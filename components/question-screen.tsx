@@ -85,11 +85,19 @@ interface QuestionData {
   question: string
   options: string[]
   correctIndex: number
-  thinkHint: string
+  hint: string // Changed from thinkHint to hint
   keyWords: string[]
   keyWordExplanations: {
     overall: string
     strategy: string
+  }
+  decisionFilter: {
+    // Added Decision Filter
+    concepts: Array<{
+      name: string
+      definition: string
+    }>
+    testQuestion: string
   }
   optionExplanations: {
     A: string
@@ -107,6 +115,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
   const [showFeedback, setShowFeedback] = useState(false)
   const [showHint, setShowHint] = useState(false)
   const [showAllOptions, setShowAllOptions] = useState(false)
+  const [showDecisionFilter, setShowDecisionFilter] = useState(false) // Added state for Decision Filter
   const t = translations[language]
 
   useEffect(() => {
@@ -120,6 +129,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
     setShowFeedback(false)
     setShowHint(false)
     setShowAllOptions(false)
+    setShowDecisionFilter(false) // Reset Decision Filter state
 
     try {
       const response = await fetch("/api/generate-question", {
@@ -283,7 +293,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
 
       <div className="flex-1 flex flex-col p-6 pb-32 overflow-y-auto">
         <div className="max-w-3xl mx-auto w-full space-y-6">
-          <div className="glass-card rounded-2xl p-6 space-y-3">
+          <div className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Question 1</span>
               <span className="text-2xl">🥋</span>
@@ -293,6 +303,15 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
               className="text-base leading-relaxed text-gray-100"
               dangerouslySetInnerHTML={{ __html: highlightTrapWords(questionData.question) }}
             />
+
+            {!showFeedback && questionData.hint && (
+              <div className="pt-3 border-t border-white/10">
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-400 italic leading-relaxed">{questionData.hint}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -340,7 +359,6 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
 
           {showFeedback && mode === "tutor" && (
             <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-500">
-              {/* Correct/Incorrect indicator */}
               <div className="glass-card rounded-2xl p-6">
                 <div className="flex items-center gap-3">
                   {isCorrect ? (
@@ -366,6 +384,48 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                   )}
                 </div>
               </div>
+
+              {questionData.decisionFilter && (
+                <div className="glass-card rounded-2xl overflow-hidden border-yellow-400/30">
+                  <button
+                    onClick={() => setShowDecisionFilter(!showDecisionFilter)}
+                    className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors duration-300 bg-yellow-400/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center">
+                        <Lightbulb className="h-5 w-5 text-yellow-400" />
+                      </div>
+                      <span className="font-semibold text-yellow-400">Decision Filter: How to Differentiate</span>
+                    </div>
+                    <ChevronLeft
+                      className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${
+                        showDecisionFilter ? "-rotate-90" : "rotate-180"
+                      }`}
+                    />
+                  </button>
+
+                  {showDecisionFilter && (
+                    <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
+                      <div className="space-y-2">
+                        {questionData.decisionFilter.concepts.map((concept, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-black/40 border border-white/5">
+                            <p className="text-sm text-gray-200">
+                              <span className="font-bold text-yellow-400">{concept.name}:</span> {concept.definition}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
+                        <p className="text-sm font-semibold text-yellow-400 mb-2">The Test:</p>
+                        <p className="text-sm text-gray-200 leading-relaxed">
+                          {questionData.decisionFilter.testQuestion}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {questionData.keyWords && questionData.keyWords.length > 0 && (
                 <div className="glass-card rounded-2xl p-6 bg-yellow-400/5 border-yellow-400/30">
@@ -452,30 +512,6 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
           )}
         </div>
       </div>
-
-      {!showFeedback && (
-        <button
-          onClick={() => setShowHint(!showHint)}
-          className="fixed bottom-28 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-xl shadow-yellow-400/30 flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all duration-300 z-20"
-          aria-label={t.hint}
-        >
-          <Lightbulb className="h-6 w-6 text-black" />
-        </button>
-      )}
-
-      {showHint && !showFeedback && questionData && (
-        <div className="fixed bottom-28 right-24 max-w-xs z-20 animate-in slide-in-from-right-8 duration-300">
-          <div className="glass-card rounded-2xl p-4 shadow-2xl border-yellow-400/20">
-            <div className="flex items-start gap-3">
-              <Lightbulb className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-sm text-yellow-400 mb-1">{t.hint}</p>
-                <p className="text-sm text-gray-300 leading-relaxed">{questionData.thinkHint}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

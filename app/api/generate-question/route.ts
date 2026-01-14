@@ -12,11 +12,18 @@ interface QuestionResponse {
   question: string
   options: string[]
   correctIndex: number
-  thinkHint: string
+  hint: string
   keyWords: string[]
   keyWordExplanations: {
     overall: string
     strategy: string
+  }
+  decisionFilter: {
+    concepts: Array<{
+      name: string
+      definition: string
+    }>
+    testQuestion: string
   }
   optionExplanations: {
     A: string
@@ -75,95 +82,107 @@ export async function POST(request: NextRequest) {
 [Category: ${category}]
 [Language for explanations: ${language}]
 
-Task: Generate ONE authentic BACB exam-style question naturally, then analyze it.
+Task: Generate ONE authentic BACB exam-style question with the Sensei Method format.
 
-STEP 1: GENERATE A NATURAL, AUTHENTIC QUESTION
-
-QUESTION STRUCTURE (Real BACB exam format):
+QUESTION FORMAT:
 1. Write a DETAILED CLINICAL SCENARIO (3-5 sentences minimum)
-   - Start with specific client details: age, target behavior, setting
-   - Describe what was done: interventions, teaching procedures, data collected
-   - Show what happened: client responses, data outcomes, observations
-   - Include specific numbers, percentages, or frequencies when relevant
-   - End with the current situation or what problem remains
+   - Start with specific client details and setting
+   - Describe what was done: interventions, procedures, data
+   - Show what happened: client responses, outcomes, observations
+   - End with the current situation or problem
 
 2. The QUESTION comes LAST after the complete scenario
-   - Use varied question types like real BACB exams:
+   - Use varied question types:
      * "What does this scenario demonstrate?"
      * "Which principle is illustrated?"
      * "What is the function of this behavior?"
      * "What type of reinforcement schedule is this?"
-     * "What does this scenario demonstrate a LACK of?"
-     * "Which concept BEST describes this situation?"
-     * "What should the analyst do NEXT?"
-   - Question must require ANALYZING the scenario, not just recalling definitions
-   - Write naturally - don't artificially insert words
+     * "What procedure is this?"
+   - Must require ANALYZING the scenario, not just recalling definitions
 
-3. Must test APPLICATION: Can the student connect scenario details to concepts?
+3. ADD HINT LINE at the bottom in ${language}:
+   - Label: "Hint:" / "Pista:" / "Dica:" / "Indice:" based on language
+   - The hint should be a QUESTION that guides thinking
+   - Point to the KEY difference between confusing options
+   - Do NOT reveal the answer
 
 REAL EXAM EXAMPLE:
-"A behavior analyst is teaching a client to identify colors. The analyst holds up a red card and says 'Red'. The client repeats 'Red'. Then, the analyst holds up the red card without saying anything, and the client says 'Red'. Finally, the analyst says 'Touch Red' and the client selects the red card from a group of colors. However, when the client sees a red apple in the cafeteria later that day, he says nothing.
+"Marcos pulls his hair (trichotillomania). The BCBA designs an intervention where Marcos receives a token every 10 minutes as long as he has not pulled his hair during that interval. If he pulls his hair, the timer resets.
 
-What does this scenario demonstrate a LACK of?"
+What procedure is this?
+
+A) Fixed Interval (FI)
+B) DRL (Differential Reinforcement of Low Rates)
+C) DRO (Differential Reinforcement of Other Behavior)
+D) DRI (Differential Reinforcement of Incompatible Behavior)
+
+${language === "English" ? "Hint" : language === "Español" ? "Pista" : language === "Português" ? "Dica" : "Indice"}: What does Marcos have to 'do' to earn the token? Do something or NOT do something?"
 
 YOUR QUESTION MUST:
-- Follow this same detailed, step-by-step scenario format
-- Show clear progression: what was done → what happened → current issue
-- Question asks what is demonstrated, missing, needed, or best describes the situation
-- Be in ENGLISH (exam style)
-- Have 4 options (A, B, C, D) that are specific ABA concepts
-- Be written naturally like a real exam writer would
+- Follow this exact format with hint at the bottom
+- Be in ENGLISH (exam style) with hint in ${language}
+- Have 4 options that test similar concepts
+- Require analyzing the scenario
 
-STEP 2: ANALYZE ONLY THE ACTUAL QUESTION (NOT THE SCENARIO)
+KEY WORDS ANALYSIS:
+Only identify key words in the ACTUAL QUESTION (not scenario):
+- Temporal: "first", "next", "before", "after"
+- Absolute: "always", "never", "only", "must"
+- Comparative: "best", "most appropriate", "primarily"
+- Negation: "except", "not", "lack of"
 
-CRITICAL: Only identify key words that appear in the ACTUAL QUESTION being asked, NOT in the narrative scenario.
+IF NO KEY WORDS: Return empty array []
 
-- Words like "first", "next", "then", "finally" in the SCENARIO are just narrative - ignore them
-- Only highlight these words if they appear in the QUESTION itself like:
-  * "What should the analyst do FIRST?" - highlight FIRST
-  * "What is the BEST approach?" - highlight BEST
-  * "What happened AFTER the intervention?" - highlight AFTER
+DECISION FILTER (for feedback):
+Create a teaching framework that shows HOW to differentiate the concepts in the options.
+Format like this example for DRO vs DRA vs DRI vs DRL:
+{
+  "concepts": [
+    {"name": "DRO", "definition": "Reinforcement for ABSENCE (doing NOTHING)"},
+    {"name": "DRA", "definition": "Reinforcement for an ALTERNATIVE behavior (can do both physically)"},
+    {"name": "DRI", "definition": "Reinforcement for an INCOMPATIBLE behavior (CANNOT do both physically)"},
+    {"name": "DRL", "definition": "Reinforcement for LOW RATES (you want LESS, not ZERO)"}
+  ],
+  "testQuestion": "Does the person receive the reward for staying still / NOT doing the problem behavior? If YES = DRO"
+}
 
-KEY WORDS TO IDENTIFY (only if in the actual question):
-- Temporal words: "first", "next", "before", "after", "initially", "following"
-- Absolute words: "always", "never", "only", "must", "all"
-- Comparative words: "best", "most appropriate", "primarily", "least"
-- Negation words: "except", "not", "lack of", "without"
-- Quantity words: "some", "any", "each", "every"
+The Decision Filter should:
+- List the similar concepts being tested
+- Give clear, distinguishing definitions
+- Provide a "test question" that helps identify the correct concept
+- Use ${language} with ABA terms in English
 
-IF NO KEY WORDS EXIST IN THE QUESTION:
-- Return empty keyWords array: []
-- Set keyWordExplanations.overall to: "No key trap words in this question. Focus on identifying the concept from the scenario description."
-- Set keyWordExplanations.strategy to: "Analyze the sequence of events and outcomes to determine which concept is being demonstrated."
-
-FEEDBACK RULES:
-- All explanations in ${language}
-- Keep ABA terms in English: reinforcement, extinction, MO, SD, prompt, fading, generalization, stimulus control, shaping, chaining, etc.
-- For key words (if any): explain how EACH one helps guide the answer in THIS scenario
-- Teach the strategy: How should students use these words as clues?
-
-CRITICAL: You MUST respond with ONLY raw JSON. No markdown, no code blocks, no explanations, no text before or after.
+CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks.
 
 Required JSON structure:
 {
-  "question": "Detailed step-by-step clinical scenario (3-5 sentences) followed by analytical question in English",
-  "options": ["A) Specific concept", "B) Specific concept", "C) Specific concept", "D) Specific concept"],
+  "question": "Detailed scenario followed by question and hint line in format 'Hint: question?' OR 'Pista: pregunta?' OR 'Dica: pergunta?' OR 'Indice: question?'",
+  "options": ["A) Concept", "B) Concept", "C) Concept", "D) Concept"],
   "correctIndex": 0,
-  "thinkHint": "Brief reasoning guide in ${language} with ABA terms in English - help analyze without revealing answer",
-  "keyWords": ["word1", "word2"] OR [] if no key words in question,
+  "hint": "The hint text only (without label) in ${language} - a question that guides reasoning",
+  "keyWords": ["word1", "word2"] OR [],
   "keyWordExplanations": {
-    "overall": "How to use these key words as clues in THIS scenario OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.' if empty",
-    "strategy": "What strategy to apply when seeing similar words in real exams OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.' if empty"
+    "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
+    "strategy": "Strategy for similar words OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.'"
+  },
+  "decisionFilter": {
+    "concepts": [
+      {"name": "Concept1", "definition": "Clear distinguishing definition in ${language} with ABA terms in English"},
+      {"name": "Concept2", "definition": "Clear distinguishing definition"},
+      {"name": "Concept3", "definition": "Clear distinguishing definition"},
+      {"name": "Concept4", "definition": "Clear distinguishing definition"}
+    ],
+    "testQuestion": "A question or test that helps identify the correct concept in ${language}"
   },
   "optionExplanations": {
-    "A": "Why A is correct/incorrect based on scenario details in ${language} with ABA terms in English",
-    "B": "Why B is correct/incorrect based on scenario details in ${language} with ABA terms in English",
-    "C": "Why C is correct/incorrect based on scenario details in ${language} with ABA terms in English",
-    "D": "Why D is correct/incorrect based on scenario details in ${language} with ABA terms in English"
+    "A": "Why correct/incorrect in ${language} with ABA terms in English",
+    "B": "Why correct/incorrect in ${language} with ABA terms in English",
+    "C": "Why correct/incorrect in ${language} with ABA terms in English",
+    "D": "Why correct/incorrect in ${language} with ABA terms in English"
   }
 }
 
-Respond with ONLY the JSON object. No other text.`
+Respond with ONLY the JSON object.`
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -213,10 +232,11 @@ Respond with ONLY the JSON object. No other text.`
         !Array.isArray(questionData.options) ||
         questionData.options.length !== 4 ||
         typeof questionData.correctIndex !== "number" ||
-        !questionData.thinkHint ||
+        !questionData.hint ||
         !questionData.keyWords ||
         !Array.isArray(questionData.keyWords) ||
         !questionData.keyWordExplanations ||
+        !questionData.decisionFilter ||
         !questionData.optionExplanations
       ) {
         throw new Error("Invalid question structure returned from AI")
