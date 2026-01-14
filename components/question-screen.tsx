@@ -20,10 +20,10 @@ const translations = {
     next: "Next Question",
     correct: "Correct!",
     incorrect: "Incorrect",
-    trapDetector: "TRAP DETECTOR",
-    trapWord: "Trap Word:",
-    whyTrap: "Why this is a trap:",
-    mightConfuse: "Common confusion:",
+    keyWordsTitle: "KEY WORDS IDENTIFIED",
+    keyWords: "Key words:",
+    howToUse: "How to use these clues:",
+    strategy: "Test-taking strategy:",
     allOptions: "Analysis of all options:",
     loading: "Generating your question...",
     error: "Failed to generate question. Please try again.",
@@ -36,10 +36,10 @@ const translations = {
     next: "Siguiente pregunta",
     correct: "¡Correcto!",
     incorrect: "Incorreto",
-    trapDetector: "DETECTOR DE TRAMPAS",
-    trapWord: "Palabra trampa:",
-    whyTrap: "Por qué es una trampa:",
-    mightConfuse: "Confusión común:",
+    keyWordsTitle: "PALABRAS CLAVE IDENTIFICADAS",
+    keyWords: "Palabras clave:",
+    howToUse: "Cómo usar estas pistas:",
+    strategy: "Estrategia para el examen:",
     allOptions: "Análise de todas las opções:",
     loading: "Generando su pregunta...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
@@ -52,10 +52,10 @@ const translations = {
     next: "Próxima questão",
     correct: "Correto!",
     incorrect: "Incorreto",
-    trapDetector: "DETECTOR DE ARMADILHAS",
-    trapWord: "Palavra armadilha:",
-    whyTrap: "Por que é uma armadilha:",
-    mightConfuse: "Confusão comum:",
+    keyWordsTitle: "PALAVRAS-CHAVE IDENTIFICADAS",
+    keyWords: "Palavras-chave:",
+    howToUse: "Como usar essas pistas:",
+    strategy: "Estratégia para o exame:",
     allOptions: "Análise de todas as opções:",
     loading: "Gerando sua questão...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
@@ -68,10 +68,10 @@ const translations = {
     next: "Question suivante",
     correct: "Correct!",
     incorrect: "Incorrect",
-    trapDetector: "DÉTECTEUR DE PIÈGES",
-    trapWord: "Mot piège:",
-    whyTrap: "Pourquoi c'est un piège:",
-    mightConfuse: "Confusion courante:",
+    keyWordsTitle: "MOTS-CLÉS IDENTIFIÉS",
+    keyWords: "Mots-clés:",
+    howToUse: "Comment utiliser ces indices:",
+    strategy: "Stratégie pour l'examen:",
     allOptions: "Analyse de toutes les options:",
     loading: "Génération de votre question...",
     error: "Échec de la génération de la question. Veuillez réessayer.",
@@ -85,11 +85,11 @@ interface QuestionData {
   question: string
   options: string[]
   correctIndex: number
-  thinkHint: string // Added thinkHint to interface
-  trapWord: string
-  trapExplanations: {
-    whyTrap: string
-    confusion: string
+  thinkHint: string
+  keyWords: string[]
+  keyWordExplanations: {
+    overall: string
+    strategy: string
   }
   optionExplanations: {
     A: string
@@ -173,10 +173,11 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
   }
 
   const highlightTrapWords = (text: string) => {
-    const trapWords = ["FIRST", "NEXT", "BEST", "ALWAYS", "NEVER", "MOST", "LEAST", "IMMEDIATELY"]
+    if (!questionData?.keyWords) return text
+
     let highlightedText = text
 
-    trapWords.forEach((word) => {
+    questionData.keyWords.forEach((word) => {
       const regex = new RegExp(`\\b${word}\\b`, "gi")
       highlightedText = highlightedText.replace(regex, `<span class="text-yellow-400 font-semibold">${word}</span>`)
     })
@@ -372,19 +373,19 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                     <AlertTriangle className="h-5 w-5 text-yellow-400" />
                   </div>
                   <div className="space-y-3">
-                    <p className="font-bold text-yellow-400 text-base">{t.trapDetector}</p>
+                    <p className="font-bold text-yellow-400 text-base">{t.keyWordsTitle}</p>
                     <div className="space-y-2">
                       <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-yellow-400">{t.trapWord}</span>{" "}
-                        <span className="font-bold text-yellow-300">{questionData.trapWord}</span>
+                        <span className="font-semibold text-yellow-400">{t.keyWords}</span>{" "}
+                        <span className="font-bold text-yellow-300">{questionData.keyWords.join(", ")}</span>
                       </p>
                       <p className="text-sm text-gray-300 leading-relaxed">
-                        <span className="font-semibold text-gray-200">{t.whyTrap}</span>{" "}
-                        {questionData.trapExplanations.whyTrap}
+                        <span className="font-semibold text-gray-200">{t.howToUse}</span>{" "}
+                        {questionData.keyWordExplanations.overall}
                       </p>
                       <p className="text-sm text-gray-300 leading-relaxed">
-                        <span className="font-semibold text-gray-200">{t.mightConfuse}</span>{" "}
-                        {questionData.trapExplanations.confusion}
+                        <span className="font-semibold text-gray-200">{t.strategy}</span>{" "}
+                        {questionData.keyWordExplanations.strategy}
                       </p>
                     </div>
                   </div>

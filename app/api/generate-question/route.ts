@@ -13,10 +13,10 @@ interface QuestionResponse {
   options: string[]
   correctIndex: number
   thinkHint: string
-  trapWord: string
-  trapExplanations: {
-    whyTrap: string
-    confusion: string
+  keyWords: string[]
+  keyWordExplanations: {
+    overall: string
+    strategy: string
   }
   optionExplanations: {
     A: string
@@ -75,22 +75,31 @@ export async function POST(request: NextRequest) {
 [Category: ${category}]
 [Language for explanations: ${language}]
 
-Task: Generate ONE exam-style question following these STRICT rules:
+Task: Generate ONE authentic BACB exam-style question naturally, then analyze it.
 
-QUESTION STRUCTURE (Critical - BACB exam format):
+STEP 1: GENERATE A NATURAL, AUTHENTIC QUESTION
+
+QUESTION STRUCTURE (Real BACB exam format):
 1. Write a DETAILED CLINICAL SCENARIO (3-5 sentences minimum)
    - Start with specific client details: age, target behavior, setting
    - Describe what was done: interventions, teaching procedures, data collected
    - Show what happened: client responses, data outcomes, observations
    - Include specific numbers, percentages, or frequencies when relevant
-   - End with what is currently happening or what problem remains
+   - End with the current situation or what problem remains
 
 2. The QUESTION comes LAST after the complete scenario
-   - Ask what the scenario "demonstrates", "shows", or "indicates"
-   - OR ask what is "MISSING" or "needed NEXT"
+   - Use varied question types like real BACB exams:
+     * "What does this scenario demonstrate?"
+     * "Which principle is illustrated?"
+     * "What is the function of this behavior?"
+     * "What type of reinforcement schedule is this?"
+     * "What does this scenario demonstrate a LACK of?"
+     * "Which concept BEST describes this situation?"
+     * "What should the analyst do NEXT?"
    - Question must require ANALYZING the scenario, not just recalling definitions
+   - Write naturally - don't artificially insert words
 
-3. Must test APPLICATION: Can the student connect the scenario details to the correct concept?
+3. Must test APPLICATION: Can the student connect scenario details to concepts?
 
 REAL EXAM EXAMPLE:
 "A behavior analyst is teaching a client to identify colors. The analyst holds up a red card and says 'Red'. The client repeats 'Red'. Then, the analyst holds up the red card without saying anything, and the client says 'Red'. Finally, the analyst says 'Touch Red' and the client selects the red card from a group of colors. However, when the client sees a red apple in the cafeteria later that day, he says nothing.
@@ -99,31 +108,40 @@ What does this scenario demonstrate a LACK of?"
 
 YOUR QUESTION MUST:
 - Follow this same detailed, step-by-step scenario format
-- Show a clear progression: what was done → what happened → current issue
-- Question asks what is demonstrated, missing, or needed
+- Show clear progression: what was done → what happened → current issue
+- Question asks what is demonstrated, missing, needed, or best describes the situation
 - Be in ENGLISH (exam style)
-- Have 4 options (A, B, C, D) that are specific concepts, not vague
-- Include ONE trap word naturally: "FIRST", "NEXT", "BEST", "ALWAYS", "NEVER", "MOST", "LEAST", "IMMEDIATELY"
-- Add a "thinkHint" that guides reasoning WITHOUT revealing the answer
+- Have 4 options (A, B, C, D) that are specific ABA concepts
+- Be written naturally like a real exam writer would
+
+STEP 2: ANALYZE THE QUESTION YOU CREATED
+
+After writing the question, identify ALL key words that help guide the answer:
+- Temporal words: "first", "next", "before", "after", "initially", "following"
+- Absolute words: "always", "never", "only", "must", "all"
+- Comparative words: "best", "most appropriate", "primarily", "least"
+- Negation words: "except", "not", "lack of", "without"
+- Quantity words: "some", "any", "each", "every"
+- Any other important guiding words
 
 FEEDBACK RULES:
 - All explanations in ${language}
 - Keep ABA terms in English: reinforcement, extinction, MO, SD, prompt, fading, generalization, stimulus control, shaping, chaining, etc.
-- Trap explanation must show why the trap word matters for THIS scenario in ${language} with ABA terms in English
-- What students commonly confuse in THIS scenario in ${language} with ABA terms in English
+- For key words: explain how EACH one helps guide the answer in THIS scenario
+- Teach the strategy: How should students use these words as clues?
 
-CRITICAL: You MUST respond with ONLY raw JSON. No markdown, no code blocks, no explanations, no text before or after. Just the JSON object.
+CRITICAL: You MUST respond with ONLY raw JSON. No markdown, no code blocks, no explanations, no text before or after.
 
 Required JSON structure:
 {
   "question": "Detailed step-by-step clinical scenario (3-5 sentences) followed by analytical question in English",
   "options": ["A) Specific concept", "B) Specific concept", "C) Specific concept", "D) Specific concept"],
   "correctIndex": 0,
-  "thinkHint": "Brief reasoning guide in ${language} with ABA terms in English - help them analyze the scenario without revealing answer",
-  "trapWord": "NEXT",
-  "trapExplanations": {
-    "whyTrap": "Why this trap word is critical for THIS scenario in ${language} with ABA terms in English",
-    "confusion": "What students commonly confuse in THIS scenario in ${language} with ABA terms in English"
+  "thinkHint": "Brief reasoning guide in ${language} with ABA terms in English - help analyze without revealing answer",
+  "keyWords": ["word1", "word2", "word3"],
+  "keyWordExplanations": {
+    "overall": "How to use these key words as clues in THIS scenario in ${language} with ABA terms in English",
+    "strategy": "What strategy to apply when seeing similar words in real exams in ${language} with ABA terms in English"
   },
   "optionExplanations": {
     "A": "Why A is correct/incorrect based on scenario details in ${language} with ABA terms in English",
@@ -184,8 +202,9 @@ Respond with ONLY the JSON object. No other text.`
         questionData.options.length !== 4 ||
         typeof questionData.correctIndex !== "number" ||
         !questionData.thinkHint ||
-        !questionData.trapWord ||
-        !questionData.trapExplanations ||
+        !questionData.keyWords ||
+        !Array.isArray(questionData.keyWords) ||
+        !questionData.keyWordExplanations ||
         !questionData.optionExplanations
       ) {
         throw new Error("Invalid question structure returned from AI")
