@@ -29,7 +29,6 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // Check if user is logged in on mount
   useEffect(() => {
     async function checkAuth() {
       const supabase = createClient()
@@ -38,8 +37,8 @@ export default function Page() {
       } = await supabase.auth.getUser()
 
       if (user) {
-        // User is logged in, redirect to study page
-        router.push("/study")
+        // User is logged in, redirect to dashboard
+        router.push("/dashboard")
       } else {
         // Show language selection for guests
         setIsLoading(false)

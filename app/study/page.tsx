@@ -225,10 +225,27 @@ export default function StudyPage() {
 
   return (
     <div className="min-h-screen gradient-bg">
+      {/* Header with navigation */}
+      {userId && (
+        <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="text-white/60 hover:text-white/80 text-sm flex items-center gap-2"
+            >
+              ← Dashboard
+            </button>
+            <button onClick={handleLogout} className="text-white/40 hover:text-white/60 text-sm">
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Logout button */}
-      <button onClick={handleLogout} className="absolute top-4 right-4 text-white/40 hover:text-white/60 text-sm z-50">
+      {/* <button onClick={handleLogout} className="absolute top-4 right-4 text-white/40 hover:text-white/60 text-sm z-50">
         Logout
-      </button>
+      </button> */}
 
       {step === 1 && <LanguageSelection onSelect={handleLanguageSelect} />}
       {step === 2 && <ExamTypeSelection onSelect={handleExamTypeSelect} onBack={handleBack} language={language} />}

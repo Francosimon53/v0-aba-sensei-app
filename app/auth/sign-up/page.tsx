@@ -54,11 +54,11 @@ export default function SignUpPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/study`,
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
             preferred_language: langCode[savedLanguage || "English"] || "en",
@@ -66,6 +66,21 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
+
+      // If user is created, insert profile
+      if (data.user) {
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: data.user.id,
+          full_name: fullName,
+          email: email,
+          preferred_language: langCode[savedLanguage || "English"] || "en",
+          onboarding_completed: false,
+        })
+
+        if (profileError) {
+          console.error("[v0] Error creating profile:", profileError)
+        }
+      }
 
       // Clear saved language after signup
       localStorage.removeItem("aba_sensei_language")

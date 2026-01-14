@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { updateUserProfile, getUserProfile } from "@/lib/supabase/progress"
+import { updateUserProfile } from "@/lib/supabase/progress"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -52,19 +52,7 @@ export default function LoginPage() {
         localStorage.removeItem("aba_sensei_language")
       }
 
-      // Check if user has completed onboarding
-      if (data.user) {
-        const profile = await getUserProfile(data.user.id)
-        if (profile?.onboarding_completed) {
-          // User has completed setup, go to study
-          router.push("/study")
-        } else {
-          // User needs to complete onboarding (select exam type)
-          router.push("/study")
-        }
-      } else {
-        router.push("/study")
-      }
+      router.push("/dashboard")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {

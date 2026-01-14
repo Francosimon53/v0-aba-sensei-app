@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (request.nextUrl.pathname.startsWith("/study") && !user) {
+  if ((request.nextUrl.pathname.startsWith("/study") || request.nextUrl.pathname.startsWith("/dashboard")) && !user) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest) {
     // Allow sign-up-success page for newly registered users
     if (!request.nextUrl.pathname.includes("sign-up-success")) {
       const url = request.nextUrl.clone()
-      url.pathname = "/study"
+      url.pathname = "/dashboard"
       return NextResponse.redirect(url)
     }
   }
