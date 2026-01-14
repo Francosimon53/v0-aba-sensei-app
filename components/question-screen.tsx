@@ -44,7 +44,7 @@ const translations = {
     loading: "Generando su pregunta...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
     retry: "Tentar novamente",
-    hint: "Dica rápida",
+    hint: "Pista rápida", // Fixed from "Dica rápida" to "Pista rápida" for Spanish
     hintText: "Pense na sequência de etapas e o que vem após a modelagem...",
   },
   Português: {
