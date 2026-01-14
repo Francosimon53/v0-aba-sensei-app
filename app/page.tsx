@@ -113,7 +113,7 @@ export default function Page() {
           language={language}
           tasks={tasks}
           currentTaskIndex={currentTaskIndex}
-          onNextTask={advanceTask}
+          onTaskComplete={advanceTask}
           loadingTasks={loadingTasks}
         />
       )}
