@@ -94,7 +94,8 @@ YOUR QUESTION MUST:
 FEEDBACK RULES:
 - All explanations in ${language}
 - Keep ABA terms in English: reinforcement, extinction, MO, SD, prompt, fading, generalization, stimulus control, shaping, chaining, etc.
-- Trap explanation must show why the trap word matters for this specific scenario
+- Trap explanation must show why the trap word matters for this specific scenario in ${language} with ABA terms in English
+- What students commonly confuse in THIS scenario in ${language} with ABA terms in English
 
 CRITICAL: You MUST respond with ONLY raw JSON. No markdown, no code blocks, no explanations, no text before or after. Just the JSON object.
 
@@ -120,7 +121,7 @@ Required JSON structure:
 Respond with ONLY the JSON object. No other text.`
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
