@@ -40,7 +40,7 @@ const translations = {
     keyWords: "Palabras clave:",
     howToUse: "Cómo usar estas pistas:",
     strategy: "Estrategia para el examen:",
-    allOptions: "Análise de todas las opções:",
+    allOptions: "Análise de todas as opções:",
     loading: "Generando su pregunta...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
     retry: "Tentar novamente",
@@ -173,7 +173,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
   }
 
   const highlightTrapWords = (text: string) => {
-    if (!questionData?.keyWords) return text
+    if (!questionData?.keyWords || questionData.keyWords.length === 0) return text
 
     let highlightedText = text
 
@@ -367,30 +367,32 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                 </div>
               </div>
 
-              <div className="glass-card rounded-2xl p-6 bg-yellow-400/5 border-yellow-400/30">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                  </div>
-                  <div className="space-y-3">
-                    <p className="font-bold text-yellow-400 text-base">{t.keyWordsTitle}</p>
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-yellow-400">{t.keyWords}</span>{" "}
-                        <span className="font-bold text-yellow-300">{questionData.keyWords.join(", ")}</span>
-                      </p>
-                      <p className="text-sm text-gray-300 leading-relaxed">
-                        <span className="font-semibold text-gray-200">{t.howToUse}</span>{" "}
-                        {questionData.keyWordExplanations.overall}
-                      </p>
-                      <p className="text-sm text-gray-300 leading-relaxed">
-                        <span className="font-semibold text-gray-200">{t.strategy}</span>{" "}
-                        {questionData.keyWordExplanations.strategy}
-                      </p>
+              {questionData.keyWords && questionData.keyWords.length > 0 && (
+                <div className="glass-card rounded-2xl p-6 bg-yellow-400/5 border-yellow-400/30">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div className="space-y-3">
+                      <p className="font-bold text-yellow-400 text-base">{t.keyWordsTitle}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-300">
+                          <span className="font-semibold text-yellow-400">{t.keyWords}</span>{" "}
+                          <span className="font-bold text-yellow-300">{questionData.keyWords.join(", ")}</span>
+                        </p>
+                        <p className="text-sm text-gray-300 leading-relaxed">
+                          <span className="font-semibold text-gray-200">{t.howToUse}</span>{" "}
+                          {questionData.keyWordExplanations.overall}
+                        </p>
+                        <p className="text-sm text-gray-300 leading-relaxed">
+                          <span className="font-semibold text-gray-200">{t.strategy}</span>{" "}
+                          {questionData.keyWordExplanations.strategy}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="glass-card rounded-2xl overflow-hidden">
                 <button

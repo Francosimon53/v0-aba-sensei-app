@@ -114,20 +114,32 @@ YOUR QUESTION MUST:
 - Have 4 options (A, B, C, D) that are specific ABA concepts
 - Be written naturally like a real exam writer would
 
-STEP 2: ANALYZE THE QUESTION YOU CREATED
+STEP 2: ANALYZE ONLY THE ACTUAL QUESTION (NOT THE SCENARIO)
 
-After writing the question, identify ALL key words that help guide the answer:
+CRITICAL: Only identify key words that appear in the ACTUAL QUESTION being asked, NOT in the narrative scenario.
+
+- Words like "first", "next", "then", "finally" in the SCENARIO are just narrative - ignore them
+- Only highlight these words if they appear in the QUESTION itself like:
+  * "What should the analyst do FIRST?" - highlight FIRST
+  * "What is the BEST approach?" - highlight BEST
+  * "What happened AFTER the intervention?" - highlight AFTER
+
+KEY WORDS TO IDENTIFY (only if in the actual question):
 - Temporal words: "first", "next", "before", "after", "initially", "following"
 - Absolute words: "always", "never", "only", "must", "all"
 - Comparative words: "best", "most appropriate", "primarily", "least"
 - Negation words: "except", "not", "lack of", "without"
 - Quantity words: "some", "any", "each", "every"
-- Any other important guiding words
+
+IF NO KEY WORDS EXIST IN THE QUESTION:
+- Return empty keyWords array: []
+- Set keyWordExplanations.overall to: "No key trap words in this question. Focus on identifying the concept from the scenario description."
+- Set keyWordExplanations.strategy to: "Analyze the sequence of events and outcomes to determine which concept is being demonstrated."
 
 FEEDBACK RULES:
 - All explanations in ${language}
 - Keep ABA terms in English: reinforcement, extinction, MO, SD, prompt, fading, generalization, stimulus control, shaping, chaining, etc.
-- For key words: explain how EACH one helps guide the answer in THIS scenario
+- For key words (if any): explain how EACH one helps guide the answer in THIS scenario
 - Teach the strategy: How should students use these words as clues?
 
 CRITICAL: You MUST respond with ONLY raw JSON. No markdown, no code blocks, no explanations, no text before or after.
@@ -138,10 +150,10 @@ Required JSON structure:
   "options": ["A) Specific concept", "B) Specific concept", "C) Specific concept", "D) Specific concept"],
   "correctIndex": 0,
   "thinkHint": "Brief reasoning guide in ${language} with ABA terms in English - help analyze without revealing answer",
-  "keyWords": ["word1", "word2", "word3"],
+  "keyWords": ["word1", "word2"] OR [] if no key words in question,
   "keyWordExplanations": {
-    "overall": "How to use these key words as clues in THIS scenario in ${language} with ABA terms in English",
-    "strategy": "What strategy to apply when seeing similar words in real exams in ${language} with ABA terms in English"
+    "overall": "How to use these key words as clues in THIS scenario OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.' if empty",
+    "strategy": "What strategy to apply when seeing similar words in real exams OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.' if empty"
   },
   "optionExplanations": {
     "A": "Why A is correct/incorrect based on scenario details in ${language} with ABA terms in English",
