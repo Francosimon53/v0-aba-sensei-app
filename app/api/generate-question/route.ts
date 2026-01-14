@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
   try {
     const { examLevel, category, language }: GenerateQuestionRequest = await request.json()
 
-    const apiKey = process.env.ANTHROPIC_API_KEY
+    const apiKey = process.env.GOOGLE_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY environment variable is not set. Please add it to your project." },
+        { error: "GOOGLE_API_KEY environment variable is not set. Please add it to your project." },
         { status: 500 },
       )
     }
@@ -119,37 +119,47 @@ Required JSON structure:
 
 Respond with ONLY the JSON object. No other text.`
 
-    // Call Claude API
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 2000,
           },
-        ],
-      }),
-    })
+        }),
+      },
+    )
 
     if (!response.ok) {
       const errorData = await response.text()
-      console.error("[v0] Claude API error:", errorData)
+      console.error("[v0] Gemini API error:", errorData)
       return NextResponse.json(
-        { error: `Claude API error: ${response.status} - ${errorData}` },
+        { error: `Gemini API error: ${response.status} - ${errorData}` },
         { status: response.status },
       )
     }
 
     const data = await response.json()
-    const content = data.content[0].text
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!content) {
+      console.error("[v0] Gemini returned empty content:", data)
+      return NextResponse.json({ error: "Gemini returned empty response" }, { status: 500 })
+    }
 
     let questionData: QuestionResponse
     try {
@@ -170,7 +180,7 @@ Respond with ONLY the JSON object. No other text.`
         throw new Error("Invalid question structure returned from AI")
       }
     } catch (parseError) {
-      console.error("[v0] Failed to parse Claude response:", content)
+      console.error("[v0] Failed to parse Gemini response:", content)
       console.error("[v0] Parse error:", parseError)
       return NextResponse.json(
         {
