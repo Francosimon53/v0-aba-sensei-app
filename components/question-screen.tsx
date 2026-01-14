@@ -54,7 +54,7 @@ const translations = {
     error: "Error al generar la pregunta. Por favor, intente de nuevo.",
     retry: "Intentar de nuevo",
     hint: "Pista rápida",
-    hintText: "Piense en la secuencia de pasos y lo que viene después del modelado...",
+    hintText: "Piense en la secuencia de etapas y lo que viene después del modelado...",
     subTopic: "Tarea",
     progress: "Progreso",
     noTasks: "No se encontraron tareas para esta categoría.",
@@ -111,6 +111,11 @@ interface QuestionData {
     overall: string
     strategy: string
   }
+  pivotWords?: Array<{
+    word: string
+    meaning: string
+    strategy: string
+  }>
   trapDetector?: {
     trapWord: string
     commonMeaning: string
@@ -557,8 +562,52 @@ export function QuestionScreen({
                     </h3>
                   </div>
 
-                  {questionData.trapDetector ? (
+                  {/* Pivot words section - show exam strategy words */}
+                  {questionData.pivotWords && questionData.pivotWords.length > 0 && (
                     <div className="space-y-3">
+                      <p className="text-sm font-semibold text-white">
+                        {language === "English" && "Pivot words found in this question:"}
+                        {language === "Español" && "Palabras clave encontradas en esta pregunta:"}
+                        {language === "Português" && "Palavras-chave encontradas nesta questão:"}
+                        {language === "Français" && "Mots-clés trouvés dans cette question:"}
+                      </p>
+                      {questionData.pivotWords.map((pivot, idx) => (
+                        <div key={idx} className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
+                          <p className="text-base font-bold text-yellow-400 mb-2">"{pivot.word}"</p>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-start gap-2">
+                              <span className="text-blue-400 font-semibold flex-shrink-0">
+                                {language === "English" && "Meaning:"}
+                                {language === "Español" && "Significado:"}
+                                {language === "Português" && "Significado:"}
+                                {language === "Français" && "Signification:"}
+                              </span>
+                              <span className="text-gray-300">{pivot.meaning}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-green-400 font-semibold flex-shrink-0">
+                                {language === "English" && "Strategy:"}
+                                {language === "Español" && "Estrategia:"}
+                                {language === "Português" && "Estratégia:"}
+                                {language === "Français" && "Stratégie:"}
+                              </span>
+                              <span className="text-gray-300">{pivot.strategy}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ABA Trap Words - show if detected */}
+                  {questionData.trapDetector && (
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-white border-t border-white/10 pt-4">
+                        {language === "English" && "ABA terminology trap:"}
+                        {language === "Español" && "Trampa de terminología ABA:"}
+                        {language === "Português" && "Armadilha de terminologia ABA:"}
+                        {language === "Français" && "Piège de terminologie ABA:"}
+                      </p>
                       <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
                         <p className="text-sm font-semibold text-yellow-400 mb-2">
                           {language === "English" && `Trap word: "${questionData.trapDetector.trapWord}"`}
@@ -591,17 +640,19 @@ export function QuestionScreen({
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  )}
+
+                  {(!questionData.pivotWords || questionData.pivotWords.length === 0) && !questionData.trapDetector && (
                     <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
                       <p className="text-sm text-gray-300">
                         {language === "English" &&
-                          "No specific ABA trap words detected. Review the Decision Filter below to understand the key distinctions between similar concepts."}
+                          "No specific trap words detected in this question. Review the Decision Filter below to understand the key distinctions between similar concepts."}
                         {language === "Español" &&
-                          "No se detectaron palabras trampa ABA específicas. Revisa el Filtro de Decisión abajo para entender las distinciones clave entre conceptos similares."}
+                          "No se detectaron palabras trampa específicas en esta pregunta. Revisa el Filtro de Decisión abajo para entender las distinciones clave entre conceptos similares."}
                         {language === "Português" &&
-                          "Nenhuma palavra armadilha ABA específica detectada. Revise o Filtro de Decisão abaixo para entender as distinções-chave entre conceitos semelhantes."}
+                          "Nenhuma palavra armadilha específica detectada nesta questão. Revise o Filtro de Decisão abaixo para entender as distinções-chave entre conceitos semelhantes."}
                         {language === "Français" &&
-                          "Aucun mot piège ABA spécifique détecté. Consultez le Filtre de Décision ci-dessous pour comprendre les distinctions clés entre concepts similaires."}
+                          "Aucun mot piège spécifique détecté dans cette question. Consultez le Filtre de Décision ci-dessous pour comprendre les distinctions clés entre concepts similaires."}
                       </p>
                     </div>
                   )}

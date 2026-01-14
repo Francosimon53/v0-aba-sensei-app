@@ -21,6 +21,11 @@ interface QuestionResponse {
     overall: string
     strategy: string
   }
+  pivotWords?: Array<{
+    word: string
+    meaning: string
+    strategy: string
+  }>
   trapDetector?: {
     trapWord: string
     commonMeaning: string
@@ -119,6 +124,18 @@ These words have DIFFERENT meanings in ABA vs everyday language. ALWAYS check if
 - "Punishment" = DECREASES behavior, NOT necessarily painful/bad
 - "Reinforce" = INCREASES behavior, NOT "to support/help"
 
+## PIVOT WORDS - EXAM STRATEGY WORDS (VERY IMPORTANT):
+These words in the QUESTION tell you HOW to think about the answer. ALWAYS scan your question for these:
+
+- "MOST" / "MOST appropriate" / "MOST likely" = Multiple options may be correct, but ONE is BETTER than others. Compare all options.
+- "FIRST" = What to do IMMEDIATELY, before anything else. Priority/sequence matters.
+- "NEXT" = What comes AFTER what was already done. Sequence matters.
+- "BEST" = Optimal choice among valid options. There may be good options, but one is superior.
+- "ALWAYS" / "NEVER" = Absolute statements - these are usually WRONG as answers (things are rarely absolute in ABA)
+- "PRIMARILY" = The MAIN reason, not the only reason
+- "EXCEPT" / "NOT" = Negation - you're looking for the WRONG answer
+- "LEAST" = Opposite of what you'd normally choose
+
 ## OTHER CRITICAL DISTINCTIONS TO TEST:
 
 ### MO vs SD (Critical Distinction)
@@ -182,28 +199,27 @@ These words have DIFFERENT meanings in ABA vs everyday language. ALWAYS check if
    - Write in ${language}
    - This goes in the separate "hint" field, NOT in the question text
 
-4. KEY WORDS ANALYSIS:
-   Only identify words in the ACTUAL QUESTION (not scenario):
-   - Temporal: "first", "next", "before", "after"
-   - Absolute: "always", "never", "only", "must"
-   - Comparative: "best", "most appropriate", "primarily"
-   - Negation: "except", "not", "lack of"
+4. PIVOT WORDS DETECTION (CRITICAL - NEW):
+   After writing your question, scan the ACTUAL QUESTION SENTENCE (not the scenario) for these pivot words:
+   MOST, FIRST, NEXT, BEST, ALWAYS, NEVER, PRIMARILY, EXCEPT, NOT, LEAST, APPROPRIATE
    
-   If NO key words: Return empty array []
-
-5. TRAP DETECTOR (IMPORTANT - Check for ABA trap words):
-   SCAN your question and scenario for ANY of these ABA trap words:
-   Negative, Positive, Consequence, Discrimination, Elicit, Emit, Evoke, Variable, Contingent, Extinction, Punishment, Reinforce
-   
-   If ANY of these words appear in the question or options, you MUST include trapDetector:
+   For EACH pivot word found, include in the "pivotWords" array:
    {
-     "trapWord": "The exact trap word used",
-     "commonMeaning": "What most people think it means in everyday English",
-     "abaMeaning": "What it ACTUALLY means in ABA context",
-     "howItConfuses": "Explanation in ${language} of how this linguistic trap might confuse students"
+     "word": "The exact word found (e.g., 'MOST')",
+     "meaning": "What this word signals in ${language} (e.g., 'Multiple options may be correct, but one is BETTER')",
+     "strategy": "How to use this clue in ${language} (e.g., 'Compare ALL options and choose the SUPERIOR one')"
    }
    
-   If NONE of these specific trap words appear, set trapDetector to null.
+   If NO pivot words in the question sentence, return empty array [].
+   
+   IMPORTANT: Only look at the question sentence itself (e.g., "What is the MOST appropriate..."), 
+   NOT the scenario narrative. Words like "first" or "then" in the story don't count.
+
+5. ABA TRAP WORDS DETECTION:
+   Scan your question and scenario for ABA trap words:
+   Negative, Positive, Consequence, Discrimination, Elicit, Emit, Evoke, Variable, Contingent, Extinction, Punishment, Reinforce
+   
+   If ANY of these words appear, include trapDetector. If NONE, set trapDetector to null.
 
 6. DECISION FILTER (Most Important):
    Create comparison showing HOW to differentiate similar concepts:
@@ -228,17 +244,19 @@ CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text
   "options": ["A) Option1", "B) Option2", "C) Option3", "D) Option4"],
   "correctIndex": 0,
   "hint": "Hint text in ${language} - separate from question",
-  "keyWords": ["word1", "word2"] OR [],
+  "pivotWords": [
+    {
+      "word": "MOST",
+      "meaning": "Multiple options may be correct, but one is BETTER",
+      "strategy": "Compare ALL options and choose the SUPERIOR one"
+    }
+  ],
+  "keyWords": [],
   "keyWordExplanations": {
-    "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
-    "strategy": "Strategy for similar words OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.'"
+    "overall": "Focus on identifying the concept from the scenario description.",
+    "strategy": "Analyze the sequence of events and outcomes."
   },
-  "trapDetector": {
-    "trapWord": "Word",
-    "commonMeaning": "Everyday meaning",
-    "abaMeaning": "ABA technical meaning",
-    "howItConfuses": "Explanation in ${language}"
-  } OR null,
+  "trapDetector": null,
   "decisionFilter": {
     "concepts": [
       {
@@ -331,6 +349,10 @@ Respond with ONLY the JSON object.`
       // Ensure keyWords is an array
       if (!questionData.keyWords || !Array.isArray(questionData.keyWords)) {
         questionData.keyWords = []
+      }
+
+      if (!questionData.pivotWords || !Array.isArray(questionData.pivotWords)) {
+        questionData.pivotWords = []
       }
 
       // Ensure keyWordExplanations exists
