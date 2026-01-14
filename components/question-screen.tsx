@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, CheckCircle2, XCircle, AlertTriangle, Lightbulb } from "lucide-react"
 import { useState, useEffect } from "react"
-import type { ExamType, Mode, Language } from "@/app/page"
-import { saveProgress } from "@/lib/supabase"
+import type { ExamType, Mode, Language, Task } from "@/app/page"
+import { createClient } from "@/lib/supabase/client"
 
 interface QuestionScreenProps {
   examType: ExamType
@@ -12,9 +12,10 @@ interface QuestionScreenProps {
   mode: Mode
   onBack: () => void
   language: Language
-  subTopics: string[]
-  currentSubTopicIndex: number
-  onNextSubTopic: () => void
+  tasks: Task[]
+  currentTaskIndex: number
+  onNextTask: () => void
+  loadingTasks: boolean
 }
 
 const translations = {
@@ -29,30 +30,34 @@ const translations = {
     strategy: "Test-taking strategy:",
     allOptions: "Analysis of all options:",
     loading: "Generating your question...",
+    loadingTasks: "Loading tasks...",
     error: "Failed to generate question. Please try again.",
     retry: "Try Again",
     hint: "Quick Hint",
     hintText: "Think about the sequence of steps and what comes after modeling...",
-    subTopic: "Topic",
+    subTopic: "Task",
     progress: "Progress",
+    noTasks: "No tasks found for this category.",
   },
   Español: {
     submit: "Enviar respuesta",
     next: "Siguiente pregunta",
     correct: "¡Correcto!",
-    incorrect: "Incorreto",
+    incorrect: "Incorrecto",
     keyWordsTitle: "PALABRAS CLAVE IDENTIFICADAS",
     keyWords: "Palabras clave:",
     howToUse: "Cómo usar estas pistas:",
     strategy: "Estrategia para el examen:",
-    allOptions: "Análise de todas as opções:",
+    allOptions: "Análisis de todas las opciones:",
     loading: "Generando su pregunta...",
-    error: "Falha ao gerar questão. Por favor, tente novamente.",
-    retry: "Tentar novamente",
+    loadingTasks: "Cargando tareas...",
+    error: "Error al generar la pregunta. Por favor, intente de nuevo.",
+    retry: "Intentar de nuevo",
     hint: "Pista rápida",
-    hintText: "Pense na sequência de etapas e o que vem após a modelagem...",
-    subTopic: "Tema",
+    hintText: "Piense en la secuencia de pasos y lo que viene después del modelado...",
+    subTopic: "Tarea",
     progress: "Progreso",
+    noTasks: "No se encontraron tareas para esta categoría.",
   },
   Português: {
     submit: "Enviar resposta",
@@ -65,12 +70,14 @@ const translations = {
     strategy: "Estratégia para o exame:",
     allOptions: "Análise de todas as opções:",
     loading: "Gerando sua questão...",
+    loadingTasks: "Carregando tarefas...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
     retry: "Tentar novamente",
     hint: "Dica rápida",
-    hintText: "Pense na sequência de etapas e ce que vem após a modelagem...",
-    subTopic: "Tópico",
+    hintText: "Pense na sequência de etapas e o que vem após a modelagem...",
+    subTopic: "Tarefa",
     progress: "Progresso",
+    noTasks: "Nenhuma tarefa encontrada para esta categoria.",
   },
   Français: {
     submit: "Soumettre la réponse",
@@ -83,12 +90,14 @@ const translations = {
     strategy: "Stratégie pour l'examen:",
     allOptions: "Analyse de toutes les options:",
     loading: "Génération de votre question...",
+    loadingTasks: "Chargement des tâches...",
     error: "Échec de la génération de la question. Veuillez réessayer.",
     retry: "Réessayer",
     hint: "Indice rapide",
     hintText: "Pensez à la séquence d'étapes et ce qui vient après la modélisation...",
-    subTopic: "Sujet",
+    subTopic: "Tâche",
     progress: "Progrès",
+    noTasks: "Aucune tâche trouvée pour cette catégorie.",
   },
 }
 
@@ -132,9 +141,10 @@ export function QuestionScreen({
   mode,
   onBack,
   language,
-  subTopics,
-  currentSubTopicIndex,
-  onNextSubTopic,
+  tasks,
+  currentTaskIndex,
+  onNextTask,
+  loadingTasks,
 }: QuestionScreenProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -146,13 +156,17 @@ export function QuestionScreen({
   const [showDecisionFilter, setShowDecisionFilter] = useState(false)
   const t = translations[language]
 
-  const currentSubTopic = subTopics[currentSubTopicIndex] || ""
+  const currentTask = tasks[currentTaskIndex]
 
   useEffect(() => {
-    loadQuestion()
-  }, [currentSubTopicIndex]) // Reload when sub-topic changes
+    if (currentTask && !loadingTasks) {
+      loadQuestion()
+    }
+  }, [currentTaskIndex, currentTask, loadingTasks])
 
   const loadQuestion = async () => {
+    if (!currentTask) return
+
     setLoading(true)
     setError(null)
     setSelectedAnswer(null)
@@ -171,7 +185,9 @@ export function QuestionScreen({
           examLevel: examType,
           category: category,
           language: language,
-          subTopic: currentSubTopic,
+          taskId: currentTask.task_id,
+          taskText: currentTask.task_text,
+          keywords: currentTask.keywords,
         }),
       })
 
@@ -195,13 +211,13 @@ export function QuestionScreen({
       setShowFeedback(true)
 
       try {
-        await saveProgress({
-          category_id: category,
-          user_answer: selectedAnswer,
-          correct_answer: questionData.correctIndex,
-          is_correct: selectedAnswer === questionData.correctIndex,
-          exam_type: examType,
-        })
+        const supabase = createClient()
+        await supabase.from("user_progress").insert([
+          {
+            category_id: category,
+            last_practiced_at: new Date().toISOString(),
+          },
+        ])
       } catch (err) {
         console.error("Error saving progress:", err)
       }
@@ -209,8 +225,7 @@ export function QuestionScreen({
   }
 
   const handleNext = () => {
-    onNextSubTopic()
-    loadQuestion()
+    onNextTask()
   }
 
   const highlightTrapWords = (text: string) => {
@@ -224,6 +239,65 @@ export function QuestionScreen({
     })
 
     return highlightedText
+  }
+
+  if (loadingTasks) {
+    return (
+      <div className="min-h-screen flex flex-col gradient-bg">
+        <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5">
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-yellow-400/20 border-t-yellow-400 animate-spin" />
+            </div>
+            <p className="text-lg text-gray-300 font-medium">{t.loadingTasks}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentTask && tasks.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col gradient-bg">
+        <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5">
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex flex-col items-center gap-6">
+            <XCircle className="h-16 w-16 text-yellow-400" />
+            <p className="text-lg text-gray-200 text-center max-w-md">{t.noTasks}</p>
+            <Button
+              onClick={onBack}
+              className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 h-12 rounded-xl"
+            >
+              {language === "English" && "Choose Another Category"}
+              {language === "Español" && "Elegir otra categoría"}
+              {language === "Português" && "Escolher outra categoria"}
+              {language === "Français" && "Choisir une autre catégorie"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -253,7 +327,11 @@ export function QuestionScreen({
               <div className="absolute inset-0 w-20 h-20 rounded-full bg-yellow-400/10 blur-xl" />
             </div>
             <p className="text-lg text-gray-300 font-medium">{t.loading}</p>
-            {currentSubTopic && <p className="text-sm text-gray-500 text-center max-w-xs">{currentSubTopic}</p>}
+            {currentTask && (
+              <p className="text-sm text-gray-500 text-center max-w-xs">
+                {currentTask.task_id}: {currentTask.task_text}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -311,19 +389,15 @@ export function QuestionScreen({
         </Button>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-          {subTopics.slice(0, 10).map((_, idx) => (
+          {tasks.slice(0, 10).map((_, idx) => (
             <div
               key={idx}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                idx < currentSubTopicIndex
-                  ? "bg-green-400"
-                  : idx === currentSubTopicIndex
-                    ? "bg-yellow-400"
-                    : "bg-gray-600"
+                idx < currentTaskIndex ? "bg-green-400" : idx === currentTaskIndex ? "bg-yellow-400" : "bg-gray-600"
               }`}
             />
           ))}
-          {subTopics.length > 10 && <span className="text-xs text-gray-500 ml-1">+{subTopics.length - 10}</span>}
+          {tasks.length > 10 && <span className="text-xs text-gray-500 ml-1">+{tasks.length - 10}</span>}
         </div>
 
         <div className="text-xs font-medium">
@@ -333,12 +407,14 @@ export function QuestionScreen({
         </div>
       </div>
 
-      {currentSubTopic && (
+      {currentTask && (
         <div className="px-6 py-3 bg-yellow-400/10 border-b border-yellow-400/20">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <p className="text-sm text-yellow-400 font-medium">{currentSubTopic}</p>
+            <p className="text-sm text-yellow-400 font-medium">
+              <span className="font-bold">{currentTask.task_id}:</span> {currentTask.task_text}
+            </p>
             <span className="text-xs text-gray-500">
-              {currentSubTopicIndex + 1}/{subTopics.length}
+              {currentTaskIndex + 1}/{tasks.length}
             </span>
           </div>
         </div>
@@ -349,7 +425,7 @@ export function QuestionScreen({
           <div className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {t.subTopic} {currentSubTopicIndex + 1}
+                {currentTask?.task_id || `${t.subTopic} ${currentTaskIndex + 1}`}
               </span>
               <span className="text-2xl">🥋</span>
             </div>
@@ -468,6 +544,7 @@ export function QuestionScreen({
                 </div>
               </div>
 
+              {/* Trap Detector - only show for incorrect answers */}
               {!isCorrect && (
                 <div className="glass-card rounded-2xl p-6 bg-yellow-400/10 border-yellow-400/30 space-y-4">
                   <div className="flex items-center gap-3">
@@ -508,167 +585,152 @@ export function QuestionScreen({
                             </span>
                             <span className="text-gray-300">{questionData.trapDetector.abaMeaning}</span>
                           </div>
+                          <div className="mt-3 pt-3 border-t border-white/10">
+                            <p className="text-gray-400 italic">{questionData.trapDetector.howItConfuses}</p>
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-yellow-400/5 border border-yellow-400/20">
-                        <p className="text-sm text-gray-200 leading-relaxed">
-                          <span className="font-semibold text-yellow-400">
-                            {language === "English" && "This may have confused you because: "}
-                            {language === "Español" && "Esto pudo confundirte porque: "}
-                            {language === "Português" && "Isso pode ter confundido você porque: "}
-                            {language === "Français" && "Cela a pu vous confondre parce que: "}
-                          </span>
-                          {questionData.trapDetector.howItConfuses}
-                        </p>
                       </div>
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
-                      <p className="text-sm text-gray-300 leading-relaxed">
+                      <p className="text-sm text-gray-300">
                         {language === "English" &&
-                          "No specific ABA trap words detected in this question. The confusion may be due to similar concepts. Review the Decision Filter below to understand the key differences."}
+                          "No specific ABA trap words detected. Review the Decision Filter below to understand the key distinctions between similar concepts."}
                         {language === "Español" &&
-                          "No se detectaron palabras trampa ABA específicas en esta pregunta. La confusión puede deberse a conceptos similares. Revisa el Filtro de Decisión abajo para entender las diferencias clave."}
+                          "No se detectaron palabras trampa ABA específicas. Revisa el Filtro de Decisión abajo para entender las distinciones clave entre conceptos similares."}
                         {language === "Português" &&
-                          "Nenhuma palavra armadilha ABA específica detectada nesta questão. A confusão pode ser devido a conceitos similares. Revise o Filtro de Decisão abaixo para entender as diferenças principais."}
+                          "Nenhuma palavra armadilha ABA específica detectada. Revise o Filtro de Decisão abaixo para entender as distinções-chave entre conceitos semelhantes."}
                         {language === "Français" &&
-                          "Aucun mot piège ABA spécifique détecté dans cette question. La confusion peut être due à des concepts similaires. Consultez le Filtre de Décision ci-dessous pour comprendre les différences clés."}
+                          "Aucun mot piège ABA spécifique détecté. Consultez le Filtre de Décision ci-dessous pour comprendre les distinctions clés entre concepts similaires."}
                       </p>
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Decision Filter */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <button
                   onClick={() => setShowDecisionFilter(!showDecisionFilter)}
-                  className="w-full p-5 flex items-center justify-between hover:bg-white/5 transition-colors"
+                  className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">🎯</span>
-                    <h3 className="font-semibold text-gray-100">
+                    <span className="text-2xl">🎯</span>
+                    <h3 className="font-bold text-white text-lg">
                       {language === "English" && "Decision Filter"}
                       {language === "Español" && "Filtro de Decisión"}
                       {language === "Português" && "Filtro de Decisão"}
                       {language === "Français" && "Filtre de Décision"}
                     </h3>
                   </div>
-                  <div
-                    className={`text-gray-400 transition-transform duration-300 ${showDecisionFilter ? "rotate-180" : ""}`}
-                  >
-                    ▼
-                  </div>
+                  <ChevronLeft
+                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${showDecisionFilter ? "-rotate-90" : "rotate-180"}`}
+                  />
                 </button>
 
                 {showDecisionFilter && (
-                  <div className="p-5 pt-0 space-y-4 border-t border-white/10">
-                    <p className="text-sm text-gray-400 italic">
-                      {language === "English" && "How to distinguish similar concepts:"}
-                      {language === "Español" && "Cómo distinguir conceptos similares:"}
-                      {language === "Português" && "Como distinguir conceitos similares:"}
-                      {language === "Français" && "Comment distinguer des concepts similaires:"}
-                    </p>
-
+                  <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
                     <div className="space-y-3">
                       {questionData.decisionFilter.concepts.map((concept, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                          <p className="font-semibold text-yellow-400">{concept.name}</p>
-                          <p className="text-sm text-gray-300">{concept.definition}</p>
-                          {concept.analogy && <p className="text-sm text-blue-400 italic">💡 {concept.analogy}</p>}
-                          {concept.rule && <p className="text-sm text-green-400">✓ {concept.rule}</p>}
+                        <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10">
+                          <h4 className="font-semibold text-yellow-400 mb-2">{concept.name}</h4>
+                          <p className="text-sm text-gray-300 mb-2">{concept.definition}</p>
+                          {concept.analogy && (
+                            <p className="text-sm text-gray-400 italic">
+                              <span className="text-yellow-400">💡</span> {concept.analogy}
+                            </p>
+                          )}
+                          {concept.rule && (
+                            <p className="text-sm text-green-400 mt-2">
+                              <span className="font-semibold">Rule:</span> {concept.rule}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
 
                     <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
-                      <p className="text-sm font-semibold text-yellow-400 mb-1">
-                        {language === "English" && "Test yourself:"}
-                        {language === "Español" && "Ponte a prueba:"}
-                        {language === "Português" && "Teste você mesmo:"}
-                        {language === "Français" && "Testez-vous:"}
+                      <p className="text-sm font-medium text-yellow-400">
+                        {language === "English" && "Ask yourself:"}
+                        {language === "Español" && "Pregúntate:"}
+                        {language === "Português" && "Pergunte-se:"}
+                        {language === "Français" && "Demandez-vous:"}
                       </p>
-                      <p className="text-sm text-gray-200">{questionData.decisionFilter.testQuestion}</p>
+                      <p className="text-sm text-gray-200 mt-1">{questionData.decisionFilter.testQuestion}</p>
                     </div>
                   </div>
                 )}
               </div>
 
+              {/* All Options Analysis */}
               <div className="glass-card rounded-2xl overflow-hidden">
                 <button
                   onClick={() => setShowAllOptions(!showAllOptions)}
-                  className="w-full p-5 flex items-center justify-between hover:bg-white/5 transition-colors"
+                  className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">📋</span>
-                    <h3 className="font-semibold text-gray-100">{t.allOptions}</h3>
-                  </div>
-                  <div
-                    className={`text-gray-400 transition-transform duration-300 ${showAllOptions ? "rotate-180" : ""}`}
-                  >
-                    ▼
-                  </div>
+                  <h3 className="font-bold text-white text-lg">{t.allOptions}</h3>
+                  <ChevronLeft
+                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${showAllOptions ? "-rotate-90" : "rotate-180"}`}
+                  />
                 </button>
 
                 {showAllOptions && (
-                  <div className="p-5 pt-0 space-y-4 border-t border-white/10">
-                    {(["A", "B", "C", "D"] as const).map((letter, idx) => {
-                      const isCorrectOption = idx === questionData.correctIndex
-                      return (
-                        <div
-                          key={letter}
-                          className={`p-4 rounded-xl border ${
-                            isCorrectOption ? "bg-green-400/10 border-green-400/30" : "bg-white/5 border-white/10"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <span className={`font-semibold ${isCorrectOption ? "text-green-400" : "text-gray-400"}`}>
-                              {letter})
-                            </span>
-                            <p className="text-sm text-gray-200 leading-relaxed">
-                              {questionData.optionExplanations[letter]}
-                            </p>
-                          </div>
+                  <div className="px-6 pb-6 space-y-3 animate-in slide-in-from-top-4 duration-300">
+                    {(["A", "B", "C", "D"] as const).map((letter, idx) => (
+                      <div
+                        key={letter}
+                        className={`p-4 rounded-xl border ${
+                          idx === questionData.correctIndex
+                            ? "bg-green-400/10 border-green-400/30"
+                            : "bg-white/5 border-white/10"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`font-bold ${idx === questionData.correctIndex ? "text-green-400" : "text-gray-400"}`}
+                          >
+                            {letter})
+                          </span>
+                          <p className="text-sm text-gray-300">{questionData.optionExplanations[letter]}</p>
                         </div>
-                      )
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
+              {/* Conclusion */}
               <div className="glass-card rounded-2xl p-6">
-                <div className="flex items-start gap-3">
-                  <span className="text-xl">🎓</span>
-                  <div>
-                    <h3 className="font-semibold text-gray-100 mb-2">
-                      {language === "English" && "Key Takeaway"}
-                      {language === "Español" && "Conclusión Clave"}
-                      {language === "Português" && "Conclusão Principal"}
-                      {language === "Français" && "Point Clé"}
-                    </h3>
-                    <p className="text-sm text-gray-300 leading-relaxed">{questionData.conclusion}</p>
-                  </div>
-                </div>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  <span className="text-yellow-400 font-semibold">
+                    {language === "English" && "Remember: "}
+                    {language === "Español" && "Recuerda: "}
+                    {language === "Português" && "Lembre-se: "}
+                    {language === "Français" && "Rappelez-vous: "}
+                  </span>
+                  {questionData.conclusion}
+                </p>
               </div>
             </div>
           )}
         </div>
       </div>
 
+      {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/95 to-transparent">
         <div className="max-w-3xl mx-auto">
           {!showFeedback ? (
             <Button
               onClick={handleSubmit}
               disabled={selectedAnswer === null}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold h-14 rounded-xl text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 rounded-xl text-lg font-semibold transition-all duration-300 bg-yellow-400 hover:bg-yellow-500 text-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t.submit}
             </Button>
           ) : (
             <Button
               onClick={handleNext}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold h-14 rounded-xl text-base transition-all duration-300"
+              className="w-full h-14 rounded-xl text-lg font-semibold transition-all duration-300 bg-yellow-400 hover:bg-yellow-500 text-black"
             >
               {t.next}
             </Button>

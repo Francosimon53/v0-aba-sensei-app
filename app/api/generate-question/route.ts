@@ -6,7 +6,9 @@ interface GenerateQuestionRequest {
   examLevel: "RBT" | "BCBA"
   category: string
   language: "English" | "Español" | "Português" | "Français"
-  subTopic?: string
+  taskId?: string
+  taskText?: string
+  keywords?: string
 }
 
 interface QuestionResponse {
@@ -61,7 +63,7 @@ function extractJSON(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { examLevel, category, language, subTopic }: GenerateQuestionRequest = await request.json()
+    const { examLevel, category, language, taskId, taskText, keywords }: GenerateQuestionRequest = await request.json()
 
     const apiKey = process.env.ANTHROPIC_API_KEY
 
@@ -75,21 +77,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let topicInstruction = ""
-    if (subTopic) {
-      topicInstruction = `
+    let taskInstruction = ""
+    if (taskId && taskText) {
+      taskInstruction = `
 
-## REQUIRED SUB-TOPIC FOR THIS QUESTION:
-You MUST create a question specifically about: ${subTopic}
-This is from the official BACB Test Content Outline. Generate a question that directly tests this specific competency.
-Do NOT deviate from this sub-topic. The question MUST assess the student's understanding of: ${subTopic}`
+## REQUIRED TASK FOR THIS QUESTION (from official BACB Test Content Outline):
+Task ID: ${taskId}
+Task Description: ${taskText}
+${keywords ? `Related Keywords: ${keywords}` : ""}
+
+You MUST create a question that directly assesses this specific task competency.
+The question MUST test the student's ability to: ${taskText}
+Do NOT deviate from this task. This is the official BACB requirement.`
     }
 
     const prompt = `You are "ABA Sensei", an expert AI tutor specializing in Applied Behavior Analysis (ABA) exam preparation. Your mission is to help students pass their RBT or BCBA certification exams by developing their "Clinical Eye" and avoiding linguistic traps.
 
 [Context: ${examLevel} Level]
 [Category: ${category}]
-[Language for explanations: ${language}]${topicInstruction}
+[Language for explanations: ${language}]${taskInstruction}
 
 ## CORE PRINCIPLES
 - Questions ALWAYS in English (simulating real exam)
@@ -292,9 +298,20 @@ Respond with ONLY the JSON object.`
       return NextResponse.json({ error: "Claude returned empty response" }, { status: 500 })
     }
 
-    let questionData: QuestionResponse
+    let questionData
     try {
-      const jsonString = extractJSON(content)
+      // Extract JSON from potential markdown code blocks
+      let jsonString = content
+      const codeBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+      if (codeBlockMatch) {
+        jsonString = codeBlockMatch[1].trim()
+      } else {
+        const jsonMatch = content.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          jsonString = jsonMatch[0].trim()
+        }
+      }
+
       questionData = JSON.parse(jsonString)
 
       if (
@@ -304,14 +321,25 @@ Respond with ONLY the JSON object.`
         questionData.options.length !== 4 ||
         typeof questionData.correctIndex !== "number" ||
         !questionData.hint ||
-        !questionData.keyWords ||
-        !Array.isArray(questionData.keyWords) ||
-        !questionData.keyWordExplanations ||
         !questionData.decisionFilter ||
         !questionData.optionExplanations ||
         !questionData.conclusion
       ) {
         throw new Error("Invalid question structure returned from AI")
+      }
+
+      // Ensure keyWords is an array
+      if (!questionData.keyWords || !Array.isArray(questionData.keyWords)) {
+        questionData.keyWords = []
+      }
+
+      // Ensure keyWordExplanations exists
+      if (!questionData.keyWordExplanations) {
+        questionData.keyWordExplanations = {
+          overall:
+            "No key trap words in this question. Focus on identifying the concept from the scenario description.",
+          strategy: "Analyze the sequence of events and outcomes to determine which concept is being demonstrated.",
+        }
       }
     } catch (parseError) {
       console.error("[v0] Failed to parse Claude response:", content)
