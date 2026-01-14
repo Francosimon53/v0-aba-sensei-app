@@ -91,6 +91,12 @@ interface QuestionData {
     overall: string
     strategy: string
   }
+  trapDetector?: {
+    trapWord: string
+    commonMeaning: string
+    abaMeaning: string
+    howItConfuses: string
+  }
   decisionFilter: {
     concepts: Array<{
       name: string
@@ -413,6 +419,63 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                   )}
                 </div>
               </div>
+
+              {!isCorrect && questionData.trapDetector && (
+                <div className="glass-card rounded-2xl p-6 bg-yellow-400/10 border-yellow-400/30 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🚨</span>
+                    <h3 className="font-bold text-yellow-400 text-lg">
+                      {language === "English" && "TRAP DETECTOR"}
+                      {language === "Español" && "DETECTOR DE TRAMPAS"}
+                      {language === "Português" && "DETECTOR DE ARMADILHAS"}
+                      {language === "Français" && "DÉTECTEUR DE PIÈGES"}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
+                      <p className="text-sm font-semibold text-yellow-400 mb-2">
+                        {language === "English" && `Trap word: "${questionData.trapDetector.trapWord}"`}
+                        {language === "Español" && `Palabra trampa: "${questionData.trapDetector.trapWord}"`}
+                        {language === "Português" && `Palavra armadilha: "${questionData.trapDetector.trapWord}"`}
+                        {language === "Français" && `Mot piège: "${questionData.trapDetector.trapWord}"`}
+                      </p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-start gap-2">
+                          <span className="text-red-400 font-semibold flex-shrink-0">
+                            {language === "English" && "Common meaning:"}
+                            {language === "Español" && "Significado común:"}
+                            {language === "Português" && "Significado comum:"}
+                            {language === "Français" && "Signification courante:"}
+                          </span>
+                          <span className="text-gray-300">{questionData.trapDetector.commonMeaning}</span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-400 font-semibold flex-shrink-0">
+                            {language === "English" && "ABA meaning:"}
+                            {language === "Español" && "Significado ABA:"}
+                            {language === "Português" && "Significado ABA:"}
+                            {language === "Français" && "Signification ABA:"}
+                          </span>
+                          <span className="text-gray-300">{questionData.trapDetector.abaMeaning}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-yellow-400/5 border border-yellow-400/20">
+                      <p className="text-sm text-gray-200 leading-relaxed">
+                        <span className="font-semibold text-yellow-400">
+                          {language === "English" && "This may have confused you because: "}
+                          {language === "Español" && "Esto pudo confundirte porque: "}
+                          {language === "Português" && "Isso pode ter confundido você porque: "}
+                          {language === "Français" && "Cela a pu vous confondre parce que: "}
+                        </span>
+                        {questionData.trapDetector.howItConfuses}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {questionData.decisionFilter && (
                 <div className="glass-card rounded-2xl overflow-hidden border-yellow-400/30">

@@ -18,6 +18,12 @@ interface QuestionResponse {
     overall: string
     strategy: string
   }
+  trapDetector?: {
+    trapWord: string
+    commonMeaning: string
+    abaMeaning: string
+    howItConfuses: string
+  }
   decisionFilter: {
     concepts: Array<{
       name: string
@@ -89,6 +95,9 @@ export async function POST(request: NextRequest) {
 - "Elicit" = AUTOMATICALLY trigger (reflexes ONLY). If voluntary, NEVER elicit
 - "Emit" = YOU produce the behavior (voluntary) → Operant
 - "Evoke" = Stimulus INVITES behavior → Operant
+- "Variable" = UNPREDICTABLE schedule, NOT "changeable"
+- "Contingent" = DEPENDENT on behavior, NOT "backup plan"
+- "Extinction" = STOP reinforcement, NOT "eliminate forever"
 
 ### MO vs SD (Critical Distinction)
 - SD (Gas station sign) = Signals AVAILABILITY → "Can I get it?"
@@ -160,7 +169,20 @@ export async function POST(request: NextRequest) {
    
    If NO key words: Return empty array []
 
-5. DECISION FILTER (Most Important):
+5. TRAP DETECTOR (Optional - for questions with ABA trap words):
+   If the question or scenario contains any ABA TRAP WORDS (words with different meanings in ABA vs everyday English), include:
+   {
+     "trapWord": "The trap word used (e.g., 'Negative', 'Consequence', 'Elicit')",
+     "commonMeaning": "What most people think it means in everyday English",
+     "abaMeaning": "What it ACTUALLY means in ABA context",
+     "howItConfuses": "Explanation in ${language} of how this linguistic trap might confuse students"
+   }
+   
+   Common ABA trap words: Negative, Consequence, Discrimination, Elicit, Emit, Evoke, Variable, Contingent, Extinction
+   
+   If NO trap words are present, set trapDetector to null or omit it.
+
+6. DECISION FILTER (Most Important):
    Create comparison showing HOW to differentiate similar concepts:
    - Use MEMORABLE ANALOGIES
    - Provide SIMPLE RULES
@@ -191,13 +213,13 @@ export async function POST(request: NextRequest) {
      "testQuestion": "Does the behavior change FORM or do you teach existing behaviors in SEQUENCE?"
    }
 
-6. OPTION EXPLANATIONS:
+7. OPTION EXPLANATIONS:
    For each option, explain in ${language} (keep ABA terms in English):
    - Why it's correct (for the right answer)
    - Why it's incorrect (for wrong answers)
    - What common confusion it represents
 
-7. CONCLUSION:
+8. CONCLUSION:
    ONE sentence connecting scenario to correct answer in ${language}.
    Example: "Since the analyst started from the beginning (grab coat) → Forward Chaining"
 
@@ -214,6 +236,12 @@ CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text
     "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
     "strategy": "Strategy for similar words OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.'"
   },
+  "trapDetector": {
+    "trapWord": "Word",
+    "commonMeaning": "Everyday meaning",
+    "abaMeaning": "ABA technical meaning",
+    "howItConfuses": "Explanation in ${language}"
+  } OR null,
   "decisionFilter": {
     "concepts": [
       {
