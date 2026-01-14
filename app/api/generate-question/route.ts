@@ -22,6 +22,8 @@ interface QuestionResponse {
     concepts: Array<{
       name: string
       definition: string
+      analogy?: string
+      rule?: string
     }>
     testQuestion: string
   }
@@ -31,6 +33,7 @@ interface QuestionResponse {
     C: string
     D: string
   }
+  conclusion: string
 }
 
 function extractJSON(text: string): string {
@@ -106,24 +109,6 @@ QUESTION FORMAT:
    - Point to the KEY difference between confusing options
    - Do NOT reveal the answer
 
-REAL EXAM EXAMPLE:
-"Marcos pulls his hair (trichotillomania). The BCBA designs an intervention where Marcos receives a token every 10 minutes as long as he has not pulled his hair during that interval. If he pulls his hair, the timer resets.
-
-What procedure is this?
-
-A) Fixed Interval (FI)
-B) DRL (Differential Reinforcement of Low Rates)
-C) DRO (Differential Reinforcement of Other Behavior)
-D) DRI (Differential Reinforcement of Incompatible Behavior)
-
-${language === "English" ? "Hint" : language === "Español" ? "Pista" : language === "Português" ? "Dica" : "Indice"}: What does Marcos have to 'do' to earn the token? Do something or NOT do something?"
-
-YOUR QUESTION MUST:
-- Follow this exact format with hint at the bottom
-- Be in ENGLISH (exam style) with hint in ${language}
-- Have 4 options that test similar concepts
-- Require analyzing the scenario
-
 KEY WORDS ANALYSIS:
 Only identify key words in the ACTUAL QUESTION (not scenario):
 - Temporal: "first", "next", "before", "after"
@@ -133,33 +118,50 @@ Only identify key words in the ACTUAL QUESTION (not scenario):
 
 IF NO KEY WORDS: Return empty array []
 
-DECISION FILTER (for feedback):
-Create a teaching framework that shows HOW to differentiate the concepts in the options.
-Format like this example for DRO vs DRA vs DRI vs DRL:
+DECISION FILTER (most important for teaching):
+Create a comparison that shows HOW to differentiate similar concepts using:
+- MEMORABLE ANALOGIES (like "Shaping is like working with clay" vs "Chaining is like linking chain links")
+- SIMPLE RULES (like "Shaping = behavior CHANGES form" vs "Chaining = behaviors exist, you teach the ORDER")
+- Sub-categories when relevant (Forward vs Backward vs Total Task)
+
+Format example:
 {
   "concepts": [
-    {"name": "DRO", "definition": "Reinforcement for ABSENCE (doing NOTHING)"},
-    {"name": "DRA", "definition": "Reinforcement for an ALTERNATIVE behavior (can do both physically)"},
-    {"name": "DRI", "definition": "Reinforcement for an INCOMPATIBLE behavior (CANNOT do both physically)"},
-    {"name": "DRL", "definition": "Reinforcement for LOW RATES (you want LESS, not ZERO)"}
+    {
+      "name": "Shaping",
+      "definition": "The behavior CHANGES form gradually",
+      "analogy": "Like working with clay - you mold it step by step",
+      "rule": "Shaping = behavior CHANGES form"
+    },
+    {
+      "name": "Forward Chaining",
+      "definition": "Teach steps in order, starting from step 1",
+      "analogy": "Like reading a book - start at the beginning",
+      "rule": "Forward = Start with step 1"
+    },
+    {
+      "name": "Backward Chaining",
+      "definition": "Teach steps in reverse, starting from the last step",
+      "analogy": "Like solving a maze backwards - start at the end",
+      "rule": "Backward = Start with the last step"
+    }
   ],
-  "testQuestion": "Does the person receive the reward for staying still / NOT doing the problem behavior? If YES = DRO"
+  "testQuestion": "Does the behavior change form OR do you teach existing behaviors in sequence?"
 }
 
-The Decision Filter should:
-- List the similar concepts being tested
-- Give clear, distinguishing definitions
-- Provide a "test question" that helps identify the correct concept
-- Use ${language} with ABA terms in English
+CONCLUSION:
+Write ONE sentence that connects the scenario to the correct answer.
+Example: "Since the analyst started from the beginning (grab coat) → Forward Chaining"
+Use ${language} with ABA terms in English.
 
 CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks.
 
 Required JSON structure:
 {
-  "question": "Detailed scenario followed by question and hint line in format 'Hint: question?' OR 'Pista: pregunta?' OR 'Dica: pergunta?' OR 'Indice: question?'",
+  "question": "Detailed scenario followed by question and hint line",
   "options": ["A) Concept", "B) Concept", "C) Concept", "D) Concept"],
   "correctIndex": 0,
-  "hint": "The hint text only (without label) in ${language} - a question that guides reasoning",
+  "hint": "The hint text only (without label) in ${language}",
   "keyWords": ["word1", "word2"] OR [],
   "keyWordExplanations": {
     "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
@@ -167,19 +169,22 @@ Required JSON structure:
   },
   "decisionFilter": {
     "concepts": [
-      {"name": "Concept1", "definition": "Clear distinguishing definition in ${language} with ABA terms in English"},
-      {"name": "Concept2", "definition": "Clear distinguishing definition"},
-      {"name": "Concept3", "definition": "Clear distinguishing definition"},
-      {"name": "Concept4", "definition": "Clear distinguishing definition"}
+      {
+        "name": "Concept1",
+        "definition": "Clear definition in ${language}",
+        "analogy": "Memorable analogy in ${language}",
+        "rule": "Simple rule in ${language}"
+      }
     ],
-    "testQuestion": "A question or test that helps identify the correct concept in ${language}"
+    "testQuestion": "A test question in ${language}"
   },
   "optionExplanations": {
-    "A": "Why correct/incorrect in ${language} with ABA terms in English",
-    "B": "Why correct/incorrect in ${language} with ABA terms in English",
-    "C": "Why correct/incorrect in ${language} with ABA terms in English",
-    "D": "Why correct/incorrect in ${language} with ABA terms in English"
-  }
+    "A": "Why correct/incorrect in ${language}",
+    "B": "Why correct/incorrect in ${language}",
+    "C": "Why correct/incorrect in ${language}",
+    "D": "Why correct/incorrect in ${language}"
+  },
+  "conclusion": "One sentence connecting scenario to answer in ${language}"
 }
 
 Respond with ONLY the JSON object.`
@@ -193,7 +198,7 @@ Respond with ONLY the JSON object.`
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
+        max_tokens: 2500,
         temperature: 0.9,
         messages: [
           {
@@ -237,7 +242,8 @@ Respond with ONLY the JSON object.`
         !Array.isArray(questionData.keyWords) ||
         !questionData.keyWordExplanations ||
         !questionData.decisionFilter ||
-        !questionData.optionExplanations
+        !questionData.optionExplanations ||
+        !questionData.conclusion
       ) {
         throw new Error("Invalid question structure returned from AI")
       }

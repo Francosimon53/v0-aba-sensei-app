@@ -85,17 +85,18 @@ interface QuestionData {
   question: string
   options: string[]
   correctIndex: number
-  hint: string // Changed from thinkHint to hint
+  hint: string
   keyWords: string[]
   keyWordExplanations: {
     overall: string
     strategy: string
   }
   decisionFilter: {
-    // Added Decision Filter
     concepts: Array<{
       name: string
       definition: string
+      analogy?: string
+      rule?: string
     }>
     testQuestion: string
   }
@@ -105,6 +106,7 @@ interface QuestionData {
     C: string
     D: string
   }
+  conclusion: string
 }
 
 export function QuestionScreen({ examType, category, mode, onBack, language }: QuestionScreenProps) {
@@ -115,7 +117,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
   const [showFeedback, setShowFeedback] = useState(false)
   const [showHint, setShowHint] = useState(false)
   const [showAllOptions, setShowAllOptions] = useState(false)
-  const [showDecisionFilter, setShowDecisionFilter] = useState(false) // Added state for Decision Filter
+  const [showDecisionFilter, setShowDecisionFilter] = useState(false)
   const t = translations[language]
 
   useEffect(() => {
@@ -129,7 +131,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
     setShowFeedback(false)
     setShowHint(false)
     setShowAllOptions(false)
-    setShowDecisionFilter(false) // Reset Decision Filter state
+    setShowDecisionFilter(false)
 
     try {
       const response = await fetch("/api/generate-question", {
@@ -163,10 +165,9 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
     if (selectedAnswer !== null && questionData) {
       setShowFeedback(true)
 
-      // Save progress to database
       try {
         await saveProgress({
-          category_id: category, // Changed from "category" to "category_id"
+          category_id: category,
           user_answer: selectedAnswer,
           correct_answer: questionData.correctIndex,
           is_correct: selectedAnswer === questionData.correctIndex,
@@ -359,26 +360,54 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
 
           {showFeedback && mode === "tutor" && (
             <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-500">
-              <div className="glass-card rounded-2xl p-6">
+              <div className="glass-card rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-3">
                   {isCorrect ? (
                     <>
                       <div className="w-12 h-12 rounded-full bg-green-400/20 flex items-center justify-center">
                         <CheckCircle2 className="h-6 w-6 text-green-400" />
                       </div>
-                      <div>
-                        <p className="text-xl font-semibold text-green-400">{t.correct}</p>
-                        <p className="text-sm text-gray-400">Great work!</p>
+                      <div className="flex-1">
+                        <p className="text-xl font-semibold text-green-400">
+                          {language === "English" &&
+                            `Correct! ${questionData.options[questionData.correctIndex].substring(0, 1)} is right! 🎉`}
+                          {language === "Español" &&
+                            `¡Respuesta ${questionData.options[questionData.correctIndex].substring(0, 1)} Correcta! 🎉`}
+                          {language === "Português" &&
+                            `Resposta ${questionData.options[questionData.correctIndex].substring(0, 1)} Correta! 🎉`}
+                          {language === "Français" &&
+                            `Réponse ${questionData.options[questionData.correctIndex].substring(0, 1)} Correcte! 🎉`}
+                        </p>
+                        <p className="text-sm text-gray-300 mt-1">
+                          {language === "English" && "You nailed it."}
+                          {language === "Español" && "Le diste al clavo."}
+                          {language === "Português" && "Você acertou em cheio."}
+                          {language === "Français" && "Vous avez réussi."}
+                        </p>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="w-12 h-12 rounded-full bg-red-400/20 flex items-center justify-center">
-                        <XCircle className="h-6 w-6 text-red-400" />
+                      <div className="w-12 h-12 rounded-full bg-yellow-400/20 flex items-center justify-center">
+                        <AlertTriangle className="h-6 w-6 text-yellow-400" />
                       </div>
-                      <div>
-                        <p className="text-xl font-semibold text-red-400">{t.incorrect}</p>
-                        <p className="text-sm text-gray-400">Let's learn from this</p>
+                      <div className="flex-1">
+                        <p className="text-lg font-semibold text-gray-200">
+                          {language === "English" &&
+                            `Not quite. The correct answer is ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
+                          {language === "Español" &&
+                            `No es exacto. La respuesta correcta es ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
+                          {language === "Português" &&
+                            `Não exatamente. A resposta correta é ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
+                          {language === "Français" &&
+                            `Pas tout à fait. La bonne réponse est ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          {language === "English" && "Let's learn the difference."}
+                          {language === "Español" && "Aprendamos la diferencia."}
+                          {language === "Português" && "Vamos aprender a diferença."}
+                          {language === "Français" && "Apprenons la différence."}
+                        </p>
                       </div>
                     </>
                   )}
@@ -395,7 +424,12 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                       <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center">
                         <Lightbulb className="h-5 w-5 text-yellow-400" />
                       </div>
-                      <span className="font-semibold text-yellow-400">Decision Filter: How to Differentiate</span>
+                      <span className="font-semibold text-yellow-400">
+                        {language === "English" && "Decision Filter: How to Differentiate"}
+                        {language === "Español" && "Filtro de Decisión: Cómo Diferenciar"}
+                        {language === "Português" && "Filtro de Decisão: Como Diferenciar"}
+                        {language === "Français" && "Filtre de Décision: Comment Différencier"}
+                      </span>
                     </div>
                     <ChevronLeft
                       className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${
@@ -406,24 +440,49 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
 
                   {showDecisionFilter && (
                     <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {questionData.decisionFilter.concepts.map((concept, idx) => (
-                          <div key={idx} className="p-3 rounded-xl bg-black/40 border border-white/5">
-                            <p className="text-sm text-gray-200">
-                              <span className="font-bold text-yellow-400">{concept.name}:</span> {concept.definition}
-                            </p>
+                          <div key={idx} className="p-4 rounded-xl bg-black/40 border border-white/10">
+                            <p className="font-bold text-yellow-400 mb-2">{concept.name}</p>
+                            <p className="text-sm text-gray-200 mb-1">{concept.definition}</p>
+                            {concept.analogy && <p className="text-sm text-gray-300 italic">💡 {concept.analogy}</p>}
+                            {concept.rule && (
+                              <p className="text-sm text-yellow-300 font-semibold mt-1">→ {concept.rule}</p>
+                            )}
                           </div>
                         ))}
                       </div>
 
                       <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
-                        <p className="text-sm font-semibold text-yellow-400 mb-2">The Test:</p>
+                        <p className="text-sm font-semibold text-yellow-400 mb-2">
+                          {language === "English" && "The Test:"}
+                          {language === "Español" && "La Prueba:"}
+                          {language === "Português" && "O Teste:"}
+                          {language === "Français" && "Le Test:"}
+                        </p>
                         <p className="text-sm text-gray-200 leading-relaxed">
                           {questionData.decisionFilter.testQuestion}
                         </p>
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {questionData.conclusion && (
+                <div className="glass-card rounded-2xl p-5 bg-green-400/5 border-green-400/30">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-green-400 mb-1">
+                        {language === "English" && "Conclusion:"}
+                        {language === "Español" && "Conclusión:"}
+                        {language === "Português" && "Conclusão:"}
+                        {language === "Français" && "Conclusion:"}
+                      </p>
+                      <p className="text-sm text-gray-200 leading-relaxed">{questionData.conclusion}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
