@@ -6,6 +6,7 @@ interface GenerateQuestionRequest {
   examLevel: "RBT" | "BCBA"
   category: string
   language: "English" | "Español" | "Português" | "Français"
+  subTopic?: string
 }
 
 interface QuestionResponse {
@@ -60,7 +61,7 @@ function extractJSON(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { examLevel, category, language }: GenerateQuestionRequest = await request.json()
+    const { examLevel, category, language, subTopic }: GenerateQuestionRequest = await request.json()
 
     const apiKey = process.env.ANTHROPIC_API_KEY
 
@@ -74,29 +75,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const conceptTopics = [
-      "reinforcement schedules (FR, VR, FI, VI)",
-      "MO vs SD distinction",
-      "stimulus control and stimulus discrimination",
-      "extinction and extinction burst",
-      "positive vs negative reinforcement",
-      "positive vs negative punishment",
-      "escape vs avoidance",
-      "unconditioned vs conditioned reinforcers",
-      "generalization vs discrimination",
-      "establishing operations vs abolishing operations",
-      "automatic vs socially mediated reinforcement",
-      "stimulus equivalence",
-      "verbal operants (mand, tact, echoic, intraverbal)",
-      "respondent vs operant conditioning",
-      "elicit vs emit vs evoke",
-    ]
+    let topicInstruction = ""
+    if (subTopic) {
+      topicInstruction = `
 
-    const randomTopic = conceptTopics[Math.floor(Math.random() * conceptTopics.length)]
-    const topicInstruction =
-      category.includes("Concepts") || category.includes("Principles")
-        ? `\n\n## REQUIRED TOPIC FOR THIS QUESTION:\nYou MUST create a question about: ${randomTopic}\nDo NOT create a question about chaining. Focus specifically on ${randomTopic}.`
-        : ""
+## REQUIRED SUB-TOPIC FOR THIS QUESTION:
+You MUST create a question specifically about: ${subTopic}
+This is from the official BACB Test Content Outline. Generate a question that directly tests this specific competency.
+Do NOT deviate from this sub-topic. The question MUST assess the student's understanding of: ${subTopic}`
+    }
 
     const prompt = `You are "ABA Sensei", an expert AI tutor specializing in Applied Behavior Analysis (ABA) exam preparation. Your mission is to help students pass their RBT or BCBA certification exams by developing their "Clinical Eye" and avoiding linguistic traps.
 

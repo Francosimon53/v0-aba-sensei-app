@@ -12,6 +12,9 @@ interface QuestionScreenProps {
   mode: Mode
   onBack: () => void
   language: Language
+  subTopics: string[]
+  currentSubTopicIndex: number
+  onNextSubTopic: () => void
 }
 
 const translations = {
@@ -30,6 +33,8 @@ const translations = {
     retry: "Try Again",
     hint: "Quick Hint",
     hintText: "Think about the sequence of steps and what comes after modeling...",
+    subTopic: "Topic",
+    progress: "Progress",
   },
   Español: {
     submit: "Enviar respuesta",
@@ -44,8 +49,10 @@ const translations = {
     loading: "Generando su pregunta...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
     retry: "Tentar novamente",
-    hint: "Pista rápida", // Fixed from "Dica rápida" to "Pista rápida" for Spanish
+    hint: "Pista rápida",
     hintText: "Pense na sequência de etapas e o que vem após a modelagem...",
+    subTopic: "Tema",
+    progress: "Progreso",
   },
   Português: {
     submit: "Enviar resposta",
@@ -62,6 +69,8 @@ const translations = {
     retry: "Tentar novamente",
     hint: "Dica rápida",
     hintText: "Pense na sequência de etapas e ce que vem após a modelagem...",
+    subTopic: "Tópico",
+    progress: "Progresso",
   },
   Français: {
     submit: "Soumettre la réponse",
@@ -78,6 +87,8 @@ const translations = {
     retry: "Réessayer",
     hint: "Indice rapide",
     hintText: "Pensez à la séquence d'étapes et ce qui vient après la modélisation...",
+    subTopic: "Sujet",
+    progress: "Progrès",
   },
 }
 
@@ -115,7 +126,16 @@ interface QuestionData {
   conclusion: string
 }
 
-export function QuestionScreen({ examType, category, mode, onBack, language }: QuestionScreenProps) {
+export function QuestionScreen({
+  examType,
+  category,
+  mode,
+  onBack,
+  language,
+  subTopics,
+  currentSubTopicIndex,
+  onNextSubTopic,
+}: QuestionScreenProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [questionData, setQuestionData] = useState<QuestionData | null>(null)
@@ -126,9 +146,11 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
   const [showDecisionFilter, setShowDecisionFilter] = useState(false)
   const t = translations[language]
 
+  const currentSubTopic = subTopics[currentSubTopicIndex] || ""
+
   useEffect(() => {
     loadQuestion()
-  }, [])
+  }, [currentSubTopicIndex]) // Reload when sub-topic changes
 
   const loadQuestion = async () => {
     setLoading(true)
@@ -149,6 +171,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
           examLevel: examType,
           category: category,
           language: language,
+          subTopic: currentSubTopic,
         }),
       })
 
@@ -186,6 +209,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
   }
 
   const handleNext = () => {
+    onNextSubTopic()
     loadQuestion()
   }
 
@@ -229,6 +253,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
               <div className="absolute inset-0 w-20 h-20 rounded-full bg-yellow-400/10 blur-xl" />
             </div>
             <p className="text-lg text-gray-300 font-medium">{t.loading}</p>
+            {currentSubTopic && <p className="text-sm text-gray-500 text-center max-w-xs">{currentSubTopic}</p>}
           </div>
         </div>
       </div>
@@ -286,9 +311,19 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
         </Button>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-yellow-400" />
-          <div className="w-2 h-2 rounded-full bg-gray-600" />
-          <div className="w-2 h-2 rounded-full bg-gray-600" />
+          {subTopics.slice(0, 10).map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                idx < currentSubTopicIndex
+                  ? "bg-green-400"
+                  : idx === currentSubTopicIndex
+                    ? "bg-yellow-400"
+                    : "bg-gray-600"
+              }`}
+            />
+          ))}
+          {subTopics.length > 10 && <span className="text-xs text-gray-500 ml-1">+{subTopics.length - 10}</span>}
         </div>
 
         <div className="text-xs font-medium">
@@ -298,11 +333,24 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
         </div>
       </div>
 
+      {currentSubTopic && (
+        <div className="px-6 py-3 bg-yellow-400/10 border-b border-yellow-400/20">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <p className="text-sm text-yellow-400 font-medium">{currentSubTopic}</p>
+            <span className="text-xs text-gray-500">
+              {currentSubTopicIndex + 1}/{subTopics.length}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col p-6 pb-32 overflow-y-auto">
         <div className="max-w-3xl mx-auto w-full space-y-6">
           <div className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Question 1</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {t.subTopic} {currentSubTopicIndex + 1}
+              </span>
               <span className="text-2xl">🥋</span>
             </div>
 
@@ -477,15 +525,15 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
-                      <p className="text-sm text-gray-200 leading-relaxed">
+                      <p className="text-sm text-gray-300 leading-relaxed">
                         {language === "English" &&
-                          "No specific ABA trap words were identified in this question. Your error may be due to confusing similar concepts. Review the Decision Filter below to understand the key differences."}
+                          "No specific ABA trap words detected in this question. The confusion may be due to similar concepts. Review the Decision Filter below to understand the key differences."}
                         {language === "Español" &&
-                          "No se identificaron palabras trampa específicas de ABA en esta pregunta. Tu error puede deberse a confundir conceptos similares. Revisa el Filtro de Decisión a continuación para entender las diferencias clave."}
+                          "No se detectaron palabras trampa ABA específicas en esta pregunta. La confusión puede deberse a conceptos similares. Revisa el Filtro de Decisión abajo para entender las diferencias clave."}
                         {language === "Português" &&
-                          "Nenhuma palavra armadilha específica de ABA foi identificada nesta questão. Seu erro pode ser devido à confusão de conceitos semelhantes. Revise o Filtro de Decisão abaixo para entender as principais diferenças."}
+                          "Nenhuma palavra armadilha ABA específica detectada nesta questão. A confusão pode ser devido a conceitos similares. Revise o Filtro de Decisão abaixo para entender as diferenças principais."}
                         {language === "Français" &&
-                          "Aucun mot piège ABA spécifique n'a été identifié dans cette question. Votre erreur peut être due à la confusion de concepts similaires. Consultez le Filtre de Décision ci-dessous pour comprendre les différences clés."}
+                          "Aucun mot piège ABA spécifique détecté dans cette question. La confusion peut être due à des concepts similaires. Consultez le Filtre de Décision ci-dessous pour comprendre les différences clés."}
                       </p>
                     </div>
                   )}
@@ -495,7 +543,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
               <div className="glass-card rounded-2xl overflow-hidden">
                 <button
                   onClick={() => setShowDecisionFilter(!showDecisionFilter)}
-                  className="w-full flex items-center justify-between p-5 text-left hover:bg-white/5 transition-colors"
+                  className="w-full p-5 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">🎯</span>
@@ -506,137 +554,121 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                       {language === "Français" && "Filtre de Décision"}
                     </h3>
                   </div>
-                  <ChevronLeft
-                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${showDecisionFilter ? "-rotate-90" : "rotate-180"}`}
-                  />
+                  <div
+                    className={`text-gray-400 transition-transform duration-300 ${showDecisionFilter ? "rotate-180" : ""}`}
+                  >
+                    ▼
+                  </div>
                 </button>
 
                 {showDecisionFilter && (
-                  <div className="px-5 pb-5 space-y-4 animate-in slide-in-from-top-4 duration-300">
+                  <div className="p-5 pt-0 space-y-4 border-t border-white/10">
+                    <p className="text-sm text-gray-400 italic">
+                      {language === "English" && "How to distinguish similar concepts:"}
+                      {language === "Español" && "Cómo distinguir conceptos similares:"}
+                      {language === "Português" && "Como distinguir conceitos similares:"}
+                      {language === "Français" && "Comment distinguer des concepts similaires:"}
+                    </p>
+
                     <div className="space-y-3">
                       {questionData.decisionFilter.concepts.map((concept, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-black/40 border border-white/10">
-                          <p className="font-bold text-yellow-400 mb-2">{concept.name}</p>
-                          <p className="text-sm text-gray-200 mb-1">{concept.definition}</p>
-                          {concept.analogy && <p className="text-sm text-gray-300 italic">💡 {concept.analogy}</p>}
-                          {concept.rule && (
-                            <p className="text-sm text-yellow-300 font-semibold mt-1">→ {concept.rule}</p>
-                          )}
+                        <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                          <p className="font-semibold text-yellow-400">{concept.name}</p>
+                          <p className="text-sm text-gray-300">{concept.definition}</p>
+                          {concept.analogy && <p className="text-sm text-blue-400 italic">💡 {concept.analogy}</p>}
+                          {concept.rule && <p className="text-sm text-green-400">✓ {concept.rule}</p>}
                         </div>
                       ))}
                     </div>
 
-                    <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
-                      <p className="text-sm font-semibold text-yellow-400 mb-2">
-                        {language === "English" && "The Test:"}
-                        {language === "Español" && "La Prueba:"}
-                        {language === "Português" && "O Teste:"}
-                        {language === "Français" && "Le Test:"}
+                    <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
+                      <p className="text-sm font-semibold text-yellow-400 mb-1">
+                        {language === "English" && "Test yourself:"}
+                        {language === "Español" && "Ponte a prueba:"}
+                        {language === "Português" && "Teste você mesmo:"}
+                        {language === "Français" && "Testez-vous:"}
                       </p>
-                      <p className="text-sm text-gray-200 leading-relaxed">
-                        {questionData.decisionFilter.testQuestion}
-                      </p>
+                      <p className="text-sm text-gray-200">{questionData.decisionFilter.testQuestion}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {questionData.conclusion && (
-                <div className="glass-card rounded-2xl p-5 bg-green-400/5 border-green-400/30">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-green-400 mb-1">
-                        {language === "English" && "Conclusion:"}
-                        {language === "Español" && "Conclusión:"}
-                        {language === "Português" && "Conclusão:"}
-                        {language === "Français" && "Conclusion:"}
-                      </p>
-                      <p className="text-sm text-gray-200 leading-relaxed">{questionData.conclusion}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {questionData.keyWords && questionData.keyWords.length > 0 && (
-                <div className="glass-card rounded-2xl p-6 bg-yellow-400/5 border-yellow-400/30">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center flex-shrink-0">
-                      <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                    </div>
-                    <div className="space-y-3">
-                      <p className="font-bold text-yellow-400 text-base">{t.keyWordsTitle}</p>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-300">
-                          <span className="font-semibold text-yellow-400">{t.keyWords}</span>{" "}
-                          <span className="font-bold text-yellow-300">{questionData.keyWords.join(", ")}</span>
-                        </p>
-                        <p className="text-sm text-gray-300 leading-relaxed">
-                          <span className="font-semibold text-gray-200">{t.howToUse}</span>{" "}
-                          {questionData.keyWordExplanations.overall}
-                        </p>
-                        <p className="text-sm text-gray-300 leading-relaxed">
-                          <span className="font-semibold text-gray-200">{t.strategy}</span>{" "}
-                          {questionData.keyWordExplanations.strategy}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="glass-card rounded-2xl overflow-hidden">
                 <button
                   onClick={() => setShowAllOptions(!showAllOptions)}
-                  className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors duration-300"
+                  className="w-full p-5 flex items-center justify-between hover:bg-white/5 transition-colors"
                 >
-                  <span className="font-semibold text-gray-200">Analysis of all options</span>
-                  <ChevronLeft
-                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${
-                      showAllOptions ? "-rotate-90" : "rotate-180"
-                    }`}
-                  />
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📋</span>
+                    <h3 className="font-semibold text-gray-100">{t.allOptions}</h3>
+                  </div>
+                  <div
+                    className={`text-gray-400 transition-transform duration-300 ${showAllOptions ? "rotate-180" : ""}`}
+                  >
+                    ▼
+                  </div>
                 </button>
 
                 {showAllOptions && (
-                  <div className="px-6 pb-6 space-y-3 animate-in slide-in-from-top-4 duration-300">
-                    {["A", "B", "C", "D"].map((letter, idx) => (
-                      <div
-                        key={letter}
-                        className={`p-4 rounded-xl ${
-                          idx === questionData.correctIndex
-                            ? "bg-green-400/10 border border-green-400/30"
-                            : "bg-black/20"
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed text-gray-200">
-                          <span className="font-bold text-yellow-400 mr-2">{letter}:</span>
-                          {questionData.optionExplanations[letter as "A" | "B" | "C" | "D"]}
-                        </p>
-                      </div>
-                    ))}
+                  <div className="p-5 pt-0 space-y-4 border-t border-white/10">
+                    {(["A", "B", "C", "D"] as const).map((letter, idx) => {
+                      const isCorrectOption = idx === questionData.correctIndex
+                      return (
+                        <div
+                          key={letter}
+                          className={`p-4 rounded-xl border ${
+                            isCorrectOption ? "bg-green-400/10 border-green-400/30" : "bg-white/5 border-white/10"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span className={`font-semibold ${isCorrectOption ? "text-green-400" : "text-gray-400"}`}>
+                              {letter})
+                            </span>
+                            <p className="text-sm text-gray-200 leading-relaxed">
+                              {questionData.optionExplanations[letter]}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
+              </div>
+
+              <div className="glass-card rounded-2xl p-6">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">🎓</span>
+                  <div>
+                    <h3 className="font-semibold text-gray-100 mb-2">
+                      {language === "English" && "Key Takeaway"}
+                      {language === "Español" && "Conclusión Clave"}
+                      {language === "Português" && "Conclusão Principal"}
+                      {language === "Français" && "Point Clé"}
+                    </h3>
+                    <p className="text-sm text-gray-300 leading-relaxed">{questionData.conclusion}</p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent backdrop-blur-xl border-t border-white/5 z-10">
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/95 to-transparent">
         <div className="max-w-3xl mx-auto">
           {!showFeedback ? (
             <Button
               onClick={handleSubmit}
               disabled={selectedAnswer === null}
-              className="w-full h-14 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-lg rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-400/20"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold h-14 rounded-xl text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t.submit}
             </Button>
           ) : (
             <Button
               onClick={handleNext}
-              className="w-full h-14 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-lg rounded-xl transition-all duration-300 shadow-lg shadow-yellow-400/20"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold h-14 rounded-xl text-base transition-all duration-300"
             >
               {t.next}
             </Button>
