@@ -47,9 +47,24 @@ export async function POST(request: NextRequest) {
     const { examLevel, category, language }: GenerateQuestionRequest = await request.json()
 
     const apiKey = process.env.ANTHROPIC_API_KEY
+
+    console.log("[v0] API Key exists:", !!apiKey)
+    console.log("[v0] API Key length:", apiKey?.length || 0)
+    console.log("[v0] API Key prefix:", apiKey?.substring(0, 7) || "none")
+
     if (!apiKey) {
       return NextResponse.json(
         { error: "ANTHROPIC_API_KEY environment variable is not set. Please add it to your project." },
+        { status: 500 },
+      )
+    }
+
+    if (!apiKey.startsWith("sk-ant-")) {
+      return NextResponse.json(
+        {
+          error:
+            "ANTHROPIC_API_KEY appears to be invalid. It should start with 'sk-ant-'. Please check your API key in the Vars section.",
+        },
         { status: 500 },
       )
     }
