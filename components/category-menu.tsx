@@ -77,7 +77,7 @@ export function CategoryMenu({ examType, onSelect, onBack, language }: CategoryM
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 bg-card/50 backdrop-blur-sm border-border/50">
+      <Card className="w-full max-w-md p-4 sm:p-8 bg-card/50 backdrop-blur-sm border-border/50">
         <Button
           onClick={onBack}
           variant="ghost"
@@ -113,18 +113,18 @@ export function CategoryMenu({ examType, onSelect, onBack, language }: CategoryM
             </button>
           </div>
 
-          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+          <div className="space-y-3 sm:space-y-3 max-h-[400px] overflow-y-auto pr-2">
             {categories.map((category) => {
               const Icon = category.icon
               return (
                 <Button
                   key={category.name}
                   onClick={() => onSelect(category.name, mode)}
-                  className="w-full h-16 justify-start gap-4 bg-secondary hover:bg-accent hover:text-accent-foreground transition-all"
+                  className="w-full min-h-[48px] h-auto py-3 px-3 sm:px-4 justify-start gap-3 sm:gap-4 bg-secondary hover:bg-accent hover:text-accent-foreground transition-all"
                   variant="secondary"
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-base font-medium text-left">{category.name}</span>
+                  <span className="text-sm sm:text-base leading-tight text-left break-words">{category.name}</span>
                 </Button>
               )
             })}
