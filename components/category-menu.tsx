@@ -58,14 +58,15 @@ const rbtCategories = [
 ]
 
 const bcbaCategories = [
-  { name: "B. Concepts & Principles", icon: Brain },
-  { name: "C. Measurement & Data Display", icon: LineChart },
+  { name: "A. Behaviorism and Philosophical Foundations", icon: Brain },
+  { name: "B. Concepts and Principles", icon: Brain },
+  { name: "C. Measurement, Data Display, and Interpretation", icon: LineChart },
   { name: "D. Experimental Design", icon: FlaskConical },
-  { name: "E. Ethics Code", icon: Scale },
+  { name: "E. Ethical and Professional Issues", icon: Scale },
   { name: "F. Behavior Assessment", icon: ClipboardList },
   { name: "G. Behavior-Change Procedures", icon: Cog },
-  { name: "H. Selecting Interventions", icon: Target },
-  { name: "I. Personnel Supervision", icon: Users },
+  { name: "H. Selecting and Implementing Interventions", icon: Target },
+  { name: "I. Personnel Supervision and Management", icon: Users },
 ]
 
 export function CategoryMenu({ examType, onSelect, onBack, language }: CategoryMenuProps) {
