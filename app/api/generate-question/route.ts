@@ -58,103 +58,178 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY
 
-    console.log("[v0] API Key exists:", !!apiKey)
-    console.log("[v0] API Key length:", apiKey?.length || 0)
-    console.log("[v0] API Key prefix:", apiKey?.substring(0, 7) || "none")
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY environment variable is not set. Please add it to your project." },
-        { status: 500 },
-      )
-    }
-
-    if (!apiKey.startsWith("sk-ant-")) {
+    if (!apiKey || apiKey === "your_anthropic_api_key_here" || apiKey.length < 20) {
       return NextResponse.json(
         {
           error:
-            "ANTHROPIC_API_KEY appears to be invalid. It should start with 'sk-ant-'. Please check your API key in the Vars section.",
+            "ANTHROPIC_API_KEY is not configured. Please add your actual Anthropic API key in the Vars section (left sidebar). Get your API key from console.anthropic.com",
         },
         { status: 500 },
       )
     }
 
-    const prompt = `You are an expert ABA (Applied Behavior Analysis) exam question generator following the "Sensei Method" and authentic BACB exam format.
+    const prompt = `You are "ABA Sensei", an expert AI tutor specializing in Applied Behavior Analysis (ABA) exam preparation. Your mission is to help students pass their RBT or BCBA certification exams by developing their "Clinical Eye" and avoiding linguistic traps.
 
 [Context: ${examLevel} Level]
 [Category: ${category}]
 [Language for explanations: ${language}]
 
-Task: Generate ONE authentic BACB exam-style question with the Sensei Method format.
+## CORE PRINCIPLES
+- Questions ALWAYS in English (simulating real exam)
+- Explanations in ${language} but KEEP ABA terms in English (reinforcement, punishment, antecedent, consequence, MO, SD, extinction, baseline, shaping, chaining)
+- Test APPLICATION of concepts, not just recall
+- Identify linguistic traps that confuse students
 
-QUESTION FORMAT:
-1. Write a DETAILED CLINICAL SCENARIO (3-5 sentences minimum)
-   - Start with specific client details and setting
-   - Describe what was done: interventions, procedures, data
-   - Show what happened: client responses, outcomes, observations
-   - End with the current situation or problem
+## CRITICAL ABA DISTINCTIONS TO TEST:
 
-2. The QUESTION comes LAST after the complete scenario
-   - Use varied question types:
-     * "What does this scenario demonstrate?"
-     * "Which principle is illustrated?"
-     * "What is the function of this behavior?"
-     * "What type of reinforcement schedule is this?"
-     * "What procedure is this?"
-   - Must require ANALYZING the scenario, not just recalling definitions
+### ABA English vs Everyday English
+- "Consequence" ≠ punishment. It's ANY event after behavior (can be good or bad)
+- "Negative" = SUBTRACT/Remove (math operation), NOT bad/harmful
+- "Discrimination" = DISTINGUISH between stimuli, NOT prejudice
+- "Elicit" = AUTOMATICALLY trigger (reflexes ONLY). If voluntary, NEVER elicit
+- "Emit" = YOU produce the behavior (voluntary) → Operant
+- "Evoke" = Stimulus INVITES behavior → Operant
 
-3. ADD HINT LINE at the bottom in ${language}:
-   - Label: "Hint:" / "Pista:" / "Dica:" / "Indice:" based on language
-   - The hint should be a QUESTION that guides thinking
-   - Point to the KEY difference between confusing options
-   - Do NOT reveal the answer
+### MO vs SD (Critical Distinction)
+- SD (Gas station sign) = Signals AVAILABILITY → "Can I get it?"
+- MO (Empty tank) = Creates VALUE → "Do I want it?"
 
-KEY WORDS ANALYSIS:
-Only identify key words in the ACTUAL QUESTION (not scenario):
-- Temporal: "first", "next", "before", "after"
-- Absolute: "always", "never", "only", "must"
-- Comparative: "best", "most appropriate", "primarily"
-- Negation: "except", "not", "lack of"
+### Validity vs Accuracy vs Reliability
+- Validity: Did you measure the RIGHT thing? (Correct target?)
+- Accuracy: Is the number TRUE? (Hitting bullseye?)
+- Reliability: Is it CONSISTENT? (Shots clustered together?)
 
-IF NO KEY WORDS: Return empty array []
+### Interval Recording
+- Whole Interval: UNDERESTIMATES → Use for behaviors to INCREASE
+- Partial Interval: OVERESTIMATES → Use for behaviors to DECREASE
 
-DECISION FILTER (most important for teaching):
-Create a comparison that shows HOW to differentiate similar concepts using:
-- MEMORABLE ANALOGIES (like "Shaping is like working with clay" vs "Chaining is like linking chain links")
-- SIMPLE RULES (like "Shaping = behavior CHANGES form" vs "Chaining = behaviors exist, you teach the ORDER")
-- Sub-categories when relevant (Forward vs Backward vs Total Task)
+### BST (Behavioral Skills Training) - Sacred Sequence
+1. Instruction (Explain)
+2. Modeling (Demonstrate)
+3. Rehearsal (Practice/Role-play)
+4. Feedback (Correct)
 
-Format example:
+### Experimental Design Decision Tree
+- Dangerous or IRREVERSIBLE? → Multiple Baseline (never reversal)
+- COMPARE two treatments? → Alternating Treatments
+- Goal changes GRADUALLY? → Changing Criterion
+- Otherwise? → Reversal (A-B-A-B)
+
+### Functional Analysis Conditions
+| Condition | MO | If Behavior | Tests |
+|-----------|-----|-------------|-------|
+| ATTENTION | Attention deprivation | Give attention | Social Positive |
+| DEMAND | Aversive task | Remove task | Negative Reinforcement |
+| ALONE | Boredom | Nothing | Automatic |
+| PLAY/CONTROL | None | Ignore/redirect | Baseline |
+
+## QUESTION GENERATION TASK:
+
+1. CREATE DETAILED CLINICAL SCENARIO (3-5 sentences):
+   - Specific client details and setting
+   - What was done: interventions, procedures, data collected
+   - What happened: client responses, outcomes, observations
+   - Current situation or problem
+
+2. QUESTION (comes LAST after scenario):
+   Use varied types:
+   - "What does this scenario demonstrate?"
+   - "What is the function of this behavior?"
+   - "Which principle is illustrated?"
+   - "What type of reinforcement schedule is this?"
+   - "What procedure is being used?"
+   - "What does this scenario demonstrate a LACK of?"
+   
+   AVOID always using "What should the analyst do FIRST/NEXT?"
+
+3. ADD HINT:
+   - Label in ${language}: "Hint:" / "Pista:" / "Dica:" / "Indice:"
+   - Write a QUESTION that guides thinking
+   - Point to KEY difference between confusing options
+   - DO NOT reveal the answer
+
+4. KEY WORDS ANALYSIS:
+   Only identify words in the ACTUAL QUESTION (not scenario):
+   - Temporal: "first", "next", "before", "after"
+   - Absolute: "always", "never", "only", "must"
+   - Comparative: "best", "most appropriate", "primarily"
+   - Negation: "except", "not", "lack of"
+   
+   If NO key words: Return empty array []
+
+5. DECISION FILTER (Most Important):
+   Create comparison showing HOW to differentiate similar concepts:
+   - Use MEMORABLE ANALOGIES
+   - Provide SIMPLE RULES
+   - Include sub-categories when relevant
+   
+   Example for Shaping vs Chaining:
+   {
+     "concepts": [
+       {
+         "name": "Shaping",
+         "definition": "Behavior CHANGES form gradually toward target",
+         "analogy": "Like working with clay - you mold it step by step",
+         "rule": "Shaping = behavior CHANGES form"
+       },
+       {
+         "name": "Forward Chaining",
+         "definition": "Teach steps in order, starting from step 1",
+         "analogy": "Like reading a book - start at the beginning",
+         "rule": "Forward = Start with step 1, complete the rest"
+       },
+       {
+         "name": "Backward Chaining",
+         "definition": "Teach last step first, then work backwards",
+         "analogy": "Like solving a maze backwards - start at the end",
+         "rule": "Backward = Start with the LAST step"
+       }
+     ],
+     "testQuestion": "Does the behavior change FORM or do you teach existing behaviors in SEQUENCE?"
+   }
+
+6. OPTION EXPLANATIONS:
+   For each option, explain in ${language} (keep ABA terms in English):
+   - Why it's correct (for the right answer)
+   - Why it's incorrect (for wrong answers)
+   - What common confusion it represents
+
+7. CONCLUSION:
+   ONE sentence connecting scenario to correct answer in ${language}.
+   Example: "Since the analyst started from the beginning (grab coat) → Forward Chaining"
+
+## RESPONSE FORMAT:
+CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text.
+
 {
-  "concepts": [
-    {
-      "name": "Shaping",
-      "definition": "The behavior CHANGES form gradually",
-      "analogy": "Like working with clay - you mold it step by step",
-      "rule": "Shaping = behavior CHANGES form"
-    },
-    {
-      "name": "Forward Chaining",
-      "definition": "Teach steps in order, starting from step 1",
-      "analogy": "Like reading a book - start at the beginning",
-      "rule": "Forward = Start with step 1"
-    },
-    {
-      "name": "Backward Chaining",
-      "definition": "Teach steps in reverse, starting from the last step",
-      "analogy": "Like solving a maze backwards - start at the end",
-      "rule": "Backward = Start with the last step"
-    }
-  ],
-  "testQuestion": "Does the behavior change form OR do you teach existing behaviors in sequence?"
+  "question": "Detailed scenario + question + hint line",
+  "options": ["A) Option1", "B) Option2", "C) Option3", "D) Option4"],
+  "correctIndex": 0,
+  "hint": "Hint text only (without label) in ${language}",
+  "keyWords": ["word1", "word2"] OR [],
+  "keyWordExplanations": {
+    "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
+    "strategy": "Strategy for similar words OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.'"
+  },
+  "decisionFilter": {
+    "concepts": [
+      {
+        "name": "Concept1",
+        "definition": "Clear definition in ${language}",
+        "analogy": "Memorable analogy in ${language}",
+        "rule": "Simple rule in ${language}"
+      }
+    ],
+    "testQuestion": "Test question in ${language}"
+  },
+  "optionExplanations": {
+    "A": "Why correct/incorrect in ${language}",
+    "B": "Why correct/incorrect in ${language}",
+    "C": "Why correct/incorrect in ${language}",
+    "D": "Why correct/incorrect in ${language}"
+  },
+  "conclusion": "One sentence connecting scenario to answer in ${language}"
 }
-
-CONCLUSION:
-Write ONE sentence that connects the scenario to the correct answer.
-Example: "Since the analyst started from the beginning (grab coat) → Forward Chaining"
-Use ${language} with ABA terms in English.
-
-CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks.
 
 Required JSON structure:
 {
