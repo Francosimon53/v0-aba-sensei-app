@@ -141,12 +141,15 @@ export async function POST(request: NextRequest) {
    - "What does this scenario demonstrate a LACK of?"
    
    AVOID always using "What should the analyst do FIRST/NEXT?"
+   
+   IMPORTANT: The "question" field should ONLY contain the scenario and question. DO NOT include the hint in this field.
 
-3. ADD HINT:
-   - Label in ${language}: "Hint:" / "Pista:" / "Dica:" / "Indice:"
+3. ADD HINT (SEPARATE FIELD):
    - Write a QUESTION that guides thinking
    - Point to KEY difference between confusing options
    - DO NOT reveal the answer
+   - Write in ${language}
+   - This goes in the separate "hint" field, NOT in the question text
 
 4. KEY WORDS ANALYSIS:
    Only identify words in the ACTUAL QUESTION (not scenario):
@@ -202,10 +205,10 @@ export async function POST(request: NextRequest) {
 CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text.
 
 {
-  "question": "Detailed scenario + question + hint line",
+  "question": "Detailed scenario followed by question. STOP HERE. Do not include hint.",
   "options": ["A) Option1", "B) Option2", "C) Option3", "D) Option4"],
   "correctIndex": 0,
-  "hint": "Hint text only (without label) in ${language}",
+  "hint": "Hint text in ${language} - separate from question",
   "keyWords": ["word1", "word2"] OR [],
   "keyWordExplanations": {
     "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
@@ -221,37 +224,6 @@ CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text
       }
     ],
     "testQuestion": "Test question in ${language}"
-  },
-  "optionExplanations": {
-    "A": "Why correct/incorrect in ${language}",
-    "B": "Why correct/incorrect in ${language}",
-    "C": "Why correct/incorrect in ${language}",
-    "D": "Why correct/incorrect in ${language}"
-  },
-  "conclusion": "One sentence connecting scenario to answer in ${language}"
-}
-
-Required JSON structure:
-{
-  "question": "Detailed scenario followed by question and hint line",
-  "options": ["A) Concept", "B) Concept", "C) Concept", "D) Concept"],
-  "correctIndex": 0,
-  "hint": "The hint text only (without label) in ${language}",
-  "keyWords": ["word1", "word2"] OR [],
-  "keyWordExplanations": {
-    "overall": "How to use key words OR 'No key trap words in this question. Focus on identifying the concept from the scenario description.'",
-    "strategy": "Strategy for similar words OR 'Analyze the sequence of events and outcomes to determine which concept is being demonstrated.'"
-  },
-  "decisionFilter": {
-    "concepts": [
-      {
-        "name": "Concept1",
-        "definition": "Clear definition in ${language}",
-        "analogy": "Memorable analogy in ${language}",
-        "rule": "Simple rule in ${language}"
-      }
-    ],
-    "testQuestion": "A test question in ${language}"
   },
   "optionExplanations": {
     "A": "Why correct/incorrect in ${language}",
