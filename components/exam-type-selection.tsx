@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ChevronLeft, BookOpen, Award } from "lucide-react"
-import type { ExamType, Language } from "@/app/page"
+import type { ExamType, Language } from "@/types"
 
 interface ExamTypeSelectionProps {
   onSelect: (type: ExamType) => void

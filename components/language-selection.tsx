@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { GraduationCap } from "lucide-react"
-import type { Language } from "@/app/page"
+import type { Language } from "@/types"
 
 interface LanguageSelectionProps {
   onSelect: (language: Language) => void

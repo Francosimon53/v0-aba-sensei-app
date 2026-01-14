@@ -3,8 +3,23 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, CheckCircle2, XCircle, AlertTriangle, Lightbulb, BookOpen } from "lucide-react"
 import { useState, useEffect, useMemo } from "react"
-import type { ExamType, Mode, Language, Task } from "@/app/page"
+import type { ExamType, Mode, Language, Task } from "@/types"
 import { createClient } from "@/lib/supabase/client"
+
+// These type definitions were already present in "@/app/page" and are being redeclared here.
+// It's best to remove these redeclarations to avoid linting errors and maintain a single source of truth.
+// export type Language = "English" | "Español" | "Português" | "Français"
+// export type ExamType = "RBT" | "BCBA"
+// export type Mode = "tutor" | "exam"
+
+// export interface Task {
+//   id: string
+//   task_id: string
+//   task_text: string
+//   domain: string
+//   exam_level: string
+//   keywords: string | null
+// }
 
 const translations: Record<Language, any> = {
   English: {
@@ -568,6 +583,8 @@ interface QuestionScreenProps {
   tasks: Task[]
   currentTaskIndex: number
   onTaskComplete: () => void
+  loadingTasks?: boolean
+  onQuestionAnswered?: (selectedOption: string, isCorrect: boolean, timeSpentSeconds: number) => void
 }
 
 export default function QuestionScreen({
@@ -579,6 +596,8 @@ export default function QuestionScreen({
   tasks,
   currentTaskIndex,
   onTaskComplete,
+  loadingTasks = false,
+  onQuestionAnswered,
 }: QuestionScreenProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
@@ -586,6 +605,7 @@ export default function QuestionScreen({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showHint, setShowHint] = useState(false)
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     trapDetector: true,
     decisionFilter: false,
@@ -719,6 +739,8 @@ export default function QuestionScreen({
     setSelectedAnswer(null)
     setShowFeedback(false)
     setShowHint(false)
+    // Reset timer when loading a new question
+    setQuestionStartTime(Date.now())
 
     try {
       const response = await fetch("/api/generate-question", {
@@ -757,6 +779,15 @@ export default function QuestionScreen({
   const handleSubmit = async () => {
     if (selectedAnswer === null || !questionData) return
 
+    // Calculate time spent and call onQuestionAnswered
+    const timeSpentSeconds = Math.floor((Date.now() - questionStartTime) / 1000)
+    const isCorrect = selectedAnswer === questionData.correctIndex
+    const selectedOptionText = questionData.options[selectedAnswer]
+
+    if (onQuestionAnswered) {
+      onQuestionAnswered(selectedOptionText, isCorrect, timeSpentSeconds)
+    }
+
     setShowFeedback(true)
     setExpandedSections({ trapDetector: true, decisionFilter: false, allOptions: false })
 
@@ -782,6 +813,8 @@ export default function QuestionScreen({
     setSelectedAnswer(null)
     setShowFeedback(false)
     setShowHint(false)
+    // Reset timer for the next question
+    setQuestionStartTime(Date.now())
   }
 
   const toggleSection = (section: string) => {
@@ -886,7 +919,8 @@ export default function QuestionScreen({
     )
   }
 
-  if (isLoading) {
+  // Use loadingTasks prop for initial loading state
+  if (isLoading || loadingTasks) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex items-center justify-center p-4">
         <div className="text-center">

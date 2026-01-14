@@ -16,7 +16,7 @@ import {
   Target,
 } from "lucide-react"
 import { useState } from "react"
-import type { ExamType, Mode, Language } from "@/app/page"
+import type { ExamType, Mode, Language } from "@/types"
 
 interface CategoryMenuProps {
   examType: ExamType
