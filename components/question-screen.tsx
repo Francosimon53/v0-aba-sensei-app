@@ -40,7 +40,7 @@ const translations = {
     trapWord: "Palabra trampa:",
     whyTrap: "Por qué es una trampa:",
     mightConfuse: "Confusión común:",
-    allOptions: "Análisis de todas las opções:",
+    allOptions: "Análise de todas las opções:",
     loading: "Generando su pregunta...",
     error: "Falha ao gerar questão. Por favor, tente novamente.",
     retry: "Tentar novamente",
@@ -61,7 +61,7 @@ const translations = {
     error: "Falha ao gerar questão. Por favor, tente novamente.",
     retry: "Tentar novamente",
     hint: "Dica rápida",
-    hintText: "Pense na sequência de etapas e o que vem após a modelagem...",
+    hintText: "Pense na sequência de etapas e ce que vem após a modelagem...",
   },
   Français: {
     submit: "Soumettre la réponse",
@@ -156,7 +156,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
       // Save progress to database
       try {
         await saveProgress({
-          category: category,
+          category_id: category, // Changed from "category" to "category_id"
           user_answer: selectedAnswer,
           correct_answer: questionData.correctIndex,
           is_correct: selectedAnswer === questionData.correctIndex,

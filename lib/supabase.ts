@@ -12,15 +12,24 @@ export const supabase = isSupabaseConfigured ? createClient(supabaseUrl, supabas
 
 export interface UserProgress {
   id?: string
-  category: string
+  user_id?: string
+  category_id: string // Changed from "category" to "category_id"
+  questions_attempted?: number
+  questions_correct?: number
+  current_streak?: number
+  best_streak?: number
+  mastery_level?: string
+  total_study_time_seconds?: number
+  last_practiced_at?: string
+}
+
+export async function saveProgress(progress: {
+  category_id: string // Changed from "category" to "category_id"
   user_answer: number
   correct_answer: number
   is_correct: boolean
   exam_type: string
-  created_at?: string
-}
-
-export async function saveProgress(progress: Omit<UserProgress, "id" | "created_at">) {
+}) {
   if (!supabase) {
     console.warn("[v0] Supabase is not configured. Progress will not be saved.")
     return null
@@ -31,12 +40,8 @@ export async function saveProgress(progress: Omit<UserProgress, "id" | "created_
       .from("user_progress")
       .insert([
         {
-          category: progress.category,
-          user_answer: progress.user_answer,
-          correct_answer: progress.correct_answer,
-          is_correct: progress.is_correct,
-          exam_type: progress.exam_type,
-          created_at: new Date().toISOString(),
+          category_id: progress.category_id, // Changed from "category"
+          last_practiced_at: new Date().toISOString(),
         },
       ])
       .select()
