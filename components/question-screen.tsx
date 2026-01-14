@@ -1,103 +1,522 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, CheckCircle2, XCircle, AlertTriangle, Lightbulb } from "lucide-react"
-import { useState, useEffect } from "react"
+import { ChevronLeft, CheckCircle2, XCircle, AlertTriangle, Lightbulb, BookOpen } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
 import type { ExamType, Mode, Language, Task } from "@/app/page"
 import { createClient } from "@/lib/supabase/client"
 
-interface QuestionScreenProps {
-  examType: ExamType
-  category: string
-  mode: Mode
-  onBack: () => void
-  language: Language
-  tasks: Task[]
-  currentTaskIndex: number
-  onNextTask: () => void
-  loadingTasks: boolean
-}
-
-const translations = {
+const translations: Record<Language, any> = {
   English: {
-    submit: "Submit Answer",
-    next: "Next Question",
-    correct: "Correct!",
-    incorrect: "Incorrect",
-    keyWordsTitle: "KEY WORDS IDENTIFIED",
-    keyWords: "Key words:",
-    howToUse: "How to use these clues:",
-    strategy: "Test-taking strategy:",
-    allOptions: "Analysis of all options:",
-    loading: "Generating your question...",
     loadingTasks: "Loading tasks...",
-    error: "Failed to generate question. Please try again.",
-    retry: "Try Again",
-    hint: "Quick Hint",
-    hintText: "Think about the sequence of steps and what comes after modeling...",
-    subTopic: "Task",
-    progress: "Progress",
-    noTasks: "No tasks found for this category.",
+    noTasks: "No tasks available for this category. Please choose another one.",
+    loading: "Loading Question...",
+    error: "An error occurred while loading the question.",
+    retry: "Retry",
+    submit: "Submit",
+    next: "Next",
+    allOptions: "All Options",
+    subTopic: "Subtopic",
   },
   Español: {
-    submit: "Enviar respuesta",
-    next: "Siguiente pregunta",
-    correct: "¡Correcto!",
-    incorrect: "Incorrecto",
-    keyWordsTitle: "PALABRAS CLAVE IDENTIFICADAS",
-    keyWords: "Palabras clave:",
-    howToUse: "Cómo usar estas pistas:",
-    strategy: "Estrategia para el examen:",
-    allOptions: "Análisis de todas las opciones:",
-    loading: "Generando su pregunta...",
     loadingTasks: "Cargando tareas...",
-    error: "Error al generar la pregunta. Por favor, intente de nuevo.",
-    retry: "Intentar de nuevo",
-    hint: "Pista rápida",
-    hintText: "Piense en la secuencia de etapas y lo que viene después del modelado...",
-    subTopic: "Tarea",
-    progress: "Progreso",
-    noTasks: "No se encontraron tareas para esta categoría.",
+    noTasks: "No hay tareas disponibles para esta categoría. Por favor, elige otra.",
+    loading: "Cargando Pregunta...",
+    error: "Ocurrió un error al cargar la pregunta.",
+    retry: "Reintentar",
+    submit: "Enviar",
+    next: "Siguiente",
+    allOptions: "Todas las Opciones",
+    subTopic: "Subtema",
   },
   Português: {
-    submit: "Enviar resposta",
-    next: "Próxima questão",
-    correct: "Correto!",
-    incorrect: "Incorreto",
-    keyWordsTitle: "PALAVRAS-CHAVE IDENTIFICADAS",
-    keyWords: "Palavras-chave:",
-    howToUse: "Como usar essas pistas:",
-    strategy: "Estratégia para o exame:",
-    allOptions: "Análise de todas as opções:",
-    loading: "Gerando sua questão...",
     loadingTasks: "Carregando tarefas...",
-    error: "Falha ao gerar questão. Por favor, tente novamente.",
-    retry: "Tentar novamente",
-    hint: "Dica rápida",
-    hintText: "Pense na sequência de etapas e o que vem após a modelagem...",
-    subTopic: "Tarefa",
-    progress: "Progresso",
-    noTasks: "Nenhuma tarefa encontrada para esta categoria.",
+    noTasks: "Nenhuma tarefa disponível para esta categoria. Por favor, escolha outra.",
+    loading: "Carregando Pergunta...",
+    error: "Ocorreu um erro ao carregar a pergunta.",
+    retry: "Tentar Novamente",
+    submit: "Enviar",
+    next: "Próximo",
+    allOptions: "Todas as Opções",
+    subTopic: "Subtópico",
   },
   Français: {
-    submit: "Soumettre la réponse",
-    next: "Question suivante",
-    correct: "Correct!",
-    incorrect: "Incorrect",
-    keyWordsTitle: "MOTS-CLÉS IDENTIFIÉS",
-    keyWords: "Mots-clés:",
-    howToUse: "Comment utiliser ces indices:",
-    strategy: "Stratégie pour l'examen:",
-    allOptions: "Analyse de toutes les options:",
-    loading: "Génération de votre question...",
     loadingTasks: "Chargement des tâches...",
-    error: "Échec de la génération de la question. Veuillez réessayer.",
+    noTasks: "Aucune tâche disponible pour cette catégorie. Veuillez en choisir une autre.",
+    loading: "Chargement de la question...",
+    error: "Une erreur est survenue lors du chargement de la question.",
     retry: "Réessayer",
-    hint: "Indice rapide",
-    hintText: "Pensez à la séquence d'étapes et ce qui vient après la modélisation...",
-    subTopic: "Tâche",
-    progress: "Progrès",
-    noTasks: "Aucune tâche trouvée pour cette catégorie.",
+    submit: "Soumettre",
+    next: "Suivant",
+    allOptions: "Toutes les Options",
+    subTopic: "Sous-thème",
+  },
+}
+
+const CONTRAST_PIVOTS = {
+  words: [
+    "HOWEVER",
+    "ALTHOUGH",
+    "BUT",
+    "DESPITE",
+    "NEVERTHELESS",
+    "YET",
+    "WHILE",
+    "WHEREAS",
+    "EVEN THOUGH",
+    "IN CONTRAST",
+  ],
+  translations: {
+    English: {
+      label: "Contrast Pivot",
+      meaning: "Forget the first half! The important information comes AFTER this word.",
+      strategy: "Focus on what comes AFTER the contrast word - that's what matters.",
+    },
+    Español: {
+      label: "Pivote de Contraste",
+      meaning: "¡Olvida la primera mitad! La información importante viene DESPUÉS de esta palabra.",
+      strategy: "Enfócate en lo que viene DESPUÉS de la palabra de contraste - eso es lo que importa.",
+    },
+    Português: {
+      label: "Pivô de Contraste",
+      meaning: "Esqueça a primeira metade! A informação importante vem DEPOIS desta palavra.",
+      strategy: "Foque no que vem DEPOIS da palavra de contraste - isso é o que importa.",
+    },
+    Français: {
+      label: "Pivot de Contraste",
+      meaning: "Oubliez la première moitié! L'information importante vient APRÈS ce mot.",
+      strategy: "Concentrez-vous sur ce qui vient APRÈS le mot de contraste - c'est ce qui compte.",
+    },
+  },
+}
+
+const TIME_PIVOTS = {
+  words: [
+    "INITIALLY",
+    "SUBSEQUENTLY",
+    "PRIOR TO",
+    "BEFORE",
+    "AFTER",
+    "FOLLOWING",
+    "DURING",
+    "EVENTUALLY",
+    "PREVIOUSLY",
+    "LATER",
+  ],
+  translations: {
+    English: {
+      label: "Time Pivot",
+      meaning: "This word indicates WHEN something happens. Crucial for Antecedent vs Consequence.",
+      strategy: "'Prior to/Before' = Antecedent context. 'After/Subsequently' = Consequence or result.",
+    },
+    Español: {
+      label: "Pivote Temporal",
+      meaning: "Esta palabra indica CUÁNDO sucede algo. Crucial para Antecedent vs Consequence.",
+      strategy: "'Prior to/Before' = contexto de Antecedent. 'After/Subsequently' = Consequence o resultado.",
+    },
+    Português: {
+      label: "Pivô Temporal",
+      meaning: "Esta palavra indica QUANDO algo acontece. Crucial para Antecedent vs Consequence.",
+      strategy: "'Prior to/Before' = contexto de Antecedent. 'After/Subsequently' = Consequence ou resultado.",
+    },
+    Français: {
+      label: "Pivot Temporel",
+      meaning: "Ce mot indique QUAND quelque chose se passe. Crucial pour Antecedent vs Consequence.",
+      strategy: "'Prior to/Before' = contexte d'Antecedent. 'After/Subsequently' = Consequence ou résultat.",
+    },
+  },
+}
+
+const NON_TECHNICAL_TRAP_WORDS: Record<string, { [key in Language]: { meaning: string; context: string } }> = {
+  feasible: {
+    English: { meaning: "Possible/Practical", context: "Intervention selection questions" },
+    Español: { meaning: "Posible/Práctico", context: "Preguntas de selección de intervención" },
+    Português: { meaning: "Possível/Prático", context: "Questões de seleção de intervenção" },
+    Français: { meaning: "Possible/Pratique", context: "Questions de sélection d'intervention" },
+  },
+  ambiguous: {
+    English: { meaning: "Unclear/Vague", context: "Operational definition questions" },
+    Español: { meaning: "Poco claro/Vago", context: "Preguntas de definición operacional" },
+    Português: { meaning: "Incerto/Vago", context: "Questões de definição operacional" },
+    Français: { meaning: "Flou/Vague", context: "Questions de définition opérationnelle" },
+  },
+  omit: {
+    English: { meaning: "Leave out/Skip", context: "Changes instruction meaning" },
+    Español: { meaning: "Omitir/Saltar", context: "Cambia el significado de la instrucción" },
+    Português: { meaning: "Omitir/Pular", context: "Muda o significado da instrução" },
+    Français: { meaning: "Omettre/Sauter", context: "Change le sens de l'instruction" },
+  },
+  discrepancy: {
+    English: { meaning: "Difference/Mismatch", context: "IOA and data questions" },
+    Español: { meaning: "Diferencia/Discrepancia", context: "Preguntas de IOA y datos" },
+    Português: { meaning: "Diferença/Discrepância", context: "Questões de IOA e dados" },
+    Français: { meaning: "Différence/Écart", context: "Questions IOA et données" },
+  },
+  predominantly: {
+    English: { meaning: "Mostly/Mainly", context: "Function identification" },
+    Español: { meaning: "Principalmente/Mayormente", context: "Identificación de función" },
+    Português: { meaning: "Predominantemente/Principalmente", context: "Identificação de função" },
+    Français: { meaning: "Principalement/Surtout", context: "Identification de fonction" },
+  },
+  intermittently: {
+    English: { meaning: "Sometimes/On and off", context: "Schedule questions" },
+    Español: { meaning: "A veces/Intermitentemente", context: "Preguntas de esquemas" },
+    Português: { meaning: "Às vezes/Intermitentemente", context: "Questões de esquemas" },
+    Français: { meaning: "Parfois/Par intermittence", context: "Questions de calendrier" },
+  },
+  cease: {
+    English: { meaning: "Stop", context: "Extinction questions" },
+    Español: { meaning: "Cesar/Parar", context: "Preguntas de extinction" },
+    Português: { meaning: "Cessar/Parar", context: "Questões de extinction" },
+    Français: { meaning: "Cesser/Arrêter", context: "Questions d'extinction" },
+  },
+  subsequent: {
+    English: { meaning: "After/Following", context: "Consequence identification" },
+    Español: { meaning: "Posterior/Siguiente", context: "Identificación de consequence" },
+    Português: { meaning: "Subsequente/Seguinte", context: "Identificação de consequence" },
+    Français: { meaning: "Subséquent/Suivant", context: "Identification de conséquence" },
+  },
+  prerequisite: {
+    English: { meaning: "Required before", context: "Skill assessment" },
+    Español: { meaning: "Requisito previo", context: "Evaluación de habilidades" },
+    Português: { meaning: "Pré-requisito", context: "Avaliação de habilidades" },
+    Français: { meaning: "Prérequis", context: "Évaluation des compétences" },
+  },
+  salient: {
+    English: { meaning: "Important/Noticeable", context: "Stimulus discrimination" },
+    Español: { meaning: "Importante/Notable", context: "Discriminación de estímulos" },
+    Português: { meaning: "Importante/Notável", context: "Discriminação de estímulos" },
+    Français: { meaning: "Important/Notable", context: "Discrimination de stimulus" },
+  },
+  concurrent: {
+    English: { meaning: "At the same time", context: "Schedule questions" },
+    Español: { meaning: "Al mismo tiempo", context: "Preguntas de esquemas" },
+    Português: { meaning: "Ao mesmo tempo", context: "Questões de esquemas" },
+    Français: { meaning: "En même temps", context: "Questions de calendrier" },
+  },
+  arbitrary: {
+    English: { meaning: "Random/No reason", context: "Stimulus control" },
+    Español: { meaning: "Arbitrario/Sin razón", context: "Control de estímulos" },
+    Português: { meaning: "Arbitrário/Sem razão", context: "Controle de estímulos" },
+    Français: { meaning: "Arbitraire/Sans raison", context: "Contrôle de stimulus" },
+  },
+}
+
+const PIVOT_WORDS = {
+  sequence: {
+    words: ["FIRST", "NEXT", "BEFORE", "AFTER", "INITIALLY", "THEN"],
+    category: "Sequence/Priority",
+    meaning: {
+      English: "This question asks about ORDER or PRIORITY. What to do IMMEDIATELY, not eventually.",
+      Español: "Esta pregunta pregunta sobre ORDEN o PRIORIDAD. Qué hacer INMEDIATAMENTE, no eventualmente.",
+      Português: "Esta questão pergunta sobre ORDEM ou PRIORIDADE. O que fazer IMEDIATAMENTE, não eventualmente.",
+      Français: "Cette question porte sur l'ORDRE ou la PRIORITÉ. Que faire IMMÉDIATEMENT, pas éventuellement.",
+    },
+    strategy: {
+      English: "Think about the logical sequence. What must happen BEFORE anything else?",
+      Español: "Piensa en la secuencia lógica. ¿Qué debe suceder ANTES que cualquier otra cosa?",
+      Português: "Pense na sequência lógica. O que deve acontecer ANTES de qualquer outra coisa?",
+      Français: "Pensez à la séquence logique. Que doit-il se passer AVANT toute autre chose?",
+    },
+  },
+  comparison: {
+    words: ["MOST", "BEST", "PRIMARY", "PRIMARILY", "APPROPRIATE", "LIKELY"],
+    category: "Comparison",
+    meaning: {
+      English: "Multiple options may be CORRECT, but one is BETTER than others.",
+      Español: "Múltiples opciones pueden ser CORRECTAS, pero una es MEJOR que las otras.",
+      Português: "Múltiplas opções podem ser CORRETAS, mas uma é MELHOR que as outras.",
+      Français: "Plusieurs options peuvent être CORRECTES, mais une est MEILLEURE que les autres.",
+    },
+    strategy: {
+      English: "Compare ALL options. Don't stop at the first 'good' answer - find the SUPERIOR one.",
+      Español: "Compara TODAS las opciones. No te detengas en la primera respuesta 'buena' - encuentra la SUPERIOR.",
+      Português: "Compare TODAS as opções. Não pare na primeira resposta 'boa' - encontre a SUPERIOR.",
+      Français:
+        "Comparez TOUTES les options. Ne vous arrêtez pas à la première 'bonne' réponse - trouvez la SUPÉRIEURE.",
+    },
+  },
+  absolute: {
+    words: ["ALWAYS", "NEVER", "ONLY", "ALL", "NONE", "SOLELY", "REGARDLESS", "EVERY"],
+    category: "Absolute",
+    meaning: {
+      English: "Absolute statements are usually WRONG in ABA. Behavior depends on context.",
+      Español: "Las declaraciones absolutas suelen ser INCORRECTAS en ABA. La conducta depende del contexto.",
+      Português: "Declarações absolutas geralmente são ERRADAS em ABA. O comportamento depende do contexto.",
+      Français: "Les déclarations absolues sont généralement FAUSSES en ABA. Le comportement dépend du contexte.",
+    },
+    strategy: {
+      English: "Be skeptical of answer options containing ALWAYS, NEVER, ONLY. They're usually incorrect.",
+      Español: "Desconfía de las opciones que contienen SIEMPRE, NUNCA, SOLO. Suelen ser incorrectas.",
+      Português: "Desconfie das opções que contêm SEMPRE, NUNCA, APENAS. Geralmente estão incorretas.",
+      Français: "Méfiez-vous des options contenant TOUJOURS, JAMAIS, SEULEMENT. Elles sont généralement incorrectes.",
+    },
+  },
+  negation: {
+    words: ["EXCEPT", "NOT", "LEAST", "EXCLUDING", "WITHOUT"],
+    category: "Negation",
+    meaning: {
+      English: "REVERSE your thinking! You're looking for the WRONG answer or the EXCEPTION.",
+      Español: "¡INVIERTE tu pensamiento! Buscas la respuesta INCORRECTA o la EXCEPCIÓN.",
+      Português: "INVERTA seu pensamento! Você está procurando a resposta ERRADA ou a EXCEÇÃO.",
+      Français: "INVERSEZ votre réflexion! Vous cherchez la MAUVAISE réponse ou l'EXCEPTION.",
+    },
+    strategy: {
+      English: "Find the 3 correct answers and eliminate them. The remaining option is your answer.",
+      Español: "Encuentra las 3 respuestas correctas y elimínalas. La opción restante es tu respuesta.",
+      Português: "Encontre as 3 respostas corretas e elimine-as. A opção restante é sua resposta.",
+      Français: "Trouvez les 3 bonnes réponses et éliminez-les. L'option restante est votre réponse.",
+    },
+  },
+}
+
+const ABA_TRAP_WORDS: Record<
+  string,
+  {
+    common: { [key in Language]: string }
+    aba: { [key in Language]: string }
+    confusion: { [key in Language]: string }
+  }
+> = {
+  negative: {
+    common: {
+      English: "Bad, harmful, unpleasant",
+      Español: "Malo, dañino, desagradable",
+      Português: "Ruim, prejudicial, desagradável",
+      Français: "Mauvais, nuisible, désagréable",
+    },
+    aba: {
+      English: "SUBTRACT/Remove something (like a minus sign in math)",
+      Español: "RESTAR/Eliminar algo (como un signo menos en matemáticas)",
+      Português: "SUBTRAIR/Remover algo (como um sinal de menos na matemática)",
+      Français: "SOUSTRAIRE/Retirer quelque chose (comme un signe moins en maths)",
+    },
+    confusion: {
+      English:
+        "Students think 'negative reinforcement' means punishment. It actually means REMOVING something to INCREASE behavior.",
+      Español:
+        "Los estudiantes piensan que 'negative reinforcement' significa castigo. En realidad significa REMOVER algo para AUMENTAR la conducta.",
+      Português:
+        "Estudantes pensam que 'negative reinforcement' significa punição. Na verdade significa REMOVER algo para AUMENTAR o comportamento.",
+      Français:
+        "Les étudiants pensent que 'negative reinforcement' signifie punition. Cela signifie en fait RETIRER quelque chose pour AUGMENTER le comportement.",
+    },
+  },
+  positive: {
+    common: {
+      English: "Good, pleasant, desirable",
+      Español: "Bueno, agradable, deseable",
+      Português: "Bom, agradável, desejável",
+      Français: "Bon, agréable, souhaitable",
+    },
+    aba: {
+      English: "ADD/Present something (like a plus sign in math)",
+      Español: "AGREGAR/Presentar algo (como un signo más en matemáticas)",
+      Português: "ADICIONAR/Apresentar algo (como um sinal de mais na matemática)",
+      Français: "AJOUTER/Présenter quelque chose (comme un signe plus en maths)",
+    },
+    confusion: {
+      English:
+        "Students think 'positive punishment' means good punishment. It actually means ADDING something that DECREASES behavior.",
+      Español:
+        "Los estudiantes piensan que 'positive punishment' significa castigo bueno. En realidad significa AGREGAR algo que DISMINUYE la conducta.",
+      Português:
+        "Estudantes pensam que 'positive punishment' significa punição boa. Na verdade significa ADICIONAR algo que DIMINUI o comportamento.",
+      Français:
+        "Les étudiants pensent que 'positive punishment' signifie bonne punition. Cela signifie en fait AJOUTER quelque chose qui DIMINUE le comportement.",
+    },
+  },
+  consequence: {
+    common: {
+      English: "Punishment, negative outcome, bad result",
+      Español: "Castigo, resultado negativo, mal resultado",
+      Português: "Punição, resultado negativo, mau resultado",
+      Français: "Punition, résultat négatif, mauvais résultat",
+    },
+    aba: {
+      English: "ANY event that follows a behavior (can be good OR bad)",
+      Español: "CUALQUIER evento que sigue a una conducta (puede ser bueno O malo)",
+      Português: "QUALQUER evento que segue um comportamento (pode ser bom OU ruim)",
+      Français: "TOUT événement qui suit un comportement (peut être bon OU mauvais)",
+    },
+    confusion: {
+      English:
+        "Students think consequences are always bad. In ABA, consequence simply means what happens AFTER a behavior.",
+      Español:
+        "Los estudiantes piensan que las consecuencias siempre son malas. En ABA, consequence simplemente significa lo que sucede DESPUÉS de una conducta.",
+      Português:
+        "Estudantes pensam que consequências são sempre ruins. Em ABA, consequence simplesmente significa o que acontece DEPOIS de um comportamento.",
+      Français:
+        "Les étudiants pensent que les conséquences sont toujours mauvaises. En ABA, consequence signifie simplement ce qui se passe APRÈS un comportement.",
+    },
+  },
+  discrimination: {
+    common: {
+      English: "Prejudice, unfair treatment, bias",
+      Español: "Prejuicio, trato injusto, sesgo",
+      Português: "Preconceito, tratamento injusto, viés",
+      Français: "Préjugé, traitement injuste, biais",
+    },
+    aba: {
+      English: "Ability to DISTINGUISH between different stimuli and respond differently",
+      Español: "Capacidad de DISTINGUIR entre diferentes estímulos y responder de manera diferente",
+      Português: "Capacidade de DISTINGUIR entre diferentes estímulos e responder de forma diferente",
+      Français: "Capacité à DISTINGUER différents stimuli et à répondre différemment",
+    },
+    confusion: {
+      English:
+        "Students avoid this word due to negative connotations. In ABA, discrimination is a GOOD skill - knowing when to respond!",
+      Español:
+        "Los estudiantes evitan esta palabra por sus connotaciones negativas. ¡En ABA, discrimination es una BUENA habilidad - saber cuándo responder!",
+      Português:
+        "Estudantes evitam esta palavra por suas conotações negativas. Em ABA, discrimination é uma ÓTIMA habilidade - saber quando responder!",
+      Français:
+        "Les étudiants évitent ce mot en raison de connotations négatives. En ABA, discrimination est une BONNE compétence - savoir quand répondre!",
+    },
+  },
+  extinction: {
+    common: {
+      English: "Disappear forever, die out, eliminate completely",
+      Español: "Desaparecer para siempre, extinguirse, eliminar completamente",
+      Português: "Desaparecer para sempre, extinguir-se, eliminar completamente",
+      Français: "Disparaître à jamais, mourir, éliminer complètement",
+    },
+    aba: {
+      English: "STOP providing reinforcement for a previously reinforced behavior",
+      Español: "DEJAR de proporcionar refuerzo para una conducta previamente reforzada",
+      Português: "PARAR de fornecer reforço para um comportamento previamente reforçado",
+      Français: "ARRÊTER de fournir du renforcement pour un comportement précédemment renforcé",
+    },
+    confusion: {
+      English:
+        "Students think extinction eliminates behavior instantly. It actually often causes an extinction BURST first (temporary increase).",
+      Español:
+        "Los estudiantes piensan que extinction elimina la conducta instantáneamente. En realidad, a menudo causa primero un extinction BURST (aumento temporal).",
+      Português:
+        "Estudantes pensam que extinction elimina o comportamento instantaneamente. Na verdade, frequentemente causa primeiro um extinction BURST (aumento temporário).",
+      Français:
+        "Les étudiants pensent que extinction élimine le comportement instantanément. En fait, cela provoque souvent d'abord un extinction BURST (augmentation temporaire).",
+    },
+  },
+  contingent: {
+    common: {
+      English: "Emergency plan, backup option, conditional",
+      Español: "Plan de emergencia, opción de respaldo, condicional",
+      Português: "Plano de emergência, opção de backup, condicional",
+      Français: "Plan d'urgence, option de secours, conditionnel",
+    },
+    aba: {
+      English: "DEPENDENT on behavior (if-then relationship)",
+      Español: "DEPENDIENTE de la conducta (relación si-entonces)",
+      Português: "DEPENDENTE do comportamento (relação se-então)",
+      Français: "DÉPENDANT du comportement (relation si-alors)",
+    },
+    confusion: {
+      English:
+        "Students confuse 'contingent' with 'contingency plan'. In ABA, contingent means the consequence DEPENDS on the behavior occurring.",
+      Español:
+        "Los estudiantes confunden 'contingent' con 'plan de contingencia'. En ABA, contingent significa que la consecuencia DEPENDE de que ocurra la conducta.",
+      Português:
+        "Estudantes confundem 'contingent' com 'plano de contingência'. Em ABA, contingent significa que a consequência DEPENDE da ocorrência do comportamento.",
+      Français:
+        "Les étudiants confondent 'contingent' avec 'plan de contingence'. En ABA, contingent signifie que la conséquence DÉPEND de l'occurrence du comportement.",
+    },
+  },
+  punishment: {
+    common: {
+      English: "Pain, suffering, harsh discipline",
+      Español: "Dolor, sufrimiento, disciplina severa",
+      Português: "Dor, sofrimento, disciplina severa",
+      Français: "Douleur, souffrance, discipline sévère",
+    },
+    aba: {
+      English: "ANY consequence that DECREASES the future probability of a behavior",
+      Español: "CUALQUIER consecuencia que DISMINUYE la probabilidad futura de una conducta",
+      Português: "QUALQUER consequência que DIMINUI a probabilidade futura de um comportamento",
+      Français: "TOUTE conséquence qui DIMINUE la probabilité future d'un comportement",
+    },
+    confusion: {
+      English:
+        "Students think punishment must be painful. In ABA, even a gentle 'no' is punishment if it DECREASES behavior.",
+      Español:
+        "Los estudiantes piensan que punishment debe ser doloroso. En ABA, incluso un suave 'no' es punishment si DISMINUYE la conducta.",
+      Português:
+        "Estudantes pensam que punishment deve ser doloroso. Em ABA, até um gentil 'não' é punishment se DIMINUIR o comportamento.",
+      Français:
+        "Les étudiants pensent que punishment doit être douloureux. En ABA, même un doux 'non' est punishment s'il DIMINUE le comportement.",
+    },
+  },
+  reinforcement: {
+    common: {
+      English: "Support, strengthen, help",
+      Español: "Apoyar, fortalecer, ayudar",
+      Português: "Apoiar, fortalecer, ajudar",
+      Français: "Soutenir, renforcer, aider",
+    },
+    aba: {
+      English: "ANY consequence that INCREASES the future probability of a behavior",
+      Español: "CUALQUIER consecuencia que AUMENTA la probabilidad futura de una conducta",
+      Português: "QUALQUER consequência que AUMENTA a probabilidade futura de um comportamento",
+      Français: "TOUTE conséquence qui AUGMENTE la probabilité future d'un comportement",
+    },
+    confusion: {
+      English:
+        "Students think reinforcement means reward or praise. In ABA, it's defined by its EFFECT on behavior, not what it looks like.",
+      Español:
+        "Los estudiantes piensan que reinforcement significa recompensa o elogio. En ABA, se define por su EFECTO en la conducta, no por cómo se ve.",
+      Português:
+        "Estudantes pensam que reinforcement significa recompensa ou elogio. Em ABA, é definido pelo seu EFEITO no comportamento, não pela aparência.",
+      Français:
+        "Les étudiants pensent que reinforcement signifie récompense ou éloge. En ABA, c'est défini par son EFFET sur le comportement, pas par son apparence.",
+    },
+  },
+  elicit: {
+    common: {
+      English: "Get, obtain, bring out",
+      Español: "Obtener, conseguir, provocar",
+      Português: "Obter, conseguir, provocar",
+      Français: "Obtenir, provoquer, susciter",
+    },
+    aba: {
+      English: "AUTOMATICALLY trigger a reflex (ONLY for respondent/involuntary behaviors)",
+      Español: "Desencadenar AUTOMÁTICAMENTE un reflejo (SOLO para conductas respondientes/involuntarias)",
+      Português: "Desencadear AUTOMATICAMENTE um reflexo (APENAS para comportamentos respondentes/involuntários)",
+      Français: "Déclencher AUTOMATIQUEMENT un réflexe (UNIQUEMENT pour les comportements répondants/involontaires)",
+    },
+    confusion: {
+      English:
+        "Students use 'elicit' for any behavior. In ABA, ONLY reflexes are elicited. Voluntary behaviors are EMITTED or EVOKED.",
+      Español:
+        "Los estudiantes usan 'elicit' para cualquier conducta. En ABA, SOLO los reflejos son elicited. Las conductas voluntarias son EMITTED o EVOKED.",
+      Português:
+        "Estudantes usam 'elicit' para qualquer comportamento. Em ABA, APENAS reflexos são elicited. Comportamentos voluntários são EMITTED ou EVOKED.",
+      Français:
+        "Les étudiants utilisent 'elicit' pour tout comportement. En ABA, SEULS les réflexes sont elicited. Les comportements volontaires sont EMITTED ou EVOKED.",
+    },
+  },
+  variable: {
+    common: {
+      English: "Changeable, flexible, adjustable",
+      Español: "Cambiable, flexible, ajustable",
+      Português: "Variável, flexível, ajustável",
+      Français: "Modifiable, flexible, ajustable",
+    },
+    aba: {
+      English: "UNPREDICTABLE schedule (reinforcement after varying number of responses or time)",
+      Español: "Horario IMPREDECIBLE (refuerzo después de un número variable de respuestas o tiempo)",
+      Português: "Esquema IMPREVISÍVEL (reforço após número variável de respostas ou tempo)",
+      Français: "Horaire IMPRÉVISIBLE (renforcement après un nombre variable de réponses ou de temps)",
+    },
+    confusion: {
+      English:
+        "Students think variable means 'can change'. In ABA, variable schedules mean the exact requirement is UNPREDICTABLE.",
+      Español:
+        "Los estudiantes piensan que variable significa 'puede cambiar'. En ABA, los horarios variable significan que el requisito exacto es IMPREDECIBLE.",
+      Português:
+        "Estudantes pensam que variable significa 'pode mudar'. Em ABA, esquemas variable significam que o requisito exato é IMPREVISÍVEL.",
+      Français:
+        "Les étudiants pensent que variable signifie 'peut changer'. En ABA, les horaires variable signifient que l'exigence exacte est IMPRÉVISIBLE.",
+    },
   },
 }
 
@@ -140,7 +559,18 @@ interface QuestionData {
   conclusion: string
 }
 
-export function QuestionScreen({
+interface QuestionScreenProps {
+  examType: ExamType
+  category: string
+  mode: Mode
+  onBack: () => void
+  language: Language
+  tasks: Task[]
+  currentTaskIndex: number
+  onTaskComplete: () => void
+}
+
+export default function QuestionScreen({
   examType,
   category,
   mode,
@@ -148,51 +578,159 @@ export function QuestionScreen({
   language,
   tasks,
   currentTaskIndex,
-  onNextTask,
-  loadingTasks,
+  onTaskComplete,
 }: QuestionScreenProps) {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [questionData, setQuestionData] = useState<QuestionData | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
+  const [questionData, setQuestionData] = useState<QuestionData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showHint, setShowHint] = useState(false)
-  const [showAllOptions, setShowAllOptions] = useState(false)
-  const [showDecisionFilter, setShowDecisionFilter] = useState(false)
-  const t = translations[language]
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    trapDetector: true,
+    decisionFilter: false,
+    allOptions: false,
+  })
 
+  const t = translations[language]
   const currentTask = tasks[currentTaskIndex]
 
-  useEffect(() => {
-    if (currentTask && !loadingTasks) {
-      loadQuestion()
+  const trapAnalysis = useMemo(() => {
+    if (!questionData) {
+      return {
+        detectedPivotWords: [],
+        detectedAbaTraps: [],
+        detectedContrastPivots: [],
+        detectedTimePivots: [],
+        detectedNonTechnicalTraps: [],
+        questionSkeleton: null,
+      }
     }
-  }, [currentTaskIndex, currentTask, loadingTasks])
+
+    const questionText = questionData.question
+    const optionsText = questionData.options.join(" ")
+    const fullText = questionText + " " + optionsText
+    const upperFullText = fullText.toUpperCase()
+
+    // Find the actual question sentence (usually starts with "What", "Which", "How", etc.)
+    const questionSentenceMatch = questionText.match(/(?:What|Which|How|Why|When|Where|Who|According)[^?]*\?/i)
+    const questionSentence = questionSentenceMatch ? questionSentenceMatch[0] : ""
+    const upperQuestionSentence = questionSentence.toUpperCase()
+
+    // Detect pivot words (only in question sentence)
+    const detectedPivotWords: Array<{ word: string; category: string; meaning: string; strategy: string }> = []
+    Object.entries(PIVOT_WORDS).forEach(([, data]) => {
+      data.words.forEach((word) => {
+        if (upperQuestionSentence.includes(word)) {
+          detectedPivotWords.push({
+            word,
+            category: data.category,
+            meaning: data.meaning[language],
+            strategy: data.strategy[language],
+          })
+        }
+      })
+    })
+
+    const detectedContrastPivots: Array<{ word: string; meaning: string; strategy: string }> = []
+    CONTRAST_PIVOTS.words.forEach((word) => {
+      if (upperFullText.includes(word)) {
+        detectedContrastPivots.push({
+          word,
+          meaning: CONTRAST_PIVOTS.translations[language].meaning,
+          strategy: CONTRAST_PIVOTS.translations[language].strategy,
+        })
+      }
+    })
+
+    const detectedTimePivots: Array<{ word: string; meaning: string; strategy: string }> = []
+    TIME_PIVOTS.words.forEach((word) => {
+      if (upperFullText.includes(word)) {
+        detectedTimePivots.push({
+          word,
+          meaning: TIME_PIVOTS.translations[language].meaning,
+          strategy: TIME_PIVOTS.translations[language].strategy,
+        })
+      }
+    })
+
+    // Detect ABA trap words (in full text)
+    const detectedAbaTraps: Array<{ word: string; common: string; aba: string; confusion: string }> = []
+    Object.entries(ABA_TRAP_WORDS).forEach(([word, data]) => {
+      if (upperFullText.includes(word.toUpperCase())) {
+        detectedAbaTraps.push({
+          word: word.charAt(0).toUpperCase() + word.slice(1),
+          common: data.common[language],
+          aba: data.aba[language],
+          confusion: data.confusion[language],
+        })
+      }
+    })
+
+    const detectedNonTechnicalTraps: Array<{ word: string; meaning: string; context: string }> = []
+    Object.entries(NON_TECHNICAL_TRAP_WORDS).forEach(([word, data]) => {
+      if (fullText.toLowerCase().includes(word.toLowerCase())) {
+        detectedNonTechnicalTraps.push({
+          word: word.charAt(0).toUpperCase() + word.slice(1),
+          meaning: data[language].meaning,
+          context: data[language].context,
+        })
+      }
+    })
+
+    let questionSkeleton: { subject: string; verb: string; object: string } | null = null
+    // Try to extract a simplified skeleton from the question
+    const skeletonLabels = {
+      English: { subject: "WHO", verb: "DOES WHAT", object: "TO WHOM/WHAT" },
+      Español: { subject: "QUIÉN", verb: "HACE QUÉ", object: "A QUIÉN/QUÉ" },
+      Português: { subject: "QUEM", verb: "FAZ O QUÊ", object: "A QUEM/O QUÊ" },
+      Français: { subject: "QUI", verb: "FAIT QUOI", object: "À QUI/QUOI" },
+    }
+
+    // Simple heuristic: look for common subjects
+    const subjectMatch = questionText.match(
+      /(?:The |A |An )?(BCBA|RBT|behavior analyst|client|parent|teacher|therapist|supervisor)/i,
+    )
+    const verbMatch = questionText.match(
+      /\b(implemented|observed|recorded|reinforced|collected|measured|assessed|taught|trained|provided|delivered|conducted|demonstrated|modeled|shaped|prompted|faded)\b/i,
+    )
+
+    if (subjectMatch && verbMatch) {
+      questionSkeleton = {
+        subject: subjectMatch[1] || subjectMatch[0],
+        verb: verbMatch[1],
+        object: skeletonLabels[language].object,
+      }
+    }
+
+    return {
+      detectedPivotWords,
+      detectedAbaTraps,
+      detectedContrastPivots,
+      detectedTimePivots,
+      detectedNonTechnicalTraps,
+      questionSkeleton,
+    }
+  }, [questionData, language])
 
   const loadQuestion = async () => {
-    if (!currentTask) return
-
-    setLoading(true)
+    setIsLoading(true)
     setError(null)
     setSelectedAnswer(null)
     setShowFeedback(false)
     setShowHint(false)
-    setShowAllOptions(false)
-    setShowDecisionFilter(false)
 
     try {
       const response = await fetch("/api/generate-question", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           examLevel: examType,
-          category: category,
-          language: language,
-          taskId: currentTask.task_id,
-          taskText: currentTask.task_text,
-          keywords: currentTask.keywords,
+          category,
+          language,
+          taskId: currentTask?.task_id,
+          taskText: currentTask?.task_text,
+          keywords: currentTask?.keywords,
         }),
       })
 
@@ -204,589 +742,516 @@ export function QuestionScreen({
       const data = await response.json()
       setQuestionData(data)
     } catch (err) {
-      console.error("Error loading question:", err)
-      setError(err instanceof Error ? err.message : "Failed to load question")
+      setError(err instanceof Error ? err.message : "Error loading question")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const handleSubmit = async () => {
-    if (selectedAnswer !== null && questionData) {
-      setShowFeedback(true)
+  useEffect(() => {
+    if (currentTask) {
+      loadQuestion()
+    }
+  }, [currentTask])
 
+  const handleSubmit = async () => {
+    if (selectedAnswer === null || !questionData) return
+
+    setShowFeedback(true)
+    setExpandedSections({ trapDetector: true, decisionFilter: false, allOptions: false })
+
+    // Save progress to Supabase
+    const supabase = createClient()
+    if (supabase) {
       try {
-        const supabase = createClient()
-        await supabase.from("user_progress").insert([
-          {
-            category_id: category,
-            last_practiced_at: new Date().toISOString(),
-          },
-        ])
+        await supabase.from("user_progress").insert({
+          category_id: category,
+          exam_type: examType,
+          questions_attempted: 1,
+          questions_correct: selectedAnswer === questionData.correctIndex ? 1 : 0,
+          last_practiced_at: new Date().toISOString(),
+        })
       } catch (err) {
-        console.error("Error saving progress:", err)
+        console.error("Failed to save progress:", err)
       }
     }
   }
 
   const handleNext = () => {
-    onNextTask()
+    onTaskComplete()
+    setSelectedAnswer(null)
+    setShowFeedback(false)
+    setShowHint(false)
   }
 
-  const highlightTrapWords = (text: string) => {
-    if (!questionData?.keyWords || questionData.keyWords.length === 0) return text
-
-    let highlightedText = text
-
-    questionData.keyWords.forEach((word) => {
-      const regex = new RegExp(`\\b${word}\\b`, "gi")
-      highlightedText = highlightedText.replace(regex, `<span class="text-yellow-400 font-semibold">${word}</span>`)
-    })
-
-    return highlightedText
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  if (loadingTasks) {
+  const isCorrect = selectedAnswer === questionData?.correctIndex
+
+  const languageSupportLabels = {
+    English: {
+      trapDetector: "TRAP DETECTOR",
+      pivotWords: "Exam Strategy Words",
+      contrastPivots: "Contrast Signals",
+      timePivots: "Time Signals",
+      abaTerms: "ABA Terminology",
+      vocabularyHelp: "Vocabulary Help",
+      skeleton: "Question Skeleton",
+      commonMeaning: "Common meaning",
+      abaMeaning: "ABA meaning",
+      thisMayConfuse: "This may have confused you because",
+      strategy: "Strategy",
+      noTrapsMessage: "No specific traps detected. Focus on analyzing the scenario carefully.",
+    },
+    Español: {
+      trapDetector: "DETECTOR DE TRAMPAS",
+      pivotWords: "Palabras Clave del Examen",
+      contrastPivots: "Señales de Contraste",
+      timePivots: "Señales Temporales",
+      abaTerms: "Terminología ABA",
+      vocabularyHelp: "Ayuda de Vocabulario",
+      skeleton: "Esqueleto de la Pregunta",
+      commonMeaning: "Significado común",
+      abaMeaning: "Significado en ABA",
+      thisMayConfuse: "Esto puede haberte confundido porque",
+      strategy: "Estrategia",
+      noTrapsMessage: "No se detectaron trampas específicas. Enfócate en analizar el escenario cuidadosamente.",
+    },
+    Português: {
+      trapDetector: "DETECTOR DE ARMADILHAS",
+      pivotWords: "Palavras-Chave do Exame",
+      contrastPivots: "Sinais de Contraste",
+      timePivots: "Sinais Temporais",
+      abaTerms: "Terminologia ABA",
+      vocabularyHelp: "Ajuda de Vocabulário",
+      skeleton: "Esqueleto da Questão",
+      commonMeaning: "Significado comum",
+      abaMeaning: "Significado em ABA",
+      thisMayConfuse: "Isso pode ter te confundido porque",
+      strategy: "Estratégia",
+      noTrapsMessage: "Nenhuma armadilha específica detectada. Foque em analisar o cenário cuidadosamente.",
+    },
+    Français: {
+      trapDetector: "DÉTECTEUR DE PIÈGES",
+      pivotWords: "Mots-Clés d'Examen",
+      contrastPivots: "Signaux de Contraste",
+      timePivots: "Signaux Temporels",
+      abaTerms: "Terminologie ABA",
+      vocabularyHelp: "Aide Vocabulaire",
+      skeleton: "Squelette de la Question",
+      commonMeaning: "Sens commun",
+      abaMeaning: "Sens ABA",
+      thisMayConfuse: "Cela a pu vous confondre parce que",
+      strategy: "Stratégie",
+      noTrapsMessage: "Aucun piège spécifique détecté. Concentrez-vous sur l'analyse du scénario.",
+    },
+  }
+
+  const labels = languageSupportLabels[language]
+
+  const celebrationText = {
+    English: "You nailed it!",
+    Español: "¡Le diste al clavo!",
+    Português: "Você acertou em cheio!",
+    Français: "Vous avez réussi!",
+  }
+
+  const incorrectText = {
+    English: "Not quite. Let's learn the difference.",
+    Español: "No exactamente. Aprendamos la diferencia.",
+    Português: "Não exatamente. Vamos aprender a diferença.",
+    Français: "Pas tout à fait. Apprenons la différence.",
+  }
+
+  const hintLabel = {
+    English: "Hint",
+    Español: "Pista",
+    Português: "Dica",
+    Français: "Indice",
+  }
+
+  if (!currentTask) {
     return (
-      <div className="min-h-screen flex flex-col gradient-bg">
-        <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-zinc-400">{t.noTasks}</p>
+          <Button onClick={onBack} variant="outline" className="mt-4 bg-transparent">
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            {t.retry}
           </Button>
-        </div>
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full border-4 border-yellow-400/20 border-t-yellow-400 animate-spin" />
-            </div>
-            <p className="text-lg text-gray-300 font-medium">{t.loadingTasks}</p>
-          </div>
         </div>
       </div>
     )
   }
 
-  if (!currentTask && tasks.length === 0) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col gradient-bg">
-        <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-        </div>
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="flex flex-col items-center gap-6">
-            <XCircle className="h-16 w-16 text-yellow-400" />
-            <p className="text-lg text-gray-200 text-center max-w-md">{t.noTasks}</p>
-            <Button
-              onClick={onBack}
-              className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 h-12 rounded-xl"
-            >
-              {language === "English" && "Choose Another Category"}
-              {language === "Español" && "Elegir otra categoría"}
-              {language === "Português" && "Escolher outra categoria"}
-              {language === "Français" && "Choisir une autre catégorie"}
-            </Button>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-zinc-400">{t.loading}</p>
         </div>
       </div>
     )
   }
 
-  if (loading) {
+  if (error) {
     return (
-      <div className="min-h-screen flex flex-col gradient-bg">
-        <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f] flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-zinc-400 mb-4">{error}</p>
+          <Button onClick={loadQuestion} className="bg-amber-500 hover:bg-amber-600 text-black">
+            {t.retry}
           </Button>
-          <div className="text-sm">
-            <span className="text-yellow-400 font-semibold">{examType}</span>
-            <span className="text-gray-600 mx-2">•</span>
-            <span className="text-gray-400">{category}</span>
-          </div>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full border-4 border-yellow-400/20 border-t-yellow-400 animate-spin" />
-              <div className="absolute inset-0 w-20 h-20 rounded-full bg-yellow-400/10 blur-xl" />
-            </div>
-            <p className="text-lg text-gray-300 font-medium">{t.loading}</p>
-            {currentTask && (
-              <p className="text-sm text-gray-500 text-center max-w-xs">
-                {currentTask.task_id}: {currentTask.task_text}
-              </p>
-            )}
-          </div>
         </div>
       </div>
     )
   }
 
-  if (error || !questionData) {
-    return (
-      <div className="min-h-screen flex flex-col gradient-bg">
-        <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5">
-          <Button
-            onClick={onBack}
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-          <div className="text-sm">
-            <span className="text-yellow-400 font-semibold">{examType}</span>
-            <span className="text-gray-600 mx-2">•</span>
-            <span className="text-gray-400">{category}</span>
-          </div>
-        </div>
+  if (!questionData) return null
 
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="flex flex-col items-center gap-6">
-            <XCircle className="h-16 w-16 text-red-400" />
-            <p className="text-lg text-gray-200 text-center max-w-md">{error || t.error}</p>
-            <Button
-              onClick={loadQuestion}
-              className="mt-4 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 h-12 rounded-xl transition-all duration-300"
-            >
-              {t.retry}
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const isCorrect = selectedAnswer === questionData.correctIndex
+  const hasAnyTraps =
+    trapAnalysis.detectedPivotWords.length > 0 ||
+    trapAnalysis.detectedAbaTraps.length > 0 ||
+    trapAnalysis.detectedContrastPivots.length > 0 ||
+    trapAnalysis.detectedTimePivots.length > 0 ||
+    trapAnalysis.detectedNonTechnicalTraps.length > 0
 
   return (
-    <div className="min-h-screen flex flex-col gradient-bg">
-      <div className="flex items-center justify-between px-6 py-5 bg-black/20 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
-        <Button
-          onClick={onBack}
-          variant="ghost"
-          size="sm"
-          className="text-gray-400 hover:text-white transition-colors duration-300"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-        </Button>
-
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-          {tasks.slice(0, 10).map((_, idx) => (
-            <div
-              key={idx}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                idx < currentTaskIndex ? "bg-green-400" : idx === currentTaskIndex ? "bg-yellow-400" : "bg-gray-600"
-              }`}
-            />
-          ))}
-          {tasks.length > 10 && <span className="text-xs text-gray-500 ml-1">+{tasks.length - 10}</span>}
-        </div>
-
-        <div className="text-xs font-medium">
-          <span className="text-yellow-400">{examType}</span>
-          <span className="text-gray-600 mx-1.5">•</span>
-          <span className="text-gray-400">{category}</span>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-zinc-800/50">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button onClick={onBack} className="text-zinc-400 hover:text-white transition-colors">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div className="flex-1 mx-4">
+              <div className="text-xs text-amber-500 font-medium">{currentTask.task_id}</div>
+              <div className="text-sm text-zinc-300 truncate">{currentTask.task_text}</div>
+            </div>
+            <div className="flex gap-1">
+              {tasks.slice(0, 10).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2 h-2 rounded-full ${
+                    i < currentTaskIndex ? "bg-amber-500" : i === currentTaskIndex ? "bg-amber-500/50" : "bg-zinc-700"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {currentTask && (
-        <div className="px-6 py-3 bg-yellow-400/10 border-b border-yellow-400/20">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <p className="text-sm text-yellow-400 font-medium">
-              <span className="font-bold">{currentTask.task_id}:</span> {currentTask.task_text}
-            </p>
-            <span className="text-xs text-gray-500">
-              {currentTaskIndex + 1}/{tasks.length}
-            </span>
-          </div>
-        </div>
-      )}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Question Card */}
+        <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800/50">
+          <p className="text-[16px] leading-relaxed text-zinc-200">{questionData.question}</p>
 
-      <div className="flex-1 flex flex-col p-6 pb-32 overflow-y-auto">
-        <div className="max-w-3xl mx-auto w-full space-y-6">
-          <div className="glass-card rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {currentTask?.task_id || `${t.subTopic} ${currentTaskIndex + 1}`}
+          {/* Hint Button */}
+          {!showFeedback && (
+            <button
+              onClick={() => setShowHint(!showHint)}
+              className="mt-4 flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors text-sm"
+            >
+              <Lightbulb className="w-4 h-4" />
+              {showHint ? questionData.hint : `${hintLabel[language]}?`}
+            </button>
+          )}
+        </div>
+
+        {/* Answer Options */}
+        <div className="space-y-3">
+          {questionData.options.map((option, index) => {
+            const isSelected = selectedAnswer === index
+            const isCorrectOption = index === questionData.correctIndex
+            const showResult = showFeedback
+
+            let optionStyle = "bg-zinc-900/30 border-zinc-800/50 hover:border-amber-500/50"
+            if (isSelected && !showResult) {
+              optionStyle = "bg-amber-500/10 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+            } else if (showResult) {
+              if (isCorrectOption) {
+                optionStyle = "bg-green-500/10 border-green-500"
+              } else if (isSelected && !isCorrectOption) {
+                optionStyle = "bg-red-500/10 border-red-500"
+              }
+            }
+
+            return (
+              <button
+                key={index}
+                onClick={() => !showFeedback && setSelectedAnswer(index)}
+                disabled={showFeedback}
+                className={`w-full text-left p-4 rounded-xl border transition-all duration-300 ${optionStyle}`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-[14px] text-zinc-300">{option}</span>
+                  {showResult && isCorrectOption && <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />}
+                  {showResult && isSelected && !isCorrectOption && (
+                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Submit / Next Button */}
+        {!showFeedback ? (
+          <Button
+            onClick={handleSubmit}
+            disabled={selectedAnswer === null}
+            className="w-full py-6 bg-amber-500 hover:bg-amber-600 text-black font-semibold text-lg disabled:opacity-50"
+          >
+            {t.submit}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleNext}
+            className="w-full py-6 bg-amber-500 hover:bg-amber-600 text-black font-semibold text-lg"
+          >
+            {t.next}
+          </Button>
+        )}
+
+        {/* Feedback Panel */}
+        {showFeedback && (
+          <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+            {/* Result Banner */}
+            <div
+              className={`p-4 rounded-xl flex items-center gap-3 ${
+                isCorrect ? "bg-green-500/10 border border-green-500/30" : "bg-red-500/10 border border-red-500/30"
+              }`}
+            >
+              {isCorrect ? (
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+              ) : (
+                <XCircle className="w-6 h-6 text-red-500" />
+              )}
+              <span className={`font-medium ${isCorrect ? "text-green-400" : "text-red-400"}`}>
+                {isCorrect ? celebrationText[language] : incorrectText[language]}
               </span>
-              <span className="text-2xl">🥋</span>
             </div>
 
-            <div
-              className="text-base leading-relaxed text-gray-100"
-              dangerouslySetInnerHTML={{ __html: highlightTrapWords(questionData.question) }}
-            />
+            {!isCorrect && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => toggleSection("trapDetector")}
+                  className="w-full p-4 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                    <span className="font-semibold text-amber-400">{labels.trapDetector}</span>
+                  </div>
+                  <span className="text-amber-500">{expandedSections.trapDetector ? "−" : "+"}</span>
+                </button>
 
-            {!showFeedback && questionData.hint && (
-              <div className="pt-3 border-t border-white/10">
-                <div className="flex items-start gap-2">
-                  <Lightbulb className="h-4 w-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-400 italic leading-relaxed">{questionData.hint}</p>
-                </div>
+                {expandedSections.trapDetector && (
+                  <div className="px-4 pb-4 space-y-4">
+                    {/* Pivot Words in Question */}
+                    {trapAnalysis.detectedPivotWords.length > 0 && (
+                      <div className="bg-amber-500/5 rounded-lg p-3">
+                        <div className="text-xs font-semibold text-amber-400 uppercase mb-2">{labels.pivotWords}</div>
+                        {trapAnalysis.detectedPivotWords.map((pivot, i) => (
+                          <div key={i} className="mb-3 last:mb-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="bg-amber-500 text-black px-2 py-0.5 rounded text-sm font-bold">
+                                {pivot.word}
+                              </span>
+                              <span className="text-xs text-zinc-500">({pivot.category})</span>
+                            </div>
+                            <p className="text-sm text-zinc-300 mb-1">{pivot.meaning}</p>
+                            <p className="text-xs text-amber-400">
+                              <strong>{labels.strategy}:</strong> {pivot.strategy}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Contrast Pivots */}
+                    {trapAnalysis.detectedContrastPivots.length > 0 && (
+                      <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-500/20">
+                        <div className="text-xs font-semibold text-blue-400 uppercase mb-2">
+                          {labels.contrastPivots}
+                        </div>
+                        {trapAnalysis.detectedContrastPivots.map((pivot, i) => (
+                          <div key={i} className="mb-2 last:mb-0">
+                            <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded text-sm font-medium mr-2">
+                              {pivot.word}
+                            </span>
+                            <p className="text-sm text-zinc-300 mt-1">{pivot.meaning}</p>
+                            <p className="text-xs text-blue-400 mt-1">
+                              <strong>{labels.strategy}:</strong> {pivot.strategy}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Time Pivots */}
+                    {trapAnalysis.detectedTimePivots.length > 0 && (
+                      <div className="bg-purple-500/5 rounded-lg p-3 border border-purple-500/20">
+                        <div className="text-xs font-semibold text-purple-400 uppercase mb-2">{labels.timePivots}</div>
+                        {trapAnalysis.detectedTimePivots.map((pivot, i) => (
+                          <div key={i} className="mb-2 last:mb-0">
+                            <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded text-sm font-medium mr-2">
+                              {pivot.word}
+                            </span>
+                            <p className="text-sm text-zinc-300 mt-1">{pivot.meaning}</p>
+                            <p className="text-xs text-purple-400 mt-1">
+                              <strong>{labels.strategy}:</strong> {pivot.strategy}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ABA Terminology Traps */}
+                    {trapAnalysis.detectedAbaTraps.length > 0 && (
+                      <div className="bg-red-500/5 rounded-lg p-3 border border-red-500/20">
+                        <div className="text-xs font-semibold text-red-400 uppercase mb-2">{labels.abaTerms}</div>
+                        {trapAnalysis.detectedAbaTraps.map((trap, i) => (
+                          <div key={i} className="mb-3 last:mb-0">
+                            <div className="font-medium text-red-300 mb-1">"{trap.word}"</div>
+                            <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                              <div>
+                                <span className="text-zinc-500 text-xs">{labels.commonMeaning}:</span>
+                                <p className="text-zinc-400">{trap.common}</p>
+                              </div>
+                              <div>
+                                <span className="text-zinc-500 text-xs">{labels.abaMeaning}:</span>
+                                <p className="text-green-400">{trap.aba}</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-red-400">
+                              <strong>{labels.thisMayConfuse}:</strong> {trap.confusion}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Non-Technical Vocabulary Help */}
+                    {trapAnalysis.detectedNonTechnicalTraps.length > 0 && (
+                      <div className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <BookOpen className="w-4 h-4 text-zinc-400" />
+                          <span className="text-xs font-semibold text-zinc-400 uppercase">{labels.vocabularyHelp}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {trapAnalysis.detectedNonTechnicalTraps.map((word, i) => (
+                            <div key={i} className="bg-zinc-700/50 rounded px-2 py-1">
+                              <span className="text-zinc-300 text-sm font-medium">{word.word}</span>
+                              <span className="text-zinc-500 text-xs ml-1">= {word.meaning}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Question Skeleton (for complex sentences) */}
+                    {trapAnalysis.questionSkeleton && (
+                      <div className="bg-zinc-800/30 rounded-lg p-3">
+                        <div className="text-xs font-semibold text-zinc-400 uppercase mb-2">{labels.skeleton}</div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="bg-zinc-700 text-zinc-200 px-2 py-1 rounded">
+                            {trapAnalysis.questionSkeleton.subject}
+                          </span>
+                          <span className="text-zinc-500">→</span>
+                          <span className="bg-zinc-700 text-amber-400 px-2 py-1 rounded">
+                            {trapAnalysis.questionSkeleton.verb}
+                          </span>
+                          <span className="text-zinc-500">→</span>
+                          <span className="bg-zinc-700 text-zinc-400 px-2 py-1 rounded">
+                            {trapAnalysis.questionSkeleton.object}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback message if no traps detected */}
+                    {!hasAnyTraps && <p className="text-sm text-zinc-400 italic">{labels.noTrapsMessage}</p>}
+                  </div>
+                )}
               </div>
             )}
-          </div>
 
-          <div className="space-y-3">
-            {questionData.options.map((option, index) => {
-              const letter = ["A", "B", "C", "D"][index]
-              const isSelected = selectedAnswer === index
-              const showCorrect = showFeedback && index === questionData.correctIndex
-              const showIncorrect = showFeedback && isSelected && !isCorrect
+            {/* Decision Filter */}
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleSection("decisionFilter")}
+                className="w-full p-4 flex items-center justify-between text-left"
+              >
+                <span className="font-semibold text-zinc-200">Decision Filter</span>
+                <span className="text-zinc-500">{expandedSections.decisionFilter ? "−" : "+"}</span>
+              </button>
 
-              return (
-                <button
-                  key={index}
-                  onClick={() => !showFeedback && setSelectedAnswer(index)}
-                  disabled={showFeedback}
-                  className={`w-full glass-card rounded-xl p-4 transition-all duration-300 ${
-                    showCorrect
-                      ? "border-green-400/50 bg-green-400/10"
-                      : showIncorrect
-                        ? "border-red-400/50 bg-red-400/10"
-                        : isSelected
-                          ? "border-yellow-400 gold-glow bg-yellow-400/5"
-                          : "hover:border-white/20 hover:bg-white/5"
-                  } ${!showFeedback ? "cursor-pointer" : "cursor-default"}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 transition-all duration-300 ${
-                        showCorrect
-                          ? "bg-green-400 text-black"
-                          : showIncorrect
-                            ? "bg-red-400 text-black"
-                            : isSelected
-                              ? "bg-yellow-400 text-black"
-                              : "bg-white/10 text-gray-400"
-                      }`}
-                    >
-                      {letter}
+              {expandedSections.decisionFilter && (
+                <div className="px-4 pb-4 space-y-3">
+                  {questionData.decisionFilter.concepts.map((concept, i) => (
+                    <div key={i} className="bg-zinc-800/30 rounded-lg p-3">
+                      <div className="font-medium text-amber-400 mb-1">{concept.name}</div>
+                      <p className="text-sm text-zinc-300 mb-2">{concept.definition}</p>
+                      {concept.analogy && <p className="text-xs text-zinc-500 italic mb-1">💡 {concept.analogy}</p>}
+                      {concept.rule && <p className="text-xs text-green-400">✓ {concept.rule}</p>}
                     </div>
-                    <p className="text-left text-sm leading-relaxed text-gray-200 pt-0.5">{option}</p>
+                  ))}
+                  <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+                    <p className="text-sm text-amber-300">
+                      <strong>Test:</strong> {questionData.decisionFilter.testQuestion}
+                    </p>
                   </div>
-                </button>
-              )
-            })}
-          </div>
-
-          {showFeedback && mode === "tutor" && (
-            <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-500">
-              <div className="glass-card rounded-2xl p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  {isCorrect ? (
-                    <>
-                      <div className="w-12 h-12 rounded-full bg-green-400/20 flex items-center justify-center">
-                        <CheckCircle2 className="h-6 w-6 text-green-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xl font-semibold text-green-400">
-                          {language === "English" &&
-                            `Correct! ${questionData.options[questionData.correctIndex].substring(0, 1)} is right! 🎉`}
-                          {language === "Español" &&
-                            `¡Respuesta ${questionData.options[questionData.correctIndex].substring(0, 1)} Correcta! 🎉`}
-                          {language === "Português" &&
-                            `Resposta ${questionData.options[questionData.correctIndex].substring(0, 1)} Correta! 🎉`}
-                          {language === "Français" &&
-                            `Réponse ${questionData.options[questionData.correctIndex].substring(0, 1)} Correcte! 🎉`}
-                        </p>
-                        <p className="text-sm text-gray-300 mt-1">
-                          {language === "English" && "You nailed it."}
-                          {language === "Español" && "Le diste al clavo."}
-                          {language === "Português" && "Você acertou em cheio."}
-                          {language === "Français" && "Vous avez réussi."}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-12 h-12 rounded-full bg-yellow-400/20 flex items-center justify-center">
-                        <AlertTriangle className="h-6 w-6 text-yellow-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-lg font-semibold text-gray-200">
-                          {language === "English" &&
-                            `Not quite. The correct answer is ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
-                          {language === "Español" &&
-                            `No es exacto. La respuesta correcta es ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
-                          {language === "Português" &&
-                            `Não exatamente. A resposta correta é ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
-                          {language === "Français" &&
-                            `Pas tout à fait. La bonne réponse est ${questionData.options[questionData.correctIndex].substring(0, 1)}.`}
-                        </p>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {language === "English" && "Let's learn the difference."}
-                          {language === "Español" && "Aprendamos la diferencia."}
-                          {language === "Português" && "Vamos aprender a diferença."}
-                          {language === "Français" && "Apprenons la différence."}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Trap Detector - only show for incorrect answers */}
-              {!isCorrect && (
-                <div className="glass-card rounded-2xl p-6 bg-yellow-400/10 border-yellow-400/30 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🚨</span>
-                    <h3 className="font-bold text-yellow-400 text-lg">
-                      {language === "English" && "TRAP DETECTOR"}
-                      {language === "Español" && "DETECTOR DE TRAMPAS"}
-                      {language === "Português" && "DETECTOR DE ARMADILHAS"}
-                      {language === "Français" && "DÉTECTEUR DE PIÈGES"}
-                    </h3>
-                  </div>
-
-                  {/* Pivot words section - show exam strategy words */}
-                  {questionData.pivotWords && questionData.pivotWords.length > 0 && (
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold text-white">
-                        {language === "English" && "Pivot words found in this question:"}
-                        {language === "Español" && "Palabras clave encontradas en esta pregunta:"}
-                        {language === "Português" && "Palavras-chave encontradas nesta questão:"}
-                        {language === "Français" && "Mots-clés trouvés dans cette question:"}
-                      </p>
-                      {questionData.pivotWords.map((pivot, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
-                          <p className="text-base font-bold text-yellow-400 mb-2">"{pivot.word}"</p>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-start gap-2">
-                              <span className="text-blue-400 font-semibold flex-shrink-0">
-                                {language === "English" && "Meaning:"}
-                                {language === "Español" && "Significado:"}
-                                {language === "Português" && "Significado:"}
-                                {language === "Français" && "Signification:"}
-                              </span>
-                              <span className="text-gray-300">{pivot.meaning}</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-green-400 font-semibold flex-shrink-0">
-                                {language === "English" && "Strategy:"}
-                                {language === "Español" && "Estrategia:"}
-                                {language === "Português" && "Estratégia:"}
-                                {language === "Français" && "Stratégie:"}
-                              </span>
-                              <span className="text-gray-300">{pivot.strategy}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* ABA Trap Words - show if detected */}
-                  {questionData.trapDetector && (
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold text-white border-t border-white/10 pt-4">
-                        {language === "English" && "ABA terminology trap:"}
-                        {language === "Español" && "Trampa de terminología ABA:"}
-                        {language === "Português" && "Armadilha de terminologia ABA:"}
-                        {language === "Français" && "Piège de terminologie ABA:"}
-                      </p>
-                      <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
-                        <p className="text-sm font-semibold text-yellow-400 mb-2">
-                          {language === "English" && `Trap word: "${questionData.trapDetector.trapWord}"`}
-                          {language === "Español" && `Palabra trampa: "${questionData.trapDetector.trapWord}"`}
-                          {language === "Português" && `Palavra armadilha: "${questionData.trapDetector.trapWord}"`}
-                          {language === "Français" && `Mot piège: "${questionData.trapDetector.trapWord}"`}
-                        </p>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-start gap-2">
-                            <span className="text-red-400 font-semibold flex-shrink-0">
-                              {language === "English" && "Common meaning:"}
-                              {language === "Español" && "Significado común:"}
-                              {language === "Português" && "Significado comum:"}
-                              {language === "Français" && "Signification courante:"}
-                            </span>
-                            <span className="text-gray-300">{questionData.trapDetector.commonMeaning}</span>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <span className="text-green-400 font-semibold flex-shrink-0">
-                              {language === "English" && "ABA meaning:"}
-                              {language === "Español" && "Significado ABA:"}
-                              {language === "Português" && "Significado ABA:"}
-                              {language === "Français" && "Signification ABA:"}
-                            </span>
-                            <span className="text-gray-300">{questionData.trapDetector.abaMeaning}</span>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-white/10">
-                            <p className="text-gray-400 italic">{questionData.trapDetector.howItConfuses}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {(!questionData.pivotWords || questionData.pivotWords.length === 0) && !questionData.trapDetector && (
-                    <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
-                      <p className="text-sm text-gray-300">
-                        {language === "English" &&
-                          "No specific trap words detected in this question. Review the Decision Filter below to understand the key distinctions between similar concepts."}
-                        {language === "Español" &&
-                          "No se detectaron palabras trampa específicas en esta pregunta. Revisa el Filtro de Decisión abajo para entender las distinciones clave entre conceptos similares."}
-                        {language === "Português" &&
-                          "Nenhuma palavra armadilha específica detectada nesta questão. Revise o Filtro de Decisão abaixo para entender as distinções-chave entre conceitos semelhantes."}
-                        {language === "Français" &&
-                          "Aucun mot piège spécifique détecté dans cette question. Consultez le Filtre de Décision ci-dessous pour comprendre les distinctions clés entre concepts similaires."}
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
-
-              {/* Decision Filter */}
-              <div className="glass-card rounded-2xl overflow-hidden">
-                <button
-                  onClick={() => setShowDecisionFilter(!showDecisionFilter)}
-                  className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🎯</span>
-                    <h3 className="font-bold text-white text-lg">
-                      {language === "English" && "Decision Filter"}
-                      {language === "Español" && "Filtro de Decisión"}
-                      {language === "Português" && "Filtro de Decisão"}
-                      {language === "Français" && "Filtre de Décision"}
-                    </h3>
-                  </div>
-                  <ChevronLeft
-                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${showDecisionFilter ? "-rotate-90" : "rotate-180"}`}
-                  />
-                </button>
-
-                {showDecisionFilter && (
-                  <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
-                    <div className="space-y-3">
-                      {questionData.decisionFilter.concepts.map((concept, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10">
-                          <h4 className="font-semibold text-yellow-400 mb-2">{concept.name}</h4>
-                          <p className="text-sm text-gray-300 mb-2">{concept.definition}</p>
-                          {concept.analogy && (
-                            <p className="text-sm text-gray-400 italic">
-                              <span className="text-yellow-400">💡</span> {concept.analogy}
-                            </p>
-                          )}
-                          {concept.rule && (
-                            <p className="text-sm text-green-400 mt-2">
-                              <span className="font-semibold">Rule:</span> {concept.rule}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
-                      <p className="text-sm font-medium text-yellow-400">
-                        {language === "English" && "Ask yourself:"}
-                        {language === "Español" && "Pregúntate:"}
-                        {language === "Português" && "Pergunte-se:"}
-                        {language === "Français" && "Demandez-vous:"}
-                      </p>
-                      <p className="text-sm text-gray-200 mt-1">{questionData.decisionFilter.testQuestion}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* All Options Analysis */}
-              <div className="glass-card rounded-2xl overflow-hidden">
-                <button
-                  onClick={() => setShowAllOptions(!showAllOptions)}
-                  className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
-                >
-                  <h3 className="font-bold text-white text-lg">{t.allOptions}</h3>
-                  <ChevronLeft
-                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${showAllOptions ? "-rotate-90" : "rotate-180"}`}
-                  />
-                </button>
-
-                {showAllOptions && (
-                  <div className="px-6 pb-6 space-y-3 animate-in slide-in-from-top-4 duration-300">
-                    {(["A", "B", "C", "D"] as const).map((letter, idx) => (
-                      <div
-                        key={letter}
-                        className={`p-4 rounded-xl border ${
-                          idx === questionData.correctIndex
-                            ? "bg-green-400/10 border-green-400/30"
-                            : "bg-white/5 border-white/10"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span
-                            className={`font-bold ${idx === questionData.correctIndex ? "text-green-400" : "text-gray-400"}`}
-                          >
-                            {letter})
-                          </span>
-                          <p className="text-sm text-gray-300">{questionData.optionExplanations[letter]}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Conclusion */}
-              <div className="glass-card rounded-2xl p-6">
-                <p className="text-sm text-gray-300 leading-relaxed">
-                  <span className="text-yellow-400 font-semibold">
-                    {language === "English" && "Remember: "}
-                    {language === "Español" && "Recuerda: "}
-                    {language === "Português" && "Lembre-se: "}
-                    {language === "Français" && "Rappelez-vous: "}
-                  </span>
-                  {questionData.conclusion}
-                </p>
-              </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/95 to-transparent">
-        <div className="max-w-3xl mx-auto">
-          {!showFeedback ? (
-            <Button
-              onClick={handleSubmit}
-              disabled={selectedAnswer === null}
-              className="w-full h-14 rounded-xl text-lg font-semibold transition-all duration-300 bg-yellow-400 hover:bg-yellow-500 text-black disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t.submit}
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="w-full h-14 rounded-xl text-lg font-semibold transition-all duration-300 bg-yellow-400 hover:bg-yellow-500 text-black"
-            >
-              {t.next}
-            </Button>
-          )}
-        </div>
+            {/* All Options Explanations */}
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleSection("allOptions")}
+                className="w-full p-4 flex items-center justify-between text-left"
+              >
+                <span className="font-semibold text-zinc-200">{t.allOptions}</span>
+                <span className="text-zinc-500">{expandedSections.allOptions ? "−" : "+"}</span>
+              </button>
+
+              {expandedSections.allOptions && (
+                <div className="px-4 pb-4 space-y-2">
+                  {(["A", "B", "C", "D"] as const).map((letter, index) => (
+                    <div
+                      key={letter}
+                      className={`p-3 rounded-lg ${
+                        index === questionData.correctIndex
+                          ? "bg-green-500/10 border border-green-500/30"
+                          : "bg-zinc-800/30"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`font-bold ${index === questionData.correctIndex ? "text-green-400" : "text-zinc-500"}`}
+                        >
+                          {letter})
+                        </span>
+                        <p className="text-sm text-zinc-300">{questionData.optionExplanations[letter]}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Conclusion */}
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-4">
+              <p className="text-sm text-zinc-300">{questionData.conclusion}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

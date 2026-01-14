@@ -4,7 +4,7 @@ import { useState } from "react"
 import { LanguageSelection } from "@/components/language-selection"
 import { ExamTypeSelection } from "@/components/exam-type-selection"
 import { CategoryMenu } from "@/components/category-menu"
-import { QuestionScreen } from "@/components/question-screen"
+import QuestionScreen from "@/components/question-screen"
 
 export type Language = "English" | "Español" | "Português" | "Français"
 export type ExamType = "RBT" | "BCBA"
