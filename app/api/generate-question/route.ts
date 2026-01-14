@@ -74,11 +74,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const conceptTopics = [
+      "reinforcement schedules (FR, VR, FI, VI)",
+      "MO vs SD distinction",
+      "stimulus control and stimulus discrimination",
+      "extinction and extinction burst",
+      "positive vs negative reinforcement",
+      "positive vs negative punishment",
+      "escape vs avoidance",
+      "unconditioned vs conditioned reinforcers",
+      "generalization vs discrimination",
+      "establishing operations vs abolishing operations",
+      "automatic vs socially mediated reinforcement",
+      "stimulus equivalence",
+      "verbal operants (mand, tact, echoic, intraverbal)",
+      "respondent vs operant conditioning",
+      "elicit vs emit vs evoke",
+    ]
+
+    const randomTopic = conceptTopics[Math.floor(Math.random() * conceptTopics.length)]
+    const topicInstruction =
+      category.includes("Concepts") || category.includes("Principles")
+        ? `\n\n## REQUIRED TOPIC FOR THIS QUESTION:\nYou MUST create a question about: ${randomTopic}\nDo NOT create a question about chaining. Focus specifically on ${randomTopic}.`
+        : ""
+
     const prompt = `You are "ABA Sensei", an expert AI tutor specializing in Applied Behavior Analysis (ABA) exam preparation. Your mission is to help students pass their RBT or BCBA certification exams by developing their "Clinical Eye" and avoiding linguistic traps.
 
 [Context: ${examLevel} Level]
 [Category: ${category}]
-[Language for explanations: ${language}]
+[Language for explanations: ${language}]${topicInstruction}
 
 ## CORE PRINCIPLES
 - Questions ALWAYS in English (simulating real exam)
@@ -86,11 +110,12 @@ export async function POST(request: NextRequest) {
 - Test APPLICATION of concepts, not just recall
 - Identify linguistic traps that confuse students
 
-## CRITICAL ABA DISTINCTIONS TO TEST:
+## CRITICAL ABA TRAP WORDS (ABA English vs Everyday English):
+These words have DIFFERENT meanings in ABA vs everyday language. ALWAYS check if your question contains any of these and include trapDetector:
 
-### ABA English vs Everyday English
-- "Consequence" ≠ punishment. It's ANY event after behavior (can be good or bad)
 - "Negative" = SUBTRACT/Remove (math operation), NOT bad/harmful
+- "Positive" = ADD/Present (math operation), NOT good/pleasant  
+- "Consequence" = ANY event after behavior (can be good or bad), NOT punishment
 - "Discrimination" = DISTINGUISH between stimuli, NOT prejudice
 - "Elicit" = AUTOMATICALLY trigger (reflexes ONLY). If voluntary, NEVER elicit
 - "Emit" = YOU produce the behavior (voluntary) → Operant
@@ -98,6 +123,10 @@ export async function POST(request: NextRequest) {
 - "Variable" = UNPREDICTABLE schedule, NOT "changeable"
 - "Contingent" = DEPENDENT on behavior, NOT "backup plan"
 - "Extinction" = STOP reinforcement, NOT "eliminate forever"
+- "Punishment" = DECREASES behavior, NOT necessarily painful/bad
+- "Reinforce" = INCREASES behavior, NOT "to support/help"
+
+## OTHER CRITICAL DISTINCTIONS TO TEST:
 
 ### MO vs SD (Critical Distinction)
 - SD (Gas station sign) = Signals AVAILABILITY → "Can I get it?"
@@ -169,49 +198,25 @@ export async function POST(request: NextRequest) {
    
    If NO key words: Return empty array []
 
-5. TRAP DETECTOR (Optional - for questions with ABA trap words):
-   If the question or scenario contains any ABA TRAP WORDS (words with different meanings in ABA vs everyday English), include:
+5. TRAP DETECTOR (IMPORTANT - Check for ABA trap words):
+   SCAN your question and scenario for ANY of these ABA trap words:
+   Negative, Positive, Consequence, Discrimination, Elicit, Emit, Evoke, Variable, Contingent, Extinction, Punishment, Reinforce
+   
+   If ANY of these words appear in the question or options, you MUST include trapDetector:
    {
-     "trapWord": "The trap word used (e.g., 'Negative', 'Consequence', 'Elicit')",
+     "trapWord": "The exact trap word used",
      "commonMeaning": "What most people think it means in everyday English",
      "abaMeaning": "What it ACTUALLY means in ABA context",
      "howItConfuses": "Explanation in ${language} of how this linguistic trap might confuse students"
    }
    
-   Common ABA trap words: Negative, Consequence, Discrimination, Elicit, Emit, Evoke, Variable, Contingent, Extinction
-   
-   If NO trap words are present, set trapDetector to null or omit it.
+   If NONE of these specific trap words appear, set trapDetector to null.
 
 6. DECISION FILTER (Most Important):
    Create comparison showing HOW to differentiate similar concepts:
    - Use MEMORABLE ANALOGIES
    - Provide SIMPLE RULES
    - Include sub-categories when relevant
-   
-   Example for Shaping vs Chaining:
-   {
-     "concepts": [
-       {
-         "name": "Shaping",
-         "definition": "Behavior CHANGES form gradually toward target",
-         "analogy": "Like working with clay - you mold it step by step",
-         "rule": "Shaping = behavior CHANGES form"
-       },
-       {
-         "name": "Forward Chaining",
-         "definition": "Teach steps in order, starting from step 1",
-         "analogy": "Like reading a book - start at the beginning",
-         "rule": "Forward = Start with step 1, complete the rest"
-       },
-       {
-         "name": "Backward Chaining",
-         "definition": "Teach last step first, then work backwards",
-         "analogy": "Like solving a maze backwards - start at the end",
-         "rule": "Backward = Start with the LAST step"
-       }
-     ],
-     "testQuestion": "Does the behavior change FORM or do you teach existing behaviors in SEQUENCE?"
-   }
 
 7. OPTION EXPLANATIONS:
    For each option, explain in ${language} (keep ABA terms in English):
@@ -221,7 +226,6 @@ export async function POST(request: NextRequest) {
 
 8. CONCLUSION:
    ONE sentence connecting scenario to correct answer in ${language}.
-   Example: "Since the analyst started from the beginning (grab coat) → Forward Chaining"
 
 ## RESPONSE FORMAT:
 CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text.

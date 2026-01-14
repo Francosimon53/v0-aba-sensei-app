@@ -420,7 +420,7 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                 </div>
               </div>
 
-              {!isCorrect && questionData.trapDetector && (
+              {!isCorrect && (
                 <div className="glass-card rounded-2xl p-6 bg-yellow-400/10 border-yellow-400/30 space-y-4">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">🚨</span>
@@ -432,105 +432,114 @@ export function QuestionScreen({ examType, category, mode, onBack, language }: Q
                     </h3>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
-                      <p className="text-sm font-semibold text-yellow-400 mb-2">
-                        {language === "English" && `Trap word: "${questionData.trapDetector.trapWord}"`}
-                        {language === "Español" && `Palabra trampa: "${questionData.trapDetector.trapWord}"`}
-                        {language === "Português" && `Palavra armadilha: "${questionData.trapDetector.trapWord}"`}
-                        {language === "Français" && `Mot piège: "${questionData.trapDetector.trapWord}"`}
-                      </p>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-start gap-2">
-                          <span className="text-red-400 font-semibold flex-shrink-0">
-                            {language === "English" && "Common meaning:"}
-                            {language === "Español" && "Significado común:"}
-                            {language === "Português" && "Significado comum:"}
-                            {language === "Français" && "Signification courante:"}
-                          </span>
-                          <span className="text-gray-300">{questionData.trapDetector.commonMeaning}</span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <span className="text-green-400 font-semibold flex-shrink-0">
-                            {language === "English" && "ABA meaning:"}
-                            {language === "Español" && "Significado ABA:"}
-                            {language === "Português" && "Significado ABA:"}
-                            {language === "Français" && "Signification ABA:"}
-                          </span>
-                          <span className="text-gray-300">{questionData.trapDetector.abaMeaning}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-yellow-400/5 border border-yellow-400/20">
-                      <p className="text-sm text-gray-200 leading-relaxed">
-                        <span className="font-semibold text-yellow-400">
-                          {language === "English" && "This may have confused you because: "}
-                          {language === "Español" && "Esto pudo confundirte porque: "}
-                          {language === "Português" && "Isso pode ter confundido você porque: "}
-                          {language === "Français" && "Cela a pu vous confondre parce que: "}
-                        </span>
-                        {questionData.trapDetector.howItConfuses}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {questionData.decisionFilter && (
-                <div className="glass-card rounded-2xl overflow-hidden border-yellow-400/30">
-                  <button
-                    onClick={() => setShowDecisionFilter(!showDecisionFilter)}
-                    className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors duration-300 bg-yellow-400/5"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center">
-                        <Lightbulb className="h-5 w-5 text-yellow-400" />
-                      </div>
-                      <span className="font-semibold text-yellow-400">
-                        {language === "English" && "Decision Filter: How to Differentiate"}
-                        {language === "Español" && "Filtro de Decisión: Cómo Diferenciar"}
-                        {language === "Português" && "Filtro de Decisão: Como Diferenciar"}
-                        {language === "Français" && "Filtre de Décision: Comment Différencier"}
-                      </span>
-                    </div>
-                    <ChevronLeft
-                      className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${
-                        showDecisionFilter ? "-rotate-90" : "rotate-180"
-                      }`}
-                    />
-                  </button>
-
-                  {showDecisionFilter && (
-                    <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-300">
-                      <div className="space-y-3">
-                        {questionData.decisionFilter.concepts.map((concept, idx) => (
-                          <div key={idx} className="p-4 rounded-xl bg-black/40 border border-white/10">
-                            <p className="font-bold text-yellow-400 mb-2">{concept.name}</p>
-                            <p className="text-sm text-gray-200 mb-1">{concept.definition}</p>
-                            {concept.analogy && <p className="text-sm text-gray-300 italic">💡 {concept.analogy}</p>}
-                            {concept.rule && (
-                              <p className="text-sm text-yellow-300 font-semibold mt-1">→ {concept.rule}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
+                  {questionData.trapDetector ? (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
                         <p className="text-sm font-semibold text-yellow-400 mb-2">
-                          {language === "English" && "The Test:"}
-                          {language === "Español" && "La Prueba:"}
-                          {language === "Português" && "O Teste:"}
-                          {language === "Français" && "Le Test:"}
+                          {language === "English" && `Trap word: "${questionData.trapDetector.trapWord}"`}
+                          {language === "Español" && `Palabra trampa: "${questionData.trapDetector.trapWord}"`}
+                          {language === "Português" && `Palavra armadilha: "${questionData.trapDetector.trapWord}"`}
+                          {language === "Français" && `Mot piège: "${questionData.trapDetector.trapWord}"`}
                         </p>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-start gap-2">
+                            <span className="text-red-400 font-semibold flex-shrink-0">
+                              {language === "English" && "Common meaning:"}
+                              {language === "Español" && "Significado común:"}
+                              {language === "Português" && "Significado comum:"}
+                              {language === "Français" && "Signification courante:"}
+                            </span>
+                            <span className="text-gray-300">{questionData.trapDetector.commonMeaning}</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-green-400 font-semibold flex-shrink-0">
+                              {language === "English" && "ABA meaning:"}
+                              {language === "Español" && "Significado ABA:"}
+                              {language === "Português" && "Significado ABA:"}
+                              {language === "Français" && "Signification ABA:"}
+                            </span>
+                            <span className="text-gray-300">{questionData.trapDetector.abaMeaning}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-yellow-400/5 border border-yellow-400/20">
                         <p className="text-sm text-gray-200 leading-relaxed">
-                          {questionData.decisionFilter.testQuestion}
+                          <span className="font-semibold text-yellow-400">
+                            {language === "English" && "This may have confused you because: "}
+                            {language === "Español" && "Esto pudo confundirte porque: "}
+                            {language === "Português" && "Isso pode ter confundido você porque: "}
+                            {language === "Français" && "Cela a pu vous confondre parce que: "}
+                          </span>
+                          {questionData.trapDetector.howItConfuses}
                         </p>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-black/40 border border-yellow-400/20">
+                      <p className="text-sm text-gray-200 leading-relaxed">
+                        {language === "English" &&
+                          "No specific ABA trap words were identified in this question. Your error may be due to confusing similar concepts. Review the Decision Filter below to understand the key differences."}
+                        {language === "Español" &&
+                          "No se identificaron palabras trampa específicas de ABA en esta pregunta. Tu error puede deberse a confundir conceptos similares. Revisa el Filtro de Decisión a continuación para entender las diferencias clave."}
+                        {language === "Português" &&
+                          "Nenhuma palavra armadilha específica de ABA foi identificada nesta questão. Seu erro pode ser devido à confusão de conceitos semelhantes. Revise o Filtro de Decisão abaixo para entender as principais diferenças."}
+                        {language === "Français" &&
+                          "Aucun mot piège ABA spécifique n'a été identifié dans cette question. Votre erreur peut être due à la confusion de concepts similaires. Consultez le Filtre de Décision ci-dessous pour comprendre les différences clés."}
+                      </p>
                     </div>
                   )}
                 </div>
               )}
+
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setShowDecisionFilter(!showDecisionFilter)}
+                  className="w-full flex items-center justify-between p-5 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">🎯</span>
+                    <h3 className="font-semibold text-gray-100">
+                      {language === "English" && "Decision Filter"}
+                      {language === "Español" && "Filtro de Decisión"}
+                      {language === "Português" && "Filtro de Decisão"}
+                      {language === "Français" && "Filtre de Décision"}
+                    </h3>
+                  </div>
+                  <ChevronLeft
+                    className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${showDecisionFilter ? "-rotate-90" : "rotate-180"}`}
+                  />
+                </button>
+
+                {showDecisionFilter && (
+                  <div className="px-5 pb-5 space-y-4 animate-in slide-in-from-top-4 duration-300">
+                    <div className="space-y-3">
+                      {questionData.decisionFilter.concepts.map((concept, idx) => (
+                        <div key={idx} className="p-4 rounded-xl bg-black/40 border border-white/10">
+                          <p className="font-bold text-yellow-400 mb-2">{concept.name}</p>
+                          <p className="text-sm text-gray-200 mb-1">{concept.definition}</p>
+                          {concept.analogy && <p className="text-sm text-gray-300 italic">💡 {concept.analogy}</p>}
+                          {concept.rule && (
+                            <p className="text-sm text-yellow-300 font-semibold mt-1">→ {concept.rule}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/30">
+                      <p className="text-sm font-semibold text-yellow-400 mb-2">
+                        {language === "English" && "The Test:"}
+                        {language === "Español" && "La Prueba:"}
+                        {language === "Português" && "O Teste:"}
+                        {language === "Français" && "Le Test:"}
+                      </p>
+                      <p className="text-sm text-gray-200 leading-relaxed">
+                        {questionData.decisionFilter.testQuestion}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {questionData.conclusion && (
                 <div className="glass-card rounded-2xl p-5 bg-green-400/5 border-green-400/30">
