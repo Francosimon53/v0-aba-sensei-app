@@ -19,15 +19,16 @@ import {
 } from "@/lib/supabase/progress"
 
 export const categoryToDomain: Record<string, string> = {
-  // BCBA categories
-  "B. Concepts & Principles": "B",
-  "C. Measurement & Data Display": "C",
+  // BCBA categories - match exact names from CategoryMenu
+  "A. Behaviorism and Philosophical Foundations": "A",
+  "B. Concepts and Principles": "B",
+  "C. Measurement, Data Display, and Interpretation": "C",
   "D. Experimental Design": "D",
-  "E. Ethics Code": "E",
+  "E. Ethical and Professional Issues": "E",
   "F. Behavior Assessment": "F",
   "G. Behavior-Change Procedures": "G",
-  "H. Selecting Interventions": "H",
-  "I. Personnel Supervision": "I",
+  "H. Selecting and Implementing Interventions": "H",
+  "I. Personnel Supervision and Management": "I",
   // RBT categories
   Measurement: "A",
   Assessment: "B",
