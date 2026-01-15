@@ -4,29 +4,16 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { LanguageSelection } from "@/components/language-selection"
-import type { Language } from "@/types"
-
-export const categoryToDomain: Record<string, string> = {
-  // BCBA categories
-  "B. Concepts & Principles": "B",
-  "C. Measurement & Data Display": "C",
-  "D. Experimental Design": "D",
-  "E. Ethics Code": "E",
-  "F. Behavior Assessment": "F",
-  "G. Behavior-Change Procedures": "G",
-  "H. Selecting Interventions": "H",
-  "I. Personnel Supervision": "I",
-  // RBT categories
-  Measurement: "A",
-  Assessment: "B",
-  "Skill Acquisition": "C",
-  "Behavior Reduction": "D",
-  Documentation: "E",
-  "Professional Scope": "F",
-}
+import { ExamTypeSelection } from "@/components/exam-type-selection"
+import { CategoryMenu } from "@/components/category-menu"
+import type { Language, ExamType, Mode } from "@/types"
 
 export default function Page() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [step, setStep] = useState(1) // Start at step 1 (language selection) instead of 0
+  const [language, setLanguage] = useState<Language>("English")
+  const [examType, setExamType] = useState<ExamType>("BCBA")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -37,53 +24,74 @@ export default function Page() {
       } = await supabase.auth.getUser()
 
       if (user) {
-        // User is logged in, redirect to dashboard
-        router.push("/dashboard")
-      } else {
-        // Show language selection for guests
-        setIsLoading(false)
+        setIsAuthenticated(true)
+        setUserId(user.id)
       }
     }
     checkAuth()
-  }, [router])
+  }, [])
 
   const handleLanguageSelect = (lang: Language) => {
-    // Save language to localStorage for retrieval after login
+    setLanguage(lang)
+    // Save to localStorage for post-login
     localStorage.setItem("aba_sensei_language", lang)
-    // Redirect to login page
-    router.push("/auth/login")
+    setStep(2)
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4 animate-pulse">🥋</div>
-          <p className="text-white/60">Loading...</p>
-        </div>
-      </div>
-    )
+  const handleExamTypeSelect = (type: ExamType) => {
+    setExamType(type)
+    // Save to localStorage
+    localStorage.setItem("aba_sensei_exam_type", type)
+    setStep(3)
+  }
+
+  const handleCategorySelect = (cat: string, selectedMode: Mode) => {
+    // Navigate to tutor page with category context
+    const params = new URLSearchParams({
+      topic: cat,
+      examType: examType,
+      mode: selectedMode,
+    })
+    router.push(`/tutor?${params.toString()}`)
+  }
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1)
   }
 
   return (
     <div className="min-h-screen gradient-bg">
-      {/* Login/Signup buttons for guests */}
       <div className="absolute top-4 right-4 flex gap-2 z-50">
-        <button
-          onClick={() => router.push("/auth/login")}
-          className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
-        >
-          Login
-        </button>
-        <button
-          onClick={() => router.push("/auth/sign-up")}
-          className="px-4 py-2 text-sm bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-colors"
-        >
-          Sign Up
-        </button>
+        {isAuthenticated ? (
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="px-4 py-2 text-sm bg-white/10 text-white hover:bg-white/20 rounded-lg transition-colors"
+          >
+            Dashboard
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => router.push("/auth/sign-up")}
+              className="px-4 py-2 text-sm bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-colors"
+            >
+              Sign Up
+            </button>
+          </>
+        )}
       </div>
 
-      <LanguageSelection onSelect={handleLanguageSelect} />
+      {step === 1 && <LanguageSelection onSelect={handleLanguageSelect} />}
+      {step === 2 && <ExamTypeSelection onSelect={handleExamTypeSelect} onBack={handleBack} language={language} />}
+      {step === 3 && (
+        <CategoryMenu examType={examType} onSelect={handleCategorySelect} onBack={handleBack} language={language} />
+      )}
     </div>
   )
 }

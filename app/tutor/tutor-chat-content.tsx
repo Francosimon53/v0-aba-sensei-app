@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Bot, User, Send, ImageIcon, Mic, Sparkles, BookOpen, Brain, Zap } from "lucide-react"
+import { Bot, User, Send, ImageIcon, Mic, Sparkles, BookOpen, Brain, Zap, ArrowLeft } from "lucide-react"
 
 interface QuizOption {
   id: string
@@ -39,8 +39,10 @@ interface ChatMessage {
 
 export default function TutorChatContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const topicFromUrl = searchParams?.get("topic")
   const examTypeFromUrl = searchParams?.get("examType")
+  const modeFromUrl = searchParams?.get("mode") as "tutor" | "exam" | null
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
@@ -51,11 +53,12 @@ export default function TutorChatContent() {
   useEffect(() => {
     if (topicFromUrl && !hasInitialized) {
       setHasInitialized(true)
+      const modeText = modeFromUrl === "exam" ? "practice exam mode" : "tutor mode"
       const initialMessage: ChatMessage = {
         id: 1,
         sender: "ai",
         type: "text",
-        content: `Hello! I see you want to study ${topicFromUrl}. Let me generate your first question...`,
+        content: `Hello! I see you want to study ${topicFromUrl} in ${modeText}. Let me generate your first question...`,
       }
       setMessages([initialMessage])
 
@@ -91,7 +94,7 @@ export default function TutorChatContent() {
         },
       ])
     }
-  }, [topicFromUrl, hasInitialized])
+  }, [topicFromUrl, hasInitialized, modeFromUrl])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -352,12 +355,17 @@ export default function TutorChatContent() {
     <div className="flex flex-col h-screen bg-slate-950">
       <div className="border-b border-slate-800 bg-slate-950 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-200 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-slate-50">BCBA Tutor AI</h1>
-            <p className="text-xs text-slate-400">Powered by Claude</p>
+            <h1 className="font-semibold text-slate-50">{examTypeFromUrl?.toUpperCase() || "BCBA"} Tutor AI</h1>
+            <p className="text-xs text-slate-400">
+              {modeFromUrl === "exam" ? "Exam Mode" : "Tutor Mode"} • Powered by Claude
+            </p>
           </div>
         </div>
         <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
