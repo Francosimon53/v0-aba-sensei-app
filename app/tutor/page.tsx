@@ -2,13 +2,19 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Bot, User, Send, ImageIcon, Mic, Sparkles, BookOpen, Brain, Zap } from "lucide-react"
+import { User, Send, Sparkles, BookOpen, Brain, Zap, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 interface QuizOption {
   id: string
   text: string
   isCorrect: boolean
   rationale: string
+}
+
+interface Flashcard {
+  front: string
+  back: string
 }
 
 interface FollowUpCard {
@@ -27,13 +33,15 @@ interface FollowUpActions {
 interface ChatMessage {
   id: number
   sender: "ai" | "user"
-  type: "text" | "quiz_question"
+  type: "text" | "quiz_question" | "flashcards" | "topic_input"
   content: string
   options?: QuizOption[]
+  flashcards?: Flashcard[]
   userSelectedOptionId?: string | null
   isAnswered?: boolean
   difficulty?: "Easy" | "Medium" | "Hard"
   followUpActions?: FollowUpActions
+  flippedCards?: Set<number>
 }
 
 export default function AITutorChatPage() {
@@ -42,30 +50,31 @@ export default function AITutorChatPage() {
       id: 1,
       sender: "ai",
       type: "text",
-      content:
-        "¡Hola! Soy tu tutor BCBA con IA. Puedes preguntarme sobre cualquier tema de ABA o comenzar a practicar.",
+      content: "Hi! I'm your BCBA AI tutor. What would you like to practice today?",
       followUpActions: {
-        title: "¿Qué te gustaría hacer?",
+        title: "Choose an option:",
         cards: [
           {
             id: "practice",
-            title: "Comenzar práctica",
-            description: "Practica con preguntas de examen BCBA",
+            title: "Start Practice",
+            description: "Practice with BCBA exam questions",
             iconType: "quiz_blue",
           },
           {
             id: "topic",
-            title: "Aprender un tema",
-            description: "Pregúntame sobre conceptos específicos de ABA",
+            title: "Learn a Topic",
+            description: "Ask me about any ABA concept",
             iconType: "guide_green",
           },
         ],
-        buttons: [{ id: "start", text: "Comenzar ahora", primary: true }],
+        buttons: [{ id: "practice", text: "Start now", primary: true }],
       },
     },
   ])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [waitingForTopic, setWaitingForTopic] = useState(false)
+  const [currentTopic, setCurrentTopic] = useState<string>("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -73,57 +82,234 @@ export default function AITutorChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isTyping])
 
-  const handleCardClick = async (cardId: string) => {
-    if (cardId === "practice" || cardId === "start") {
-      await loadPracticeQuestion()
+  const callChatAPI = async (action: string, topic?: string, message?: string) => {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action,
+        topic: topic || currentTopic,
+        message: message || topic,
+        examLevel: "bcba",
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
     }
+
+    return response.json()
   }
 
-  const loadPracticeQuestion = async () => {
-    const userMessage: ChatMessage = {
-      id: Date.now(),
-      sender: "user",
-      type: "text",
-      content: "Comenzar práctica",
-    }
-    setMessages((prev) => [...prev, userMessage])
-
+  const loadPracticeQuestion = async (topic?: string) => {
     setIsTyping(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
 
     try {
-      const response = await fetch("/api/generate-topic-quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: "BCBA exam concepts" }),
-      })
-
-      if (!response.ok) throw new Error("Failed to generate question")
-
-      const data = await response.json()
+      const data = await callChatAPI("practice", topic || "BCBA exam concepts")
       setIsTyping(false)
 
-      const questionMessage: ChatMessage = {
-        id: Date.now(),
-        sender: "ai",
-        type: "quiz_question",
-        content: data.question,
-        options: data.options,
-        difficulty: data.difficulty,
-        userSelectedOptionId: null,
-        isAnswered: false,
+      if (data.type === "quiz" && data.question && data.options) {
+        const questionMessage: ChatMessage = {
+          id: Date.now(),
+          sender: "ai",
+          type: "quiz_question",
+          content: data.question,
+          options: data.options,
+          difficulty: data.difficulty || "Medium",
+          userSelectedOptionId: null,
+          isAnswered: false,
+        }
+        setMessages((prev) => [...prev, questionMessage])
+      } else {
+        throw new Error("Invalid response format")
       }
-
-      setMessages((prev) => [...prev, questionMessage])
     } catch (error) {
+      console.error("[v0] Error loading practice question:", error)
       setIsTyping(false)
       const errorMessage: ChatMessage = {
         id: Date.now(),
         sender: "ai",
         type: "text",
-        content: "Lo siento, hubo un error generando la pregunta. Por favor intenta de nuevo.",
+        content: "Sorry, I couldn't generate a question. Please try again.",
+        followUpActions: {
+          title: "Try again:",
+          cards: [],
+          buttons: [{ id: "practice", text: "Retry", primary: true }],
+        },
       }
       setMessages((prev) => [...prev, errorMessage])
+    }
+  }
+
+  const generateFlashcards = async (topic?: string) => {
+    const userMessage: ChatMessage = {
+      id: Date.now(),
+      sender: "user",
+      type: "text",
+      content: `Generate flashcards about: ${topic || currentTopic || "BCBA concepts"}`,
+    }
+    setMessages((prev) => [...prev, userMessage])
+    setIsTyping(true)
+
+    try {
+      const data = await callChatAPI("flashcards", topic || currentTopic || "BCBA concepts")
+      setIsTyping(false)
+
+      if (data.flashcards && data.flashcards.length > 0) {
+        const flashcardsMessage: ChatMessage = {
+          id: Date.now(),
+          sender: "ai",
+          type: "flashcards",
+          content: "Here are your flashcards. Click to flip!",
+          flashcards: data.flashcards,
+          flippedCards: new Set(),
+          followUpActions: {
+            title: "What's next?",
+            cards: [],
+            buttons: [
+              { id: "more_flashcards", text: "More flashcards" },
+              { id: "practice", text: "Practice questions", primary: true },
+            ],
+          },
+        }
+        setMessages((prev) => [...prev, flashcardsMessage])
+      } else {
+        throw new Error("No flashcards generated")
+      }
+    } catch (error) {
+      console.error("[v0] Error generating flashcards:", error)
+      setIsTyping(false)
+      const errorMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content: "Sorry, I couldn't generate flashcards. Let me try with a practice question instead.",
+        followUpActions: {
+          title: "Options:",
+          cards: [],
+          buttons: [{ id: "practice", text: "Practice question", primary: true }],
+        },
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    }
+  }
+
+  const generateStudyGuide = async (topic?: string) => {
+    const userMessage: ChatMessage = {
+      id: Date.now(),
+      sender: "user",
+      type: "text",
+      content: `Create study guide for: ${topic || currentTopic || "BCBA concepts"}`,
+    }
+    setMessages((prev) => [...prev, userMessage])
+    setIsTyping(true)
+
+    try {
+      const data = await callChatAPI("studyguide", topic || currentTopic || "BCBA concepts")
+      setIsTyping(false)
+
+      const guideMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content: data.content,
+        followUpActions: {
+          title: "Continue learning:",
+          cards: [],
+          buttons: [
+            { id: "flashcards", text: "Flashcards" },
+            { id: "practice", text: "Practice questions", primary: true },
+          ],
+        },
+      }
+      setMessages((prev) => [...prev, guideMessage])
+    } catch (error) {
+      console.error("[v0] Error generating study guide:", error)
+      setIsTyping(false)
+      const errorMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content: "Sorry, I couldn't generate the study guide. Please try again.",
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    }
+  }
+
+  const explainTopic = async (topic: string) => {
+    setCurrentTopic(topic)
+    setIsTyping(true)
+
+    try {
+      const data = await callChatAPI("explain", topic)
+      setIsTyping(false)
+
+      const explainMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content: data.content,
+        followUpActions: {
+          title: "Continue learning:",
+          cards: [
+            {
+              id: "flashcards",
+              title: "Flashcards",
+              description: "Create flashcards on this topic",
+              iconType: "flashcards_purple",
+            },
+            {
+              id: "studyguide",
+              title: "Study Guide",
+              description: "Get a study guide on this topic",
+              iconType: "guide_green",
+            },
+          ],
+          buttons: [
+            { id: "review", text: "Review Quiz" },
+            { id: "practice", text: "Practice Questions", primary: true },
+          ],
+        },
+      }
+      setMessages((prev) => [...prev, explainMessage])
+    } catch (error) {
+      console.error("[v0] Error explaining topic:", error)
+      setIsTyping(false)
+      const errorMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content: "Sorry, I couldn't explain that topic. Please try again.",
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    }
+  }
+
+  const handleCardClick = async (cardId: string) => {
+    if (cardId === "practice") {
+      const userMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "user",
+        type: "text",
+        content: "Start practice",
+      }
+      setMessages((prev) => [...prev, userMessage])
+      await loadPracticeQuestion()
+    } else if (cardId === "topic") {
+      setWaitingForTopic(true)
+      const promptMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content:
+          "What topic would you like to learn about? Type any ABA concept (e.g., 'reinforcement schedules', 'extinction', 'stimulus control').",
+      }
+      setMessages((prev) => [...prev, promptMessage])
+      inputRef.current?.focus()
+    } else if (cardId === "flashcards") {
+      await generateFlashcards()
+    } else if (cardId === "studyguide") {
+      await generateStudyGuide()
     }
   }
 
@@ -141,7 +327,6 @@ export default function AITutorChatPage() {
       }),
     )
 
-    // Add follow-up actions after 1 second
     setTimeout(() => {
       const selectedOption = messages.find((m) => m.id === messageId)?.options?.find((opt) => opt.id === optionId)
 
@@ -149,26 +334,26 @@ export default function AITutorChatPage() {
         id: Date.now() + 1,
         sender: "ai",
         type: "text",
-        content: selectedOption?.isCorrect ? "¡Excelente! 🎉" : "Buen intento. Aprendamos de esto.",
+        content: selectedOption?.isCorrect ? "Excellent! You got it right." : "Good try. Let's learn from this.",
         followUpActions: {
-          title: "Sigue aprendiendo",
+          title: "Keep learning:",
           cards: [
             {
               id: "flashcards",
-              title: "Tarjetas didácticas",
-              description: "Crea un conjunto completo de tarjetas para repasar",
+              title: "Flashcards",
+              description: "Create flashcards to review this topic",
               iconType: "flashcards_purple",
             },
             {
               id: "studyguide",
-              title: "Guía de estudio",
-              description: "Genera una guía de estudio sobre este tema",
+              title: "Study Guide",
+              description: "Generate a study guide on this topic",
               iconType: "guide_green",
             },
           ],
           buttons: [
-            { id: "review", text: "Cuestionario de revisión" },
-            { id: "more", text: "Más preguntas", primary: true },
+            { id: "review", text: "Review Quiz" },
+            { id: "more", text: "More Questions", primary: true },
           ],
         },
       }
@@ -176,13 +361,43 @@ export default function AITutorChatPage() {
     }, 1000)
   }
 
+  const handleFlipCard = (messageId: number, cardIndex: number) => {
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id === messageId && msg.type === "flashcards") {
+          const newFlipped = new Set(msg.flippedCards)
+          if (newFlipped.has(cardIndex)) {
+            newFlipped.delete(cardIndex)
+          } else {
+            newFlipped.add(cardIndex)
+          }
+          return { ...msg, flippedCards: newFlipped }
+        }
+        return msg
+      }),
+    )
+  }
+
   const handleActionButton = async (buttonId: string) => {
-    if (buttonId === "more") {
-      await loadPracticeQuestion()
+    if (buttonId === "more" || buttonId === "practice") {
+      const userMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "user",
+        type: "text",
+        content: "More questions",
+      }
+      setMessages((prev) => [...prev, userMessage])
+      await loadPracticeQuestion(currentTopic)
+    } else if (buttonId === "flashcards" || buttonId === "more_flashcards") {
+      await generateFlashcards()
+    } else if (buttonId === "studyguide") {
+      await generateStudyGuide()
+    } else if (buttonId === "review") {
+      await loadPracticeQuestion(currentTopic)
     }
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return
 
     const userMessage: ChatMessage = {
@@ -192,32 +407,50 @@ export default function AITutorChatPage() {
       content: inputText,
     }
     setMessages((prev) => [...prev, userMessage])
+    const userInput = inputText
     setInputText("")
 
-    // Simulate AI response
-    setIsTyping(true)
-    setTimeout(() => {
-      setIsTyping(false)
-      const aiMessage: ChatMessage = {
-        id: Date.now() + 1,
-        sender: "ai",
-        type: "text",
-        content: `Entiendo que estás interesado en "${inputText}". ¿Te gustaría practicar con preguntas sobre este tema?`,
-        followUpActions: {
-          title: "Opciones",
-          cards: [
-            {
-              id: "practice",
-              title: "Practicar con preguntas",
-              description: "Genera preguntas de práctica sobre este tema",
-              iconType: "quiz_blue",
-            },
-          ],
-          buttons: [{ id: "start", text: "Comenzar", primary: true }],
-        },
+    if (waitingForTopic) {
+      setWaitingForTopic(false)
+      await explainTopic(userInput)
+    } else {
+      // General chat - use RAG to respond
+      setIsTyping(true)
+      try {
+        const data = await callChatAPI("chat", undefined, userInput)
+        setIsTyping(false)
+
+        const aiMessage: ChatMessage = {
+          id: Date.now() + 1,
+          sender: "ai",
+          type: "text",
+          content: data.content,
+          followUpActions: {
+            title: "Options:",
+            cards: [
+              {
+                id: "practice",
+                title: "Practice Questions",
+                description: "Practice with questions on this topic",
+                iconType: "quiz_blue",
+              },
+            ],
+            buttons: [{ id: "practice", text: "Practice", primary: true }],
+          },
+        }
+        setMessages((prev) => [...prev, aiMessage])
+        setCurrentTopic(userInput)
+      } catch (error) {
+        setIsTyping(false)
+        const errorMessage: ChatMessage = {
+          id: Date.now() + 1,
+          sender: "ai",
+          type: "text",
+          content: "Sorry, I had trouble processing that. Could you try again?",
+        }
+        setMessages((prev) => [...prev, errorMessage])
       }
-      setMessages((prev) => [...prev, aiMessage])
-    }, 1500)
+    }
   }
 
   const getDifficultyColor = (difficulty: string) => {
@@ -265,14 +498,18 @@ export default function AITutorChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
+      {/* Header */}
       <div className="border-b border-gray-200 bg-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <Bot className="w-6 h-6 text-white" />
+          <Link href="/" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
+            <span className="text-xl">🥋</span>
           </div>
           <div>
-            <h1 className="font-semibold text-gray-900">BCBA Tutor AI</h1>
-            <p className="text-xs text-gray-500">Powered by Claude</p>
+            <h1 className="font-semibold text-gray-900">ABA Sensei</h1>
+            <p className="text-xs text-gray-500">AI Tutor with RAG</p>
           </div>
         </div>
         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -280,49 +517,50 @@ export default function AITutorChatPage() {
         </div>
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
             {message.sender === "ai" && (
               <div className="flex gap-3 max-w-[85%]">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-5 h-5 text-white" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm">🥋</span>
                 </div>
                 <div className="flex-1">
                   {message.type === "text" ? (
                     <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                      <p className="text-gray-900 leading-relaxed">{message.content}</p>
+                      <p className="text-gray-900 leading-relaxed whitespace-pre-wrap">{message.content}</p>
 
                       {message.followUpActions && (
                         <div className="mt-4 space-y-3">
-                          <h3 className="text-lg font-medium text-gray-900">{message.followUpActions.title}</h3>
+                          <h3 className="text-sm font-medium text-gray-700">{message.followUpActions.title}</h3>
 
-                          {/* Cards grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {message.followUpActions.cards.map((card) => (
-                              <button
-                                key={card.id}
-                                onClick={() => handleCardClick(card.id)}
-                                className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer text-left group"
-                              >
-                                <div className="flex gap-3">
-                                  <div
-                                    className={`w-10 h-10 rounded-full ${getIconBgColor(card.iconType)} flex items-center justify-center flex-shrink-0`}
-                                  >
-                                    {getIconComponent(card.iconType)}
+                          {message.followUpActions.cards.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {message.followUpActions.cards.map((card) => (
+                                <button
+                                  key={card.id}
+                                  onClick={() => handleCardClick(card.id)}
+                                  className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer text-left group"
+                                >
+                                  <div className="flex gap-3">
+                                    <div
+                                      className={`w-10 h-10 rounded-full ${getIconBgColor(card.iconType)} flex items-center justify-center flex-shrink-0`}
+                                    >
+                                      {getIconComponent(card.iconType)}
+                                    </div>
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                                        {card.title}
+                                      </h4>
+                                      <p className="text-sm text-gray-600 mt-0.5">{card.description}</p>
+                                    </div>
                                   </div>
-                                  <div className="flex-1">
-                                    <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                                      {card.title}
-                                    </h4>
-                                    <p className="text-sm text-gray-600 mt-0.5">{card.description}</p>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
-                          {/* Action buttons */}
                           <div className="flex gap-2 flex-wrap">
                             {message.followUpActions.buttons.map((button) => (
                               <Button
@@ -331,7 +569,7 @@ export default function AITutorChatPage() {
                                 variant={button.primary ? "default" : "outline"}
                                 className={`rounded-full text-sm ${
                                   button.primary
-                                    ? "bg-blue-500 hover:bg-blue-600 text-white"
+                                    ? "bg-amber-500 hover:bg-amber-600 text-white"
                                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
                                 }`}
                               >
@@ -339,6 +577,51 @@ export default function AITutorChatPage() {
                               </Button>
                             ))}
                           </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : message.type === "flashcards" ? (
+                    <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md p-5 shadow-sm space-y-4">
+                      <p className="text-gray-900">{message.content}</p>
+
+                      <div className="grid grid-cols-1 gap-3">
+                        {message.flashcards?.map((card, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleFlipCard(message.id, index)}
+                            className="w-full p-4 rounded-xl border-2 border-purple-200 bg-purple-50 hover:bg-purple-100 transition-all text-left min-h-[80px]"
+                          >
+                            {message.flippedCards?.has(index) ? (
+                              <div>
+                                <p className="text-xs text-purple-500 mb-1">Answer:</p>
+                                <p className="text-gray-900">{card.back}</p>
+                              </div>
+                            ) : (
+                              <div>
+                                <p className="text-xs text-purple-500 mb-1">Question:</p>
+                                <p className="text-gray-900 font-medium">{card.front}</p>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {message.followUpActions && (
+                        <div className="flex gap-2 flex-wrap pt-2">
+                          {message.followUpActions.buttons.map((button) => (
+                            <Button
+                              key={button.id}
+                              onClick={() => handleActionButton(button.id)}
+                              variant={button.primary ? "default" : "outline"}
+                              className={`rounded-full text-sm ${
+                                button.primary
+                                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              {button.text}
+                            </Button>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -376,7 +659,7 @@ export default function AITutorChatPage() {
                                     ? "bg-red-50 text-red-900 border-red-500"
                                     : message.isAnswered
                                       ? "bg-gray-50 text-gray-400 border-gray-200"
-                                      : "bg-white hover:bg-gray-50 border-gray-300 hover:border-blue-400 cursor-pointer"
+                                      : "bg-white hover:bg-gray-50 border-gray-300 hover:border-amber-400 cursor-pointer"
                               }`}
                             >
                               <span className="font-semibold">{option.id}.</span> {option.text}
@@ -386,14 +669,14 @@ export default function AITutorChatPage() {
                       </div>
 
                       {message.isAnswered && message.options && (
-                        <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                          <p className="font-semibold text-gray-900 mb-2">Explicación:</p>
+                        <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                          <p className="font-semibold text-gray-900 mb-2">Explanation:</p>
                           {message.options.map((option) => {
                             if (option.id === message.userSelectedOptionId || option.isCorrect) {
                               return (
                                 <div key={option.id} className="mb-3 last:mb-0">
                                   <p className="text-sm font-semibold text-gray-700">
-                                    {option.id}: {option.isCorrect ? "✓ Correcta" : "✗ Incorrecta"}
+                                    {option.id}: {option.isCorrect ? "✓ Correct" : "✗ Incorrect"}
                                   </p>
                                   <p className="text-sm text-gray-600 mt-1">{option.rationale}</p>
                                 </div>
@@ -411,10 +694,10 @@ export default function AITutorChatPage() {
 
             {message.sender === "user" && (
               <div className="flex gap-3 max-w-[85%]">
-                <div className="bg-blue-500 text-white rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
+                <div className="bg-amber-500 text-white rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
                   <p>{message.content}</p>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-white" />
                 </div>
               </div>
@@ -425,13 +708,13 @@ export default function AITutorChatPage() {
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex gap-3 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm">🥋</span>
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -440,28 +723,23 @@ export default function AITutorChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input */}
       <div className="border-t border-gray-200 bg-white p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 bg-gray-100 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-amber-500 transition-all">
             <input
               ref={inputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              placeholder="Pregúntale al tutor BCBA..."
+              placeholder={waitingForTopic ? "Enter a topic (e.g., reinforcement)" : "Ask the tutor anything..."}
               className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500"
             />
-            <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-              <ImageIcon className="w-5 h-5 text-gray-600" />
-            </button>
-            <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-              <Mic className="w-5 h-5 text-gray-600" />
-            </button>
             <button
               onClick={handleSendMessage}
               disabled={!inputText.trim()}
-              className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 rounded-full transition-colors"
+              className="p-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 rounded-full transition-colors"
             >
               <Send className="w-5 h-5 text-white" />
             </button>
