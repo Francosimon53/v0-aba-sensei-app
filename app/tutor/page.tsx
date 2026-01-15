@@ -42,25 +42,24 @@ export default function AITutorChatPage() {
       id: 1,
       sender: "ai",
       type: "text",
-      content:
-        "¡Hola! Soy tu tutor BCBA con IA. Puedes preguntarme sobre cualquier tema de ABA o comenzar a practicar.",
+      content: "Hello! I'm your AI BCBA Tutor. Ready to practice discontinuous measurement?",
       followUpActions: {
-        title: "¿Qué te gustaría hacer?",
+        title: "What would you like to do?",
         cards: [
           {
             id: "practice",
-            title: "Comenzar práctica",
-            description: "Practica con preguntas de examen BCBA",
+            title: "Start Practice",
+            description: "Practice with BCBA exam questions",
             iconType: "quiz_blue",
           },
           {
             id: "topic",
-            title: "Aprender un tema",
-            description: "Pregúntame sobre conceptos específicos de ABA",
+            title: "Learn a Topic",
+            description: "Ask me about specific ABA concepts",
             iconType: "guide_green",
           },
         ],
-        buttons: [{ id: "start", text: "Comenzar ahora", primary: true }],
+        buttons: [{ id: "start", text: "Start Now", primary: true }],
       },
     },
   ])
@@ -84,7 +83,7 @@ export default function AITutorChatPage() {
       id: Date.now(),
       sender: "user",
       type: "text",
-      content: "Comenzar práctica",
+      content: "Start Practice",
     }
     setMessages((prev) => [...prev, userMessage])
 
@@ -121,7 +120,7 @@ export default function AITutorChatPage() {
         id: Date.now(),
         sender: "ai",
         type: "text",
-        content: "Lo siento, hubo un error generando la pregunta. Por favor intenta de nuevo.",
+        content: "Sorry, there was an error generating the question. Please try again.",
       }
       setMessages((prev) => [...prev, errorMessage])
     }
@@ -141,7 +140,6 @@ export default function AITutorChatPage() {
       }),
     )
 
-    // Add follow-up actions after 1 second
     setTimeout(() => {
       const selectedOption = messages.find((m) => m.id === messageId)?.options?.find((opt) => opt.id === optionId)
 
@@ -149,26 +147,26 @@ export default function AITutorChatPage() {
         id: Date.now() + 1,
         sender: "ai",
         type: "text",
-        content: selectedOption?.isCorrect ? "¡Excelente! 🎉" : "Buen intento. Aprendamos de esto.",
+        content: selectedOption?.isCorrect ? "Excellent! 🎉" : "Good try. Let's learn from this.",
         followUpActions: {
-          title: "Sigue aprendiendo",
+          title: "Keep Learning",
           cards: [
             {
               id: "flashcards",
-              title: "Tarjetas didácticas",
-              description: "Crea un conjunto completo de tarjetas para repasar",
+              title: "Flashcards",
+              description: "Review key terms for this topic.",
               iconType: "flashcards_purple",
             },
             {
               id: "studyguide",
-              title: "Guía de estudio",
-              description: "Genera una guía de estudio sobre este tema",
+              title: "Study Guide",
+              description: "Generate a summary of missed concepts.",
               iconType: "guide_green",
             },
           ],
           buttons: [
-            { id: "review", text: "Cuestionario de revisión" },
-            { id: "more", text: "Más preguntas", primary: true },
+            { id: "review", text: "Review Quiz" },
+            { id: "more", text: "More Questions", primary: true },
           ],
         },
       }
@@ -194,7 +192,6 @@ export default function AITutorChatPage() {
     setMessages((prev) => [...prev, userMessage])
     setInputText("")
 
-    // Simulate AI response
     setIsTyping(true)
     setTimeout(() => {
       setIsTyping(false)
@@ -202,18 +199,18 @@ export default function AITutorChatPage() {
         id: Date.now() + 1,
         sender: "ai",
         type: "text",
-        content: `Entiendo que estás interesado en "${inputText}". ¿Te gustaría practicar con preguntas sobre este tema?`,
+        content: `I understand you're interested in "${inputText}". Would you like to practice with questions on this topic?`,
         followUpActions: {
-          title: "Opciones",
+          title: "Options",
           cards: [
             {
               id: "practice",
-              title: "Practicar con preguntas",
-              description: "Genera preguntas de práctica sobre este tema",
+              title: "Practice with Questions",
+              description: "Generate practice questions about this topic",
               iconType: "quiz_blue",
             },
           ],
-          buttons: [{ id: "start", text: "Comenzar", primary: true }],
+          buttons: [{ id: "start", text: "Start", primary: true }],
         },
       }
       setMessages((prev) => [...prev, aiMessage])
@@ -384,13 +381,13 @@ export default function AITutorChatPage() {
 
                       {message.isAnswered && message.options && (
                         <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                          <p className="font-semibold text-slate-200 mb-2">Explicación:</p>
+                          <p className="font-semibold text-slate-200 mb-2">Rationale:</p>
                           {message.options.map((option) => {
                             if (option.id === message.userSelectedOptionId || option.isCorrect) {
                               return (
                                 <div key={option.id} className="mb-3 last:mb-0">
                                   <p className="text-sm font-semibold text-slate-300">
-                                    {option.id}: {option.isCorrect ? "✓ Correcta" : "✗ Incorrecta"}
+                                    {option.id}: {option.isCorrect ? "✓ Correct" : "✗ Incorrect"}
                                   </p>
                                   <p className="text-sm text-slate-400 mt-1">{option.rationale}</p>
                                 </div>
@@ -446,7 +443,7 @@ export default function AITutorChatPage() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              placeholder="Pregúntale al tutor BCBA..."
+              placeholder="Ask the BCBA Tutor..."
               className="flex-1 bg-transparent outline-none text-white placeholder:text-slate-500"
             />
             <button className="p-2 hover:bg-slate-800 rounded-full transition-colors">
