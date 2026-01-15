@@ -429,6 +429,16 @@ export default function DashboardPage() {
                     <span>AI Tutor</span>
                   </div>
                 </Button>
+
+                <Button
+                  onClick={() => router.push("/admin/embeddings")}
+                  className="h-14 bg-transparent hover:bg-purple-500/20 text-white font-semibold border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">⚙️</span>
+                    <span>Generate Embeddings</span>
+                  </div>
+                </Button>
               </div>
             </div>
 
