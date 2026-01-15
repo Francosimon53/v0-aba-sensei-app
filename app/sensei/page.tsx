@@ -228,7 +228,7 @@ export default function SenseiModePage() {
       </div>
 
       <div className="border-t border-white/10 bg-zinc-900 p-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 max-w-[600px] mx-auto">
           <input
             type="text"
             value={inputText}
