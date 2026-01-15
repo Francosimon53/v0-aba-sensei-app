@@ -106,6 +106,11 @@ export async function updateUserProgress(
 
   console.log("[v0] updateUserProgress called with:", { userId, categoryId, isCorrect, timeSpentSeconds })
 
+  if (!categoryId || categoryId.trim() === "") {
+    console.error("[v0] ERROR: categoryId is empty or null!")
+    return false
+  }
+
   // First, try to get existing progress
   const { data: existingProgress, error: fetchError } = await supabase
     .from("user_progress")
@@ -140,7 +145,7 @@ export async function updateUserProgress(
       updated_at: new Date().toISOString(),
     }
 
-    console.log("[v0] Updating progress with data:", updateData)
+    console.log("[v0] Updating existing progress with data:", updateData)
 
     const { data: updatedData, error: updateError } = await supabase
       .from("user_progress")
@@ -154,11 +159,13 @@ export async function updateUserProgress(
       console.error("[v0] Error updating user progress:", updateError)
       return false
     }
+
+    console.log("[v0] Successfully updated user progress")
+    return true
   } else {
-    // Create new progress record
     const insertData = {
       user_id: userId,
-      category_id: categoryId,
+      category_id: categoryId, // Explicitly set category_id
       questions_attempted: 1,
       questions_correct: isCorrect ? 1 : 0,
       current_streak: isCorrect ? 1 : 0,
@@ -168,7 +175,7 @@ export async function updateUserProgress(
       last_practiced_at: new Date().toISOString(),
     }
 
-    console.log("[v0] Creating new progress record:", insertData)
+    console.log("[v0] Creating new progress record with data:", insertData)
 
     const { data: insertedData, error: insertError } = await supabase.from("user_progress").insert(insertData).select()
 
@@ -178,6 +185,8 @@ export async function updateUserProgress(
       console.error("[v0] Error inserting user progress:", insertError)
       return false
     }
+
+    console.log("[v0] Successfully created new user progress record")
   }
 
   const { data: verifyData, error: verifyError } = await supabase
@@ -187,7 +196,20 @@ export async function updateUserProgress(
     .eq("category_id", categoryId)
     .single()
 
-  console.log("[v0] Verification query result:", { verifyData, verifyError })
+  console.log("[v0] Verification after save:", { verifyData, verifyError })
+
+  if (verifyError) {
+    console.error("[v0] ERROR: Could not verify saved data!", verifyError)
+    return false
+  }
+
+  if (!verifyData || verifyData.category_id !== categoryId) {
+    console.error("[v0] ERROR: category_id mismatch after save!", {
+      expected: categoryId,
+      actual: verifyData?.category_id,
+    })
+    return false
+  }
 
   return true
 }

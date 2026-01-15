@@ -124,9 +124,12 @@ export default function StudyPage() {
     setLoadingTasks(true)
     setSessionStats({ total: 0, correct: 0, startTime: Date.now() })
 
+    const domain = categoryToDomain[cat] || cat.charAt(0)
+    console.log("[v0] Category selected:", { cat, domain, mapping: categoryToDomain })
+
     // Create study session
     if (userId) {
-      const session = await createStudySession(userId, examType, categoryToDomain[cat] || cat.charAt(0), selectedMode)
+      const session = await createStudySession(userId, examType, domain, selectedMode)
       setCurrentSession(session)
     }
 
@@ -173,6 +176,19 @@ export default function StudyPage() {
     if (userId) {
       console.log("[v0] User ID exists:", userId)
 
+      const categoryId = categoryToDomain[category] || category.charAt(0)
+      console.log("[v0] Category mapping:", {
+        rawCategory: category,
+        mappedCategoryId: categoryId,
+        allMappings: categoryToDomain,
+      })
+
+      // Validate category_id is not empty
+      if (!categoryId || categoryId.trim() === "") {
+        console.error("[v0] ERROR: category_id is empty!", { category, categoryId })
+        return
+      }
+
       // Record the attempt
       const attemptResult = await recordQuestionAttempt(
         userId,
@@ -185,10 +201,8 @@ export default function StudyPage() {
       )
       console.log("[v0] Record attempt result:", attemptResult)
 
-      // Update user progress
-      const categoryId = categoryToDomain[category] || category.charAt(0)
-      console.log("[v0] Updating progress for category:", { category, categoryId })
-
+      // Update user progress with validated category_id
+      console.log("[v0] About to call updateUserProgress with:", { userId, categoryId, isCorrect, timeSpentSeconds })
       const progressResult = await updateUserProgress(userId, categoryId, isCorrect, timeSpentSeconds)
       console.log("[v0] Update progress result:", progressResult)
 
