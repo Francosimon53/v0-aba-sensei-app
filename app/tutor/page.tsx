@@ -223,60 +223,60 @@ export default function AITutorChatPage() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
-        return "bg-green-100 text-green-700"
+        return "bg-green-600/20 text-green-200 border border-green-800"
       case "Medium":
-        return "bg-yellow-100 text-yellow-700"
+        return "bg-yellow-600/20 text-yellow-200 border border-yellow-800"
       case "Hard":
-        return "bg-red-100 text-red-700"
+        return "bg-red-600/20 text-red-200 border border-red-800"
       default:
-        return "bg-gray-100 text-gray-700"
+        return "bg-slate-800 text-slate-300 border border-slate-700"
     }
   }
 
   const getIconComponent = (iconType: string) => {
     switch (iconType) {
       case "flashcards_purple":
-        return <Brain className="w-5 h-5 text-purple-600" />
+        return <Brain className="w-5 h-5 text-purple-300" />
       case "guide_green":
-        return <BookOpen className="w-5 h-5 text-green-600" />
+        return <BookOpen className="w-5 h-5 text-green-300" />
       case "quiz_blue":
-        return <Sparkles className="w-5 h-5 text-blue-600" />
+        return <Sparkles className="w-5 h-5 text-blue-300" />
       case "more_orange":
-        return <Zap className="w-5 h-5 text-orange-600" />
+        return <Zap className="w-5 h-5 text-orange-300" />
       default:
-        return <BookOpen className="w-5 h-5 text-gray-600" />
+        return <BookOpen className="w-5 h-5 text-slate-400" />
     }
   }
 
   const getIconBgColor = (iconType: string) => {
     switch (iconType) {
       case "flashcards_purple":
-        return "bg-purple-100"
+        return "bg-purple-900/50"
       case "guide_green":
-        return "bg-green-100"
+        return "bg-green-900/50"
       case "quiz_blue":
-        return "bg-blue-100"
+        return "bg-blue-900/50"
       case "more_orange":
-        return "bg-orange-100"
+        return "bg-orange-900/50"
       default:
-        return "bg-gray-100"
+        return "bg-slate-800"
     }
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      <div className="border-b border-gray-200 bg-white px-4 py-3 flex items-center justify-between">
+    <div className="flex flex-col h-screen bg-slate-950">
+      <div className="border-b border-slate-800 bg-slate-950 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-gray-900">BCBA Tutor AI</h1>
-            <p className="text-xs text-gray-500">Powered by Claude</p>
+            <h1 className="font-semibold text-slate-50">BCBA Tutor AI</h1>
+            <p className="text-xs text-slate-400">Powered by Claude</p>
           </div>
         </div>
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-          <User className="w-5 h-5 text-gray-600" />
+        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
+          <User className="w-5 h-5 text-slate-300" />
         </div>
       </div>
 
@@ -290,20 +290,19 @@ export default function AITutorChatPage() {
                 </div>
                 <div className="flex-1">
                   {message.type === "text" ? (
-                    <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                      <p className="text-gray-900 leading-relaxed">{message.content}</p>
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                      <p className="text-slate-50 leading-relaxed">{message.content}</p>
 
                       {message.followUpActions && (
                         <div className="mt-4 space-y-3">
-                          <h3 className="text-lg font-medium text-gray-900">{message.followUpActions.title}</h3>
+                          <h3 className="text-lg font-medium text-slate-50">{message.followUpActions.title}</h3>
 
-                          {/* Cards grid */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {message.followUpActions.cards.map((card) => (
                               <button
                                 key={card.id}
                                 onClick={() => handleCardClick(card.id)}
-                                className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer text-left group"
+                                className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:bg-slate-800 hover:border-slate-700 transition-all cursor-pointer text-left group"
                               >
                                 <div className="flex gap-3">
                                   <div
@@ -312,17 +311,16 @@ export default function AITutorChatPage() {
                                     {getIconComponent(card.iconType)}
                                   </div>
                                   <div className="flex-1">
-                                    <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                    <h4 className="font-semibold text-slate-50 group-hover:text-blue-400 transition-colors">
                                       {card.title}
                                     </h4>
-                                    <p className="text-sm text-gray-600 mt-0.5">{card.description}</p>
+                                    <p className="text-sm text-slate-400 mt-0.5">{card.description}</p>
                                   </div>
                                 </div>
                               </button>
                             ))}
                           </div>
 
-                          {/* Action buttons */}
                           <div className="flex gap-2 flex-wrap">
                             {message.followUpActions.buttons.map((button) => (
                               <Button
@@ -331,8 +329,8 @@ export default function AITutorChatPage() {
                                 variant={button.primary ? "default" : "outline"}
                                 className={`rounded-full text-sm ${
                                   button.primary
-                                    ? "bg-blue-500 hover:bg-blue-600 text-white"
-                                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                    : "border-slate-700 text-slate-200 hover:bg-slate-800 bg-slate-900"
                                 }`}
                               >
                                 {button.text}
@@ -343,8 +341,7 @@ export default function AITutorChatPage() {
                       )}
                     </div>
                   ) : (
-                    // Quiz question
-                    <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md p-5 shadow-sm space-y-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-5 shadow-sm space-y-4">
                       {message.difficulty && (
                         <div className="flex justify-end">
                           <span
@@ -355,7 +352,7 @@ export default function AITutorChatPage() {
                         </div>
                       )}
 
-                      <p className="text-gray-900 leading-relaxed">{message.content}</p>
+                      <p className="text-slate-50 leading-relaxed">{message.content}</p>
 
                       <div className="space-y-2">
                         {message.options?.map((option) => {
@@ -371,12 +368,12 @@ export default function AITutorChatPage() {
                               disabled={message.isAnswered}
                               className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
                                 showAsCorrect
-                                  ? "bg-green-50 text-green-900 border-green-500"
+                                  ? "bg-green-600/20 text-green-200 border-green-800"
                                   : showAsIncorrect
-                                    ? "bg-red-50 text-red-900 border-red-500"
+                                    ? "bg-red-600/20 text-red-200 border-red-800"
                                     : message.isAnswered
-                                      ? "bg-gray-50 text-gray-400 border-gray-200"
-                                      : "bg-white hover:bg-gray-50 border-gray-300 hover:border-blue-400 cursor-pointer"
+                                      ? "bg-slate-800/50 text-slate-500 border-slate-700"
+                                      : "bg-slate-800 text-slate-200 hover:bg-slate-700 border-slate-700 hover:border-slate-600 cursor-pointer"
                               }`}
                             >
                               <span className="font-semibold">{option.id}.</span> {option.text}
@@ -386,16 +383,16 @@ export default function AITutorChatPage() {
                       </div>
 
                       {message.isAnswered && message.options && (
-                        <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                          <p className="font-semibold text-gray-900 mb-2">Explicación:</p>
+                        <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                          <p className="font-semibold text-slate-200 mb-2">Explicación:</p>
                           {message.options.map((option) => {
                             if (option.id === message.userSelectedOptionId || option.isCorrect) {
                               return (
                                 <div key={option.id} className="mb-3 last:mb-0">
-                                  <p className="text-sm font-semibold text-gray-700">
+                                  <p className="text-sm font-semibold text-slate-300">
                                     {option.id}: {option.isCorrect ? "✓ Correcta" : "✗ Incorrecta"}
                                   </p>
-                                  <p className="text-sm text-gray-600 mt-1">{option.rationale}</p>
+                                  <p className="text-sm text-slate-400 mt-1">{option.rationale}</p>
                                 </div>
                               )
                             }
@@ -411,10 +408,10 @@ export default function AITutorChatPage() {
 
             {message.sender === "user" && (
               <div className="flex gap-3 max-w-[85%]">
-                <div className="bg-blue-500 text-white rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
+                <div className="bg-blue-600 text-white rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
                   <p>{message.content}</p>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-white" />
                 </div>
               </div>
@@ -428,10 +425,10 @@ export default function AITutorChatPage() {
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
                 <Bot className="w-5 h-5 text-white" />
               </div>
-              <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm flex gap-1">
+                <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -440,9 +437,9 @@ export default function AITutorChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-gray-200 bg-white p-4">
+      <div className="border-t border-slate-800 bg-slate-950 p-4">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 bg-gray-100 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+          <div className="flex items-center gap-2 bg-slate-900 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-slate-700 transition-all">
             <input
               ref={inputRef}
               type="text"
@@ -450,18 +447,18 @@ export default function AITutorChatPage() {
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               placeholder="Pregúntale al tutor BCBA..."
-              className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500"
+              className="flex-1 bg-transparent outline-none text-white placeholder:text-slate-500"
             />
-            <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-              <ImageIcon className="w-5 h-5 text-gray-600" />
+            <button className="p-2 hover:bg-slate-800 rounded-full transition-colors">
+              <ImageIcon className="w-5 h-5 text-slate-400" />
             </button>
-            <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-              <Mic className="w-5 h-5 text-gray-600" />
+            <button className="p-2 hover:bg-slate-800 rounded-full transition-colors">
+              <Mic className="w-5 h-5 text-slate-400" />
             </button>
             <button
               onClick={handleSendMessage}
               disabled={!inputText.trim()}
-              className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 rounded-full transition-colors"
+              className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 rounded-full transition-colors"
             >
               <Send className="w-5 h-5 text-white" />
             </button>
