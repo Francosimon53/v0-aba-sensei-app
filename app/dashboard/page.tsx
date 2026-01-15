@@ -388,64 +388,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="mb-10">
-              <h3 className="text-xl font-bold text-white mb-6">Progress by Domain</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getAllDomains().map((domain) => {
-                  const progress =
-                    domain.questionsAttempted > 0
-                      ? Math.round((domain.questionsCorrect / domain.questionsAttempted) * 100)
-                      : 0
-                  const badge = getMasteryBadge(domain.masteryLevel)
-
-                  return (
-                    <Card
-                      key={domain.domain}
-                      className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300 group"
-                    >
-                      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/0 to-transparent group-hover:from-yellow-400/5 transition-all duration-300 pointer-events-none" />
-                      <div className="relative">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <div className="text-yellow-400 font-bold text-lg mb-1">{domain.domain}</div>
-                            <h4 className="text-white/90 text-sm font-medium leading-tight">{domain.name}</h4>
-                          </div>
-                          <div className={`px-2 py-1 rounded-full text-xs border ${badge.className}`}>
-                            {badge.label}
-                          </div>
-                        </div>
-
-                        <div className="mb-4">
-                          <div className="flex justify-between text-xs text-white/50 mb-2">
-                            <span>
-                              {domain.questionsCorrect}/{domain.questionsAttempted} correct
-                            </span>
-                            <span className="font-semibold text-white/70">{progress}%</span>
-                          </div>
-                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <Button
-                          onClick={() => router.push(`/study?category=${domain.domain}`)}
-                          className="w-full h-9 bg-transparent hover:bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 hover:border-yellow-400/50 text-sm transition-all duration-300"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">📚</span>
-                            <span>Practice</span>
-                          </div>
-                        </Button>
-                      </div>
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div className="mb-10">
               <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button
@@ -473,7 +415,7 @@ export default function DashboardPage() {
                   className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">⚡</span>
+                    <span className="text-xl">🎓</span>
                     <span>Exam Mode</span>
                   </div>
                 </Button>
@@ -489,27 +431,28 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {recentSessions.map((session) => (
-                    <div key={session.id} className="p-4 hover:bg-white/5 transition-colors">
+                    <Card
+                      key={session.id}
+                      className="bg-white/5 border-white/10 backdrop-blur-sm p-4 hover:border-yellow-400/30 transition-all"
+                    >
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="text-white font-medium text-sm mb-1">Domain {session.categoryId}</div>
-                          <div className="flex items-center gap-4 text-xs text-white/50">
-                            <span>{formatDate(session.startedAt)}</span>
-                            <span>
-                              {session.correctAnswers}/{session.totalQuestions} correct
-                            </span>
-                            <span>{formatDuration(session.durationSeconds)}</span>
-                            <span className="capitalize">{session.mode} mode</span>
+                        <div>
+                          <div className="text-white font-medium mb-1">{session.categoryId || "General Study"}</div>
+                          <div className="text-sm text-white/50">
+                            {session.correctAnswers}/{session.totalQuestions} correct (
+                            {Math.round((session.correctAnswers / session.totalQuestions) * 100)}%) ·{" "}
+                            {formatDuration(session.durationSeconds)} · {formatDate(session.startedAt)}
                           </div>
                         </div>
-                        <div className="text-xl font-bold text-yellow-400">
-                          {session.totalQuestions > 0
-                            ? Math.round((session.correctAnswers / session.totalQuestions) * 100)
-                            : 0}
-                          %
+                        <div className="flex items-center gap-2">
+                          {session.mode === "exam" && (
+                            <span className="px-2 py-1 rounded text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                              Exam Mode
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               )}
