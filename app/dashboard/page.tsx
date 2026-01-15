@@ -335,7 +335,7 @@ export default function DashboardPage() {
                 guidance.
               </p>
               <Button
-                onClick={() => router.push("/sensei")}
+                onClick={() => router.push("/study")}
                 className="h-16 px-8 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold text-xl shadow-lg shadow-yellow-500/20"
               >
                 <div className="flex items-center gap-3">
@@ -391,7 +391,7 @@ export default function DashboardPage() {
               <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button
-                  onClick={() => router.push("/sensei")}
+                  onClick={() => router.push(lastCategory ? `/study?category=${lastCategory}` : "/study")}
                   className="h-14 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold shadow-lg shadow-yellow-500/20 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
@@ -401,7 +401,7 @@ export default function DashboardPage() {
                 </Button>
 
                 <Button
-                  onClick={() => router.push("/sensei")}
+                  onClick={() => router.push("/study")}
                   className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
@@ -411,7 +411,7 @@ export default function DashboardPage() {
                 </Button>
 
                 <Button
-                  onClick={() => router.push("/sensei?tab=exam")}
+                  onClick={() => router.push("/study?mode=exam")}
                   className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
@@ -421,12 +421,12 @@ export default function DashboardPage() {
                 </Button>
 
                 <Button
-                  onClick={() => router.push("/admin/embeddings")}
-                  className="h-14 bg-transparent hover:bg-purple-500/20 text-white font-semibold border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300"
+                  onClick={() => router.push("/tutor")}
+                  className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">⚙️</span>
-                    <span>Generate Embeddings</span>
+                    <span className="text-xl">✨</span>
+                    <span>AI Tutor</span>
                   </div>
                 </Button>
               </div>
