@@ -21,6 +21,44 @@ import { createClient } from "@/lib/supabase/client"
 //   keywords: string | null
 // }
 
+function extractShortTitle(taskText: string): string {
+  // The task_text may contain multiple sections with headers
+  // Extract just the first meaningful line (usually "TÍTULO:" or first sentence)
+  const lines = taskText.split("\n").filter((line) => line.trim())
+
+  // Look for a title marker first
+  const titleLine = lines.find(
+    (line) =>
+      line.startsWith("TÍTULO:") ||
+      line.startsWith("TITLE:") ||
+      line.startsWith("DEFINICIÓN CORTA:") ||
+      line.startsWith("SHORT DEFINITION:"),
+  )
+
+  if (titleLine) {
+    // Extract text after the colon
+    const colonIndex = titleLine.indexOf(":")
+    if (colonIndex !== -1) {
+      return titleLine.substring(colonIndex + 1).trim()
+    }
+  }
+
+  // If no title marker, use the first line but limit length
+  const firstLine = lines[0] || ""
+  // Truncate to first sentence or max 100 chars
+  const endOfSentence = firstLine.search(/[.!?]/)
+  if (endOfSentence !== -1 && endOfSentence < 100) {
+    return firstLine.substring(0, endOfSentence + 1).trim()
+  }
+
+  // If task_text is very long, just use the task_id description
+  if (firstLine.length > 100) {
+    return firstLine.substring(0, 100).trim() + "..."
+  }
+
+  return firstLine.trim()
+}
+
 const translations: Record<Language, any> = {
   English: {
     loadingTasks: "Loading tasks...",
@@ -399,8 +437,8 @@ const ABA_TRAP_WORDS: Record<
     aba: {
       English: "STOP providing reinforcement for a previously reinforced behavior",
       Español: "DEJAR de proporcionar refuerzo para una conducta previamente reforzada",
-      Português: "PARAR de fornecer reforço para um comportamento previamente reforçado",
-      Français: "ARRÊTER de fournir du renforcement pour un comportement précédemment renforcé",
+      Português: "PARAR de fornecer reforço para um comportamento previously reforçado",
+      Français: "ARRÊTER de fournir du renforcement pour un comportement previously renforcé",
     },
     confusion: {
       English:
@@ -965,11 +1003,12 @@ export default function QuestionScreen({
             </button>
             <div className="flex-1 mx-4 min-w-0">
               <div className="text-xs text-amber-500 font-medium flex-shrink-0">{currentTask.task_id}</div>
+              {/* CHANGE: Only show short title, NOT raw knowledge_chunks content */}
               <div
                 className="text-sm text-zinc-300 break-words whitespace-normal overflow-hidden"
                 style={{ wordWrap: "break-word", overflowWrap: "break-word" }}
               >
-                {currentTask.task_text}
+                {extractShortTitle(currentTask.task_text)}
               </div>
             </div>
             <div className="flex gap-1">
