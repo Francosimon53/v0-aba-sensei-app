@@ -16,6 +16,7 @@ interface QuizOption {
 interface Quiz {
   question: string
   difficulty: "Easy" | "Medium" | "Hard"
+  topic: string
   options: QuizOption[]
 }
 
@@ -63,34 +64,34 @@ export default function AITutorPage() {
   }
 
   const handleOptionSelect = (optionId: string) => {
-    if (selectedOption) return // Already answered
+    if (selectedOption) return
     setSelectedOption(optionId)
-    setShowFeedback(true)
+    setTimeout(() => setShowFeedback(true), 300)
   }
 
   const handleNewQuestion = () => {
     setQuiz(null)
     setSelectedOption(null)
     setShowFeedback(false)
-    setTopic("")
+    setError(null)
   }
 
   const getOptionButtonClass = (option: QuizOption) => {
     if (!selectedOption) {
-      return "bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-400 text-slate-700"
+      return "bg-white hover:bg-slate-50/50 border-2 border-slate-200 hover:border-sky-400 hover:shadow-md text-slate-700 transition-all"
     }
 
     if (option.id === selectedOption) {
       return option.isCorrect
-        ? "bg-green-50 border-2 border-green-500 text-green-800"
-        : "bg-red-50 border-2 border-red-500 text-red-800"
+        ? "bg-emerald-50 border-2 border-emerald-500 text-emerald-900 shadow-lg"
+        : "bg-rose-50 border-2 border-rose-500 text-rose-900 shadow-lg"
     }
 
     if (option.isCorrect) {
-      return "bg-green-50 border-2 border-green-500 text-green-800"
+      return "bg-emerald-50 border-2 border-emerald-500 text-emerald-900 shadow-md"
     }
 
-    return "bg-slate-50 border-2 border-slate-200 text-slate-400"
+    return "bg-slate-50/30 border-2 border-slate-200 text-slate-400 opacity-60"
   }
 
   const getOptionIcon = (option: QuizOption) => {
@@ -98,14 +99,14 @@ export default function AITutorPage() {
 
     if (option.id === selectedOption) {
       return option.isCorrect ? (
-        <CheckCircle2 className="w-5 h-5 text-green-600" />
+        <CheckCircle2 className="w-6 h-6 text-emerald-600" />
       ) : (
-        <XCircle className="w-5 h-5 text-red-600" />
+        <XCircle className="w-6 h-6 text-rose-600" />
       )
     }
 
     if (option.isCorrect) {
-      return <CheckCircle2 className="w-5 h-5 text-green-600" />
+      return <CheckCircle2 className="w-6 h-6 text-emerald-600" />
     }
 
     return null
@@ -114,63 +115,67 @@ export default function AITutorPage() {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
-        return "bg-green-100 text-green-700 border-green-300"
+        return "bg-emerald-50 text-emerald-700 border-emerald-300"
       case "Medium":
-        return "bg-blue-100 text-blue-700 border-blue-300"
+        return "bg-amber-50 text-amber-700 border-amber-400"
       case "Hard":
-        return "bg-purple-100 text-purple-700 border-purple-300"
+        return "bg-rose-50 text-rose-700 border-rose-400"
       default:
         return "bg-slate-100 text-slate-700 border-slate-300"
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-white">
-      {/* Header */}
-      <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-white">
+      {/* Header - Clinical/Medical aesthetic */}
+      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-sm shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 shadow-md">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">AI Tutor</h1>
-              <p className="text-sm text-slate-500">Practice any topic with personalized questions</p>
+              <h1 className="text-2xl font-bold text-slate-800">BCBA Exam Prep</h1>
+              <p className="text-sm text-slate-500">Interactive Quiz & Study Assistant</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
-        {/* Topic Input */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+        {/* Topic Selector (Start Screen) */}
         {!quiz && !loading && (
-          <Card className="bg-white border-slate-200 shadow-lg p-8">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 mb-4">
-                <BookOpen className="w-8 h-8 text-blue-600" />
+          <Card className="bg-white border-slate-200 shadow-xl p-10">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-100 to-sky-200 mb-6 shadow-inner">
+                <BookOpen className="w-10 h-10 text-sky-700" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">What would you like to practice?</h2>
-              <p className="text-slate-500">
-                Enter any ABA topic and get a personalized practice question with detailed feedback
+              <h2 className="text-3xl font-bold text-slate-800 mb-3">What topic do you want to practice?</h2>
+              <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                Enter any ABA concept and receive a comprehensive practice question with detailed feedback
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <Input
                 type="text"
-                placeholder="e.g., Partial Interval Recording, Functional Analysis, Reinforcement Schedules..."
+                placeholder="e.g., Partial Interval, Ethics, Functional Analysis..."
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && generateQuiz()}
-                className="h-14 text-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                className="h-16 text-lg border-2 border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 rounded-xl shadow-sm"
               />
 
-              {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+              {error && (
+                <div className="bg-rose-50 border-l-4 border-rose-400 p-4 rounded-lg">
+                  <p className="text-sm text-rose-700">{error}</p>
+                </div>
+              )}
 
               <Button
                 onClick={generateQuiz}
                 disabled={!topic.trim()}
-                className="w-full h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-lg shadow-lg"
+                className="w-full h-16 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all rounded-xl"
               >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Generate Question
@@ -179,67 +184,72 @@ export default function AITutorPage() {
           </Card>
         )}
 
-        {/* Loading State */}
+        {/* Loading State - Sophisticated skeleton/thinking animation */}
         {loading && (
-          <Card className="bg-white border-slate-200 shadow-lg p-12">
-            <div className="text-center space-y-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 animate-pulse">
-                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+          <Card className="bg-white border-slate-200 shadow-xl p-14">
+            <div className="text-center space-y-8">
+              <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-sky-100 to-sky-200 animate-pulse shadow-lg">
+                <Loader2 className="w-12 h-12 text-sky-600 animate-spin" />
               </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">Generating your question...</h3>
-                <p className="text-slate-500">Analyzing {topic} and creating a practice scenario</p>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold text-slate-700">Thinking...</h3>
+                <p className="text-slate-500 text-lg">Generating your {topic} practice question</p>
               </div>
               <div className="flex justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="w-3 h-3 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-3 h-3 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-3 h-3 rounded-full bg-sky-400 animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </Card>
         )}
 
-        {/* Quiz Card */}
+        {/* Question Interface (Active State) */}
         {quiz && (
           <div className="space-y-6">
-            <Card className="bg-white border-slate-200 shadow-lg p-8">
-              {/* Difficulty Badge */}
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-sm text-slate-500 font-medium">Topic: {topic}</span>
+            <Card className="bg-white border-slate-200 shadow-xl p-8 sm:p-10">
+              {/* Topic and Difficulty Badge */}
+              <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-500 font-medium">Topic:</span>
+                  <span className="text-sm font-semibold text-slate-700">{quiz.topic}</span>
+                </div>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold border ${getDifficultyColor(quiz.difficulty)}`}
+                  className={`px-4 py-1.5 rounded-full text-sm font-bold border-2 ${getDifficultyColor(quiz.difficulty)} shadow-sm`}
                 >
                   {quiz.difficulty}
                 </span>
               </div>
 
-              {/* Question */}
-              <div className="mb-8">
-                <p className="text-lg text-slate-800 leading-relaxed whitespace-pre-wrap">{quiz.question}</p>
+              {/* Question Text */}
+              <div className="mb-10">
+                <p className="text-xl text-slate-800 leading-relaxed font-medium">{quiz.question}</p>
               </div>
 
-              {/* Options */}
-              <div className="space-y-3 mb-6">
+              {/* Answer Options - Large, clickable cards */}
+              <div className="space-y-4 mb-8">
                 {quiz.options.map((option) => (
                   <button
                     key={option.id}
                     onClick={() => handleOptionSelect(option.id)}
                     disabled={!!selectedOption}
-                    className={`w-full p-4 rounded-lg text-left transition-all duration-200 flex items-start gap-3 ${getOptionButtonClass(option)} ${!selectedOption ? "cursor-pointer" : "cursor-default"}`}
+                    className={`w-full p-5 rounded-xl text-left flex items-start gap-4 ${getOptionButtonClass(option)} ${!selectedOption ? "cursor-pointer active:scale-[0.98]" : "cursor-default"}`}
                   >
-                    <span className="font-bold text-base mt-0.5">{option.id}.</span>
-                    <span className="flex-1 text-base">{option.text}</span>
-                    {getOptionIcon(option)}
+                    <span className="font-bold text-lg mt-0.5 min-w-[24px]">{option.id}.</span>
+                    <span className="flex-1 text-lg leading-relaxed">{option.text}</span>
+                    <div className="mt-0.5">{getOptionIcon(option)}</div>
                   </button>
                 ))}
               </div>
 
-              {/* Feedback Section */}
+              {/* Rationale Section - Slides down/fades in after answering */}
               {showFeedback && (
-                <div className="border-t-2 border-slate-200 pt-6 mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-blue-600" />
-                    Rationale & Feedback
+                <div className="border-t-2 border-slate-200 pt-8 mt-8 space-y-5 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                  <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-sky-100">
+                      <BookOpen className="w-5 h-5 text-sky-700" />
+                    </div>
+                    Rationale & Explanation
                   </h3>
 
                   {quiz.options.map((option) => {
@@ -251,21 +261,21 @@ export default function AITutorPage() {
                     return (
                       <div
                         key={option.id}
-                        className={`p-4 rounded-lg border-l-4 ${
-                          option.isCorrect ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"
+                        className={`p-5 rounded-xl border-l-4 shadow-md ${
+                          option.isCorrect ? "bg-emerald-50 border-emerald-500" : "bg-rose-50 border-rose-500"
                         }`}
                       >
-                        <div className="flex items-start gap-2 mb-2">
+                        <div className="flex items-start gap-3 mb-3">
                           {option.isCorrect ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                            <CheckCircle2 className="w-6 h-6 text-emerald-600 mt-0.5" />
                           ) : (
-                            <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                            <XCircle className="w-6 h-6 text-rose-600 mt-0.5" />
                           )}
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-bold text-slate-800 text-lg">
                             Option {option.id}: {option.isCorrect ? "Correct Answer" : "Your Selection"}
                           </span>
                         </div>
-                        <p className="text-slate-700 ml-7">{option.rationale}</p>
+                        <p className="text-slate-700 ml-9 text-base leading-relaxed">{option.rationale}</p>
                       </div>
                     )
                   })}
@@ -273,14 +283,14 @@ export default function AITutorPage() {
               )}
             </Card>
 
-            {/* Next Action */}
+            {/* Next Question Button */}
             {showFeedback && (
-              <div className="flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+              <div className="flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
                 <Button
                   onClick={handleNewQuestion}
-                  className="h-14 px-8 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg"
+                  className="h-16 px-10 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-semibold text-lg shadow-xl hover:shadow-2xl transition-all rounded-xl"
                 >
-                  Generate Another Question
+                  Next Question
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
