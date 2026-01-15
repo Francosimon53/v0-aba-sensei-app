@@ -295,7 +295,7 @@ export default function DashboardPage() {
     })
   }
 
-  const isNewUser = userStats?.totalQuestions === 0 && domainProgress.length === 0
+  const shouldShowEmptyState = userStats?.totalQuestions === 0 && recentSessions.length === 0
 
   return (
     <div className="min-h-screen gradient-bg">
@@ -325,7 +325,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {isNewUser ? (
+        {shouldShowEmptyState ? (
           <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-12 text-center">
             <div className="max-w-2xl mx-auto">
               <div className="text-6xl mb-6">🥋</div>
@@ -433,7 +433,10 @@ export default function DashboardPage() {
                           onClick={() => router.push(`/study?category=${domain.domain}`)}
                           className="w-full h-9 bg-transparent hover:bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 hover:border-yellow-400/50 text-sm transition-all duration-300"
                         >
-                          Practice
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">📚</span>
+                            <span>Practice</span>
+                          </div>
                         </Button>
                       </div>
                     </Card>
@@ -479,39 +482,37 @@ export default function DashboardPage() {
 
             <div>
               <h3 className="text-xl font-bold text-white mb-6">Recent Activity</h3>
-              <Card className="bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md overflow-hidden">
-                <div className="divide-y divide-white/10">
-                  {recentSessions.length === 0 ? (
-                    <div className="p-8 text-center text-white/40 text-sm">
-                      No recent sessions. Start studying to see your activity here!
-                    </div>
-                  ) : (
-                    recentSessions.map((session) => (
-                      <div key={session.id} className="p-4 hover:bg-white/5 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="text-white font-medium text-sm mb-1">Domain {session.categoryId}</div>
-                            <div className="flex items-center gap-4 text-xs text-white/50">
-                              <span>{formatDate(session.startedAt)}</span>
-                              <span>
-                                {session.correctAnswers}/{session.totalQuestions} correct
-                              </span>
-                              <span>{formatDuration(session.durationSeconds)}</span>
-                              <span className="capitalize">{session.mode} mode</span>
-                            </div>
-                          </div>
-                          <div className="text-xl font-bold text-yellow-400">
-                            {session.totalQuestions > 0
-                              ? Math.round((session.correctAnswers / session.totalQuestions) * 100)
-                              : 0}
-                            %
+              {recentSessions.length === 0 ? (
+                <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-8 text-center">
+                  <p className="text-white/60">No recent sessions. Start studying to see your activity here!</p>
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {recentSessions.map((session) => (
+                    <div key={session.id} className="p-4 hover:bg-white/5 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="text-white font-medium text-sm mb-1">Domain {session.categoryId}</div>
+                          <div className="flex items-center gap-4 text-xs text-white/50">
+                            <span>{formatDate(session.startedAt)}</span>
+                            <span>
+                              {session.correctAnswers}/{session.totalQuestions} correct
+                            </span>
+                            <span>{formatDuration(session.durationSeconds)}</span>
+                            <span className="capitalize">{session.mode} mode</span>
                           </div>
                         </div>
+                        <div className="text-xl font-bold text-yellow-400">
+                          {session.totalQuestions > 0
+                            ? Math.round((session.correctAnswers / session.totalQuestions) * 100)
+                            : 0}
+                          %
+                        </div>
                       </div>
-                    ))
-                  )}
+                    </div>
+                  ))}
                 </div>
-              </Card>
+              )}
             </div>
           </>
         )}
