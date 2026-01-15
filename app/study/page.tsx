@@ -161,6 +161,8 @@ export default function StudyPage() {
   }
 
   const handleQuestionAnswered = async (selectedOption: string, isCorrect: boolean, timeSpentSeconds: number) => {
+    console.log("[v0] handleQuestionAnswered called:", { selectedOption, isCorrect, timeSpentSeconds, category })
+
     // Update local stats
     setSessionStats((prev) => ({
       ...prev,
@@ -169,8 +171,10 @@ export default function StudyPage() {
     }))
 
     if (userId) {
+      console.log("[v0] User ID exists:", userId)
+
       // Record the attempt
-      await recordQuestionAttempt(
+      const attemptResult = await recordQuestionAttempt(
         userId,
         currentSession?.id || null,
         null, // No specific question ID for AI-generated questions
@@ -179,21 +183,28 @@ export default function StudyPage() {
         timeSpentSeconds,
         mode,
       )
+      console.log("[v0] Record attempt result:", attemptResult)
 
       // Update user progress
       const categoryId = categoryToDomain[category] || category.charAt(0)
-      await updateUserProgress(userId, categoryId, isCorrect, timeSpentSeconds)
+      console.log("[v0] Updating progress for category:", { category, categoryId })
+
+      const progressResult = await updateUserProgress(userId, categoryId, isCorrect, timeSpentSeconds)
+      console.log("[v0] Update progress result:", progressResult)
 
       // Update session stats
       if (currentSession) {
         const duration = Math.floor((Date.now() - sessionStats.startTime) / 1000)
-        await updateStudySession(
+        const sessionResult = await updateStudySession(
           currentSession.id,
           sessionStats.total + 1,
           sessionStats.correct + (isCorrect ? 1 : 0),
           duration,
         )
+        console.log("[v0] Update session result:", sessionResult)
       }
+    } else {
+      console.error("[v0] No user ID found - cannot save progress")
     }
   }
 

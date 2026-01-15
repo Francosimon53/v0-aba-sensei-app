@@ -113,7 +113,11 @@ export default function DashboardPage() {
           .select("*")
           .eq("user_id", user.id)
 
-        console.log("[v0] Dashboard: Progress response:", { count: progressData?.length, error: progressError })
+        console.log("[v0] Dashboard: Progress response:", {
+          count: progressData?.length,
+          data: progressData, // Log the actual data to see what's in the table
+          error: progressError,
+        })
 
         if (progressError) {
           console.error("[v0] Dashboard: Progress error:", progressError)

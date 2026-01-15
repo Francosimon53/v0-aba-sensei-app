@@ -104,6 +104,8 @@ export async function updateUserProgress(
 ): Promise<boolean> {
   const supabase = createClient()
 
+  console.log("[v0] updateUserProgress called with:", { userId, categoryId, isCorrect, timeSpentSeconds })
+
   // First, try to get existing progress
   const { data: existingProgress, error: fetchError } = await supabase
     .from("user_progress")
@@ -111,6 +113,8 @@ export async function updateUserProgress(
     .eq("user_id", userId)
     .eq("category_id", categoryId)
     .single()
+
+  console.log("[v0] Existing progress query result:", { existingProgress, fetchError })
 
   if (fetchError && fetchError.code !== "PGRST116") {
     console.error("[v0] Error fetching user progress:", fetchError)
@@ -122,22 +126,29 @@ export async function updateUserProgress(
     const newStreak = isCorrect ? existingProgress.current_streak + 1 : 0
     const newBestStreak = Math.max(newStreak, existingProgress.best_streak)
 
-    const { error: updateError } = await supabase
+    const updateData = {
+      questions_attempted: existingProgress.questions_attempted + 1,
+      questions_correct: existingProgress.questions_correct + (isCorrect ? 1 : 0),
+      current_streak: newStreak,
+      best_streak: newBestStreak,
+      total_study_time_seconds: existingProgress.total_study_time_seconds + timeSpentSeconds,
+      last_practiced_at: new Date().toISOString(),
+      mastery_level: calculateMasteryLevel(
+        existingProgress.questions_correct + (isCorrect ? 1 : 0),
+        existingProgress.questions_attempted + 1,
+      ),
+      updated_at: new Date().toISOString(),
+    }
+
+    console.log("[v0] Updating progress with data:", updateData)
+
+    const { data: updatedData, error: updateError } = await supabase
       .from("user_progress")
-      .update({
-        questions_attempted: existingProgress.questions_attempted + 1,
-        questions_correct: existingProgress.questions_correct + (isCorrect ? 1 : 0),
-        current_streak: newStreak,
-        best_streak: newBestStreak,
-        total_study_time_seconds: existingProgress.total_study_time_seconds + timeSpentSeconds,
-        last_practiced_at: new Date().toISOString(),
-        mastery_level: calculateMasteryLevel(
-          existingProgress.questions_correct + (isCorrect ? 1 : 0),
-          existingProgress.questions_attempted + 1,
-        ),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", existingProgress.id)
+      .select()
+
+    console.log("[v0] Update result:", { updatedData, updateError })
 
     if (updateError) {
       console.error("[v0] Error updating user progress:", updateError)
@@ -145,7 +156,7 @@ export async function updateUserProgress(
     }
   } else {
     // Create new progress record
-    const { error: insertError } = await supabase.from("user_progress").insert({
+    const insertData = {
       user_id: userId,
       category_id: categoryId,
       questions_attempted: 1,
@@ -155,13 +166,28 @@ export async function updateUserProgress(
       total_study_time_seconds: timeSpentSeconds,
       mastery_level: "novice",
       last_practiced_at: new Date().toISOString(),
-    })
+    }
+
+    console.log("[v0] Creating new progress record:", insertData)
+
+    const { data: insertedData, error: insertError } = await supabase.from("user_progress").insert(insertData).select()
+
+    console.log("[v0] Insert result:", { insertedData, insertError })
 
     if (insertError) {
       console.error("[v0] Error inserting user progress:", insertError)
       return false
     }
   }
+
+  const { data: verifyData, error: verifyError } = await supabase
+    .from("user_progress")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("category_id", categoryId)
+    .single()
+
+  console.log("[v0] Verification query result:", { verifyData, verifyError })
 
   return true
 }
