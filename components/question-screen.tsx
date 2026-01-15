@@ -963,9 +963,14 @@ export default function QuestionScreen({
             <button onClick={onBack} className="text-zinc-400 hover:text-white transition-colors">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <div className="flex-1 mx-4">
-              <div className="text-xs text-amber-500 font-medium">{currentTask.task_id}</div>
-              <div className="text-sm text-zinc-300 truncate">{currentTask.task_text}</div>
+            <div className="flex-1 mx-4 min-w-0">
+              <div className="text-xs text-amber-500 font-medium flex-shrink-0">{currentTask.task_id}</div>
+              <div
+                className="text-sm text-zinc-300 break-words whitespace-normal overflow-hidden"
+                style={{ wordWrap: "break-word", overflowWrap: "break-word" }}
+              >
+                {currentTask.task_text}
+              </div>
             </div>
             <div className="flex gap-1">
               {tasks.slice(0, 10).map((_, i) => (
