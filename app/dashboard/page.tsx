@@ -262,77 +262,62 @@ export default function DashboardPage() {
     return date.toLocaleDateString()
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4 animate-pulse">🥋</div>
-          <p className="text-white/60">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+  const getAllDomains = () => {
+    const allDomainNames: Record<string, string> = {
+      A: "Behaviorism & Philosophical Foundations",
+      B: "Concepts and Principles",
+      C: "Measurement, Data Display, & Interpretation",
+      D: "Experimental Design",
+      E: "Ethical and Professional Issues",
+      F: "Behavior Assessment",
+      G: "Behavior-Change Procedures",
+      H: "Selecting & Implementing Interventions",
+      I: "Personnel Supervision & Management",
+    }
 
-  if (error) {
-    return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <Card className="bg-white/5 border-red-500/30 backdrop-blur-sm p-8 max-w-md mx-4">
-          <div className="text-center">
-            <div className="text-5xl mb-4">⚠️</div>
-            <h2 className="text-xl font-bold text-white mb-2">Error Loading Dashboard</h2>
-            <p className="text-white/60 mb-6">{error}</p>
-            <div className="space-y-3">
-              <Button
-                onClick={() => {
-                  setError(null)
-                  setLoading(true)
-                  window.location.reload()
-                }}
-                className="w-full bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 border border-yellow-400/30"
-              >
-                Try Again
-              </Button>
-              <Button
-                onClick={() => router.push("/auth/login")}
-                variant="ghost"
-                className="w-full text-white/60 hover:text-white/80"
-              >
-                Back to Login
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-    )
+    return Object.entries(allDomainNames).map(([letter, name]) => {
+      const existing = domainProgress.find((d) => d.domain === letter)
+      if (existing) {
+        return existing
+      }
+      return {
+        domain: letter,
+        name,
+        questionsCorrect: 0,
+        questionsAttempted: 0,
+        masteryLevel: "novice",
+        lastPracticedAt: null,
+      }
+    })
   }
 
   const isNewUser = userStats?.totalQuestions === 0 && domainProgress.length === 0
 
   return (
     <div className="min-h-screen gradient-bg">
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
+      <div className="border-b border-white/10 bg-black/30 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-3xl">🥋</div>
+              <div className="text-2xl">🥋</div>
               <div>
-                <h1 className="text-xl font-bold text-white">ABA Sensei</h1>
-                <p className="text-sm text-white/60">Dashboard</p>
+                <h1 className="text-lg font-bold text-white">ABA Sensei</h1>
+                <p className="text-xs text-white/50">Dashboard</p>
               </div>
             </div>
-            <Button onClick={handleLogout} variant="ghost" className="text-white/60 hover:text-white/80">
+            <Button onClick={handleLogout} variant="ghost" className="text-white/60 hover:text-white/80 text-sm">
               Logout
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Welcome back, {userProfile?.fullName}!</h2>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-500/30">
-            <span className="text-yellow-400 font-bold">{userProfile?.examLevel}</span>
-            <span className="text-white/60">Candidate</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Welcome back, {userProfile?.fullName}!</h2>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-500/30">
+            <span className="text-yellow-400 font-semibold text-sm">{userProfile?.examLevel}</span>
+            <span className="text-white/60 text-sm">Candidate</span>
           </div>
         </div>
 
@@ -347,7 +332,7 @@ export default function DashboardPage() {
               </p>
               <Button
                 onClick={() => router.push("/study")}
-                className="h-16 px-8 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold text-xl"
+                className="h-16 px-8 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold text-xl shadow-lg shadow-yellow-500/20"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">📚</span>
@@ -358,38 +343,50 @@ export default function DashboardPage() {
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-6">
-                <div className="text-white/60 text-sm mb-2">Total Questions</div>
-                <div className="text-4xl font-bold text-yellow-400">{userStats?.totalQuestions || 0}</div>
-              </Card>
-
-              <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-6">
-                <div className="text-white/60 text-sm mb-2">Accuracy Rate</div>
-                <div className="text-4xl font-bold text-yellow-400">{userStats?.accuracyRate || 0}%</div>
-              </Card>
-
-              <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-6">
-                <div className="text-white/60 text-sm mb-2">Current Streak</div>
-                <div className="text-4xl font-bold text-yellow-400 flex items-center gap-2">
-                  {userStats?.currentStreak || 0}
-                  <span className="text-2xl">🔥</span>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+                <div className="relative">
+                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Total Questions</div>
+                  <div className="text-3xl font-bold text-white">{userStats?.totalQuestions || 0}</div>
                 </div>
               </Card>
 
-              <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-6">
-                <div className="text-white/60 text-sm mb-2">Best Streak</div>
-                <div className="text-4xl font-bold text-yellow-400 flex items-center gap-2">
-                  {userStats?.bestStreak || 0}
-                  <span className="text-2xl">⭐</span>
+              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+                <div className="relative">
+                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Accuracy</div>
+                  <div className="text-3xl font-bold text-yellow-400">{userStats?.accuracyRate || 0}%</div>
+                </div>
+              </Card>
+
+              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+                <div className="relative">
+                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Current Streak</div>
+                  <div className="text-3xl font-bold text-white flex items-center gap-2">
+                    {userStats?.currentStreak || 0}
+                    <span className="text-xl">🔥</span>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+                <div className="relative">
+                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Best Streak</div>
+                  <div className="text-3xl font-bold text-white flex items-center gap-2">
+                    {userStats?.bestStreak || 0}
+                    <span className="text-xl">⭐</span>
+                  </div>
                 </div>
               </Card>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold text-white mb-4">Progress by Domain</h3>
+            <div className="mb-10">
+              <h3 className="text-xl font-bold text-white mb-6">Progress by Domain</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {domainProgress.map((domain) => {
+                {getAllDomains().map((domain) => {
                   const progress =
                     domain.questionsAttempted > 0
                       ? Math.round((domain.questionsCorrect / domain.questionsAttempted) * 100)
@@ -397,48 +394,91 @@ export default function DashboardPage() {
                   const badge = getMasteryBadge(domain.masteryLevel)
 
                   return (
-                    <Card key={domain.domain} className="bg-white/5 border-white/10 backdrop-blur-sm p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <h4 className="text-white font-semibold text-sm leading-tight">{domain.name}</h4>
-                        <div className={`px-2 py-1 rounded-full text-xs border ${badge.className}`}>{badge.label}</div>
-                      </div>
+                    <Card
+                      key={domain.domain}
+                      className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300 group"
+                    >
+                      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/0 to-transparent group-hover:from-yellow-400/5 transition-all duration-300 pointer-events-none" />
+                      <div className="relative">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <div className="text-yellow-400 font-bold text-lg mb-1">{domain.domain}</div>
+                            <h4 className="text-white/90 text-sm font-medium leading-tight">{domain.name}</h4>
+                          </div>
+                          <div className={`px-2 py-1 rounded-full text-xs border ${badge.className}`}>
+                            {badge.label}
+                          </div>
+                        </div>
 
-                      <div className="mb-3">
-                        <div className="flex justify-between text-xs text-white/60 mb-1">
-                          <span>
-                            {domain.questionsCorrect}/{domain.questionsAttempted}
-                          </span>
-                          <span>{progress}%</span>
+                        <div className="mb-4">
+                          <div className="flex justify-between text-xs text-white/50 mb-2">
+                            <span>
+                              {domain.questionsCorrect}/{domain.questionsAttempted} correct
+                            </span>
+                            <span className="font-semibold text-white/70">{progress}%</span>
+                          </div>
+                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-300"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
 
-                      <Button
-                        onClick={() => router.push(`/study?category=${domain.domain}`)}
-                        className="w-full bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-400 border border-yellow-400/30"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl">📚</span>
-                          <span>Continue</span>
-                        </div>
-                      </Button>
+                        <Button
+                          onClick={() => router.push(`/study?category=${domain.domain}`)}
+                          className="w-full h-9 bg-transparent hover:bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 hover:border-yellow-400/50 text-sm transition-all duration-300"
+                        >
+                          Practice
+                        </Button>
+                      </div>
                     </Card>
                   )
                 })}
               </div>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold text-white mb-4">Recent Activity</h3>
-              <Card className="bg-white/5 border-white/10 backdrop-blur-sm overflow-hidden">
+            <div className="mb-10">
+              <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Button
+                  onClick={() => router.push(lastCategory ? `/study?category=${lastCategory}` : "/study")}
+                  className="h-14 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold shadow-lg shadow-yellow-500/20 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📚</span>
+                    <span>Continue Studying</span>
+                  </div>
+                </Button>
+
+                <Button
+                  onClick={() => router.push("/study")}
+                  className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">🎯</span>
+                    <span>New Category</span>
+                  </div>
+                </Button>
+
+                <Button
+                  onClick={() => router.push("/study?mode=exam")}
+                  className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">⚡</span>
+                    <span>Exam Mode</span>
+                  </div>
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-white mb-6">Recent Activity</h3>
+              <Card className="bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md overflow-hidden">
                 <div className="divide-y divide-white/10">
                   {recentSessions.length === 0 ? (
-                    <div className="p-6 text-center text-white/40">
+                    <div className="p-8 text-center text-white/40 text-sm">
                       No recent sessions. Start studying to see your activity here!
                     </div>
                   ) : (
@@ -446,8 +486,8 @@ export default function DashboardPage() {
                       <div key={session.id} className="p-4 hover:bg-white/5 transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="text-white font-medium mb-1">Domain {session.categoryId}</div>
-                            <div className="flex items-center gap-4 text-sm text-white/60">
+                            <div className="text-white font-medium text-sm mb-1">Domain {session.categoryId}</div>
+                            <div className="flex items-center gap-4 text-xs text-white/50">
                               <span>{formatDate(session.startedAt)}</span>
                               <span>
                                 {session.correctAnswers}/{session.totalQuestions} correct
@@ -456,7 +496,7 @@ export default function DashboardPage() {
                               <span className="capitalize">{session.mode} mode</span>
                             </div>
                           </div>
-                          <div className="text-2xl font-bold text-yellow-400">
+                          <div className="text-xl font-bold text-yellow-400">
                             {session.totalQuestions > 0
                               ? Math.round((session.correctAnswers / session.totalQuestions) * 100)
                               : 0}
@@ -468,41 +508,6 @@ export default function DashboardPage() {
                   )}
                 </div>
               </Card>
-            </div>
-
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Button
-                  onClick={() => router.push(lastCategory ? `/study?category=${lastCategory}` : "/study")}
-                  className="h-24 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-bold text-lg"
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-2xl">📚</span>
-                    <span>Continue Studying</span>
-                  </div>
-                </Button>
-
-                <Button
-                  onClick={() => router.push("/study")}
-                  className="h-24 bg-white/10 hover:bg-white/20 text-white font-bold text-lg border border-white/20"
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-2xl">🎯</span>
-                    <span>Start New Session</span>
-                  </div>
-                </Button>
-
-                <Button
-                  onClick={() => router.push("/study?mode=exam")}
-                  className="h-24 bg-white/10 hover:bg-white/20 text-white font-bold text-lg border border-white/20"
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <span className="text-2xl">🏆</span>
-                    <span>Take Mock Exam</span>
-                  </div>
-                </Button>
-              </div>
             </div>
           </>
         )}
