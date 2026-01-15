@@ -21,6 +21,29 @@ import { createClient } from "@/lib/supabase/client"
 //   keywords: string | null
 // }
 
+const DOMAIN_NAMES: Record<string, string> = {
+  A: "Philosophical Underpinnings",
+  B: "Concepts and Principles",
+  C: "Measurement, Data Display & Interpretation",
+  D: "Experimental Design",
+  E: "Ethics and Professional Conduct",
+  F: "Behavior Assessment",
+  G: "Behavior-Change Procedures",
+  H: "Selecting and Implementing Interventions",
+  I: "Personnel Supervision and Management",
+}
+
+// Helper function to get domain letter from task_id (e.g., "C.10" -> "C")
+function getDomainLetter(taskId: string): string {
+  return taskId.split(".")[0].toUpperCase()
+}
+
+// Helper function to get full domain name
+function getDomainName(taskId: string): string {
+  const letter = getDomainLetter(taskId)
+  return DOMAIN_NAMES[letter] || letter
+}
+
 function extractShortTitle(taskText: string): string {
   // The task_text may contain multiple sections with headers
   // Extract just the first meaningful line (usually "TÍTULO:" or first sentence)
@@ -1002,13 +1025,8 @@ export default function QuestionScreen({
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div className="flex-1 mx-4 min-w-0">
-              <div className="text-xs text-amber-500 font-medium flex-shrink-0">{currentTask.task_id}</div>
-              {/* CHANGE: Only show short title, NOT raw knowledge_chunks content */}
-              <div
-                className="text-sm text-zinc-300 break-words whitespace-normal overflow-hidden"
-                style={{ wordWrap: "break-word", overflowWrap: "break-word" }}
-              >
-                {extractShortTitle(currentTask.task_text)}
+              <div className="text-base text-zinc-200 font-medium">
+                {currentTask.task_id} - {getDomainName(currentTask.task_id)}
               </div>
             </div>
             <div className="flex gap-1">
@@ -1196,17 +1214,15 @@ export default function QuestionScreen({
                         <div className="text-xs font-semibold text-red-400 uppercase mb-2">{labels.abaTerms}</div>
                         {trapAnalysis.detectedAbaTraps.map((trap, i) => (
                           <div key={i} className="mb-3 last:mb-0">
-                            <div className="font-medium text-red-300 mb-1">"{trap.word}"</div>
-                            <div className="grid grid-cols-2 gap-2 text-sm mb-2">
-                              <div>
-                                <span className="text-zinc-500 text-xs">{labels.commonMeaning}:</span>
-                                <p className="text-zinc-400">{trap.common}</p>
-                              </div>
-                              <div>
-                                <span className="text-zinc-500 text-xs">{labels.abaMeaning}:</span>
-                                <p className="text-green-400">{trap.aba}</p>
-                              </div>
+                            <div className="font-medium text-red-300">
+                              <span className="font-bold">{trap.word}:</span>{" "}
                             </div>
+                            <p className="text-sm text-zinc-300 mb-1">
+                              <span className="font-medium text-red-400">{labels.commonMeaning}:</span> {trap.common}
+                            </p>
+                            <p className="text-sm text-zinc-300 mb-1">
+                              <span className="font-medium text-red-400">{labels.abaMeaning}:</span> {trap.aba}
+                            </p>
                             <p className="text-xs text-red-400">
                               <strong>{labels.thisMayConfuse}:</strong> {trap.confusion}
                             </p>
@@ -1215,46 +1231,38 @@ export default function QuestionScreen({
                       </div>
                     )}
 
-                    {/* Non-Technical Vocabulary Help */}
+                    {/* Non-Technical Trap Words */}
                     {trapAnalysis.detectedNonTechnicalTraps.length > 0 && (
-                      <div className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700/50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <BookOpen className="w-4 h-4 text-zinc-400" />
-                          <span className="text-xs font-semibold text-zinc-400 uppercase">{labels.vocabularyHelp}</span>
+                      <div className="bg-yellow-500/5 rounded-lg p-3 border border-yellow-500/20">
+                        <div className="text-xs font-semibold text-yellow-400 uppercase mb-2">
+                          {labels.vocabularyHelp}
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {trapAnalysis.detectedNonTechnicalTraps.map((word, i) => (
-                            <div key={i} className="bg-zinc-700/50 rounded px-2 py-1">
-                              <span className="text-zinc-300 text-sm font-medium">{word.word}</span>
-                              <span className="text-zinc-500 text-xs ml-1">= {word.meaning}</span>
-                            </div>
-                          ))}
-                        </div>
+                        {trapAnalysis.detectedNonTechnicalTraps.map((trap, i) => (
+                          <div key={i} className="mb-2 last:mb-0">
+                            <span className="bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded text-sm font-medium mr-2">
+                              {trap.word}
+                            </span>
+                            <p className="text-sm text-zinc-300 inline">
+                              - {trap.meaning} <span className="text-zinc-500">({trap.context})</span>
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     )}
 
-                    {/* Question Skeleton (for complex sentences) */}
+                    {/* Question Skeleton */}
                     {trapAnalysis.questionSkeleton && (
-                      <div className="bg-zinc-800/30 rounded-lg p-3">
-                        <div className="text-xs font-semibold text-zinc-400 uppercase mb-2">{labels.skeleton}</div>
+                      <div className="bg-cyan-500/5 rounded-lg p-3 border border-cyan-500/20">
+                        <div className="text-xs font-semibold text-cyan-400 uppercase mb-2">{labels.skeleton}</div>
                         <div className="flex items-center gap-2 text-sm">
-                          <span className="bg-zinc-700 text-zinc-200 px-2 py-1 rounded">
-                            {trapAnalysis.questionSkeleton.subject}
-                          </span>
-                          <span className="text-zinc-500">→</span>
-                          <span className="bg-zinc-700 text-amber-400 px-2 py-1 rounded">
-                            {trapAnalysis.questionSkeleton.verb}
-                          </span>
-                          <span className="text-zinc-500">→</span>
-                          <span className="bg-zinc-700 text-zinc-400 px-2 py-1 rounded">
-                            {trapAnalysis.questionSkeleton.object}
-                          </span>
+                          <span className="font-bold text-cyan-300">{trapAnalysis.questionSkeleton.subject}</span>
+                          <span className="text-zinc-400">{trapAnalysis.questionSkeleton.verb}</span>
+                          <span className="font-bold text-cyan-300">{trapAnalysis.questionSkeleton.object}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* Fallback message if no traps detected */}
-                    {!hasAnyTraps && <p className="text-sm text-zinc-400 italic">{labels.noTrapsMessage}</p>}
+                    {!hasAnyTraps && <p className="text-sm text-zinc-500">{labels.noTrapsMessage}</p>}
                   </div>
                 )}
               </div>
@@ -1266,67 +1274,68 @@ export default function QuestionScreen({
                 onClick={() => toggleSection("decisionFilter")}
                 className="w-full p-4 flex items-center justify-between text-left"
               >
-                <span className="font-semibold text-zinc-200">Decision Filter</span>
-                <span className="text-zinc-500">{expandedSections.decisionFilter ? "−" : "+"}</span>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-blue-500" />
+                  <span className="font-semibold text-blue-400">DECISION FILTER</span>
+                </div>
+                <span className="text-blue-500">{expandedSections.decisionFilter ? "−" : "+"}</span>
               </button>
-
-              {expandedSections.decisionFilter && (
-                <div className="px-4 pb-4 space-y-3">
+              {expandedSections.decisionFilter && questionData.decisionFilter && (
+                <div className="px-4 pb-4">
+                  <p className="text-sm text-zinc-300 mb-3">{questionData.decisionFilter.testQuestion}</p>
                   {questionData.decisionFilter.concepts.map((concept, i) => (
-                    <div key={i} className="bg-zinc-800/30 rounded-lg p-3">
-                      <div className="font-medium text-amber-400 mb-1">{concept.name}</div>
-                      <p className="text-sm text-zinc-300 mb-2">{concept.definition}</p>
-                      {concept.analogy && <p className="text-xs text-zinc-500 italic mb-1">💡 {concept.analogy}</p>}
-                      {concept.rule && <p className="text-xs text-green-400">✓ {concept.rule}</p>}
+                    <div key={i} className="mb-2 last:mb-0">
+                      <p className="text-sm font-medium text-zinc-200">
+                        {concept.name}
+                        {concept.analogy && (
+                          <span className="text-xs font-normal text-zinc-500 ml-2">({concept.analogy})</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-zinc-400">{concept.definition}</p>
+                      {concept.rule && <p className="text-[11px] text-blue-400 italic">Rule: {concept.rule}</p>}
                     </div>
                   ))}
-                  <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
-                    <p className="text-sm text-amber-300">
-                      <strong>Test:</strong> {questionData.decisionFilter.testQuestion}
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
 
-            {/* All Options Explanations */}
+            {/* All Options Explained */}
             <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden">
               <button
                 onClick={() => toggleSection("allOptions")}
                 className="w-full p-4 flex items-center justify-between text-left"
               >
-                <span className="font-semibold text-zinc-200">{t.allOptions}</span>
-                <span className="text-zinc-500">{expandedSections.allOptions ? "−" : "+"}</span>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-green-500" />
+                  <span className="font-semibold text-green-400">{labels.allOptions}</span>
+                </div>
+                <span className="text-green-500">{expandedSections.allOptions ? "−" : "+"}</span>
               </button>
-
-              {expandedSections.allOptions && (
-                <div className="px-4 pb-4 space-y-2">
-                  {(["A", "B", "C", "D"] as const).map((letter, index) => (
-                    <div
-                      key={letter}
-                      className={`p-3 rounded-lg ${
-                        index === questionData.correctIndex
-                          ? "bg-green-500/10 border border-green-500/30"
-                          : "bg-zinc-800/30"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <span
-                          className={`font-bold ${index === questionData.correctIndex ? "text-green-400" : "text-zinc-500"}`}
-                        >
-                          {letter})
+              {expandedSections.allOptions && questionData.optionExplanations && (
+                <div className="px-4 pb-4 space-y-3">
+                  {Object.entries(questionData.optionExplanations).map(([key, explanation]) => (
+                    <div key={key} className="bg-zinc-800/50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-zinc-200">
+                        {key}.{" "}
+                        <span className="text-zinc-400">
+                          {
+                            questionData.options[
+                              Number.parseInt(key === "A" ? "0" : key === "B" ? "1" : key === "C" ? "2" : "3")
+                            ]
+                          }
                         </span>
-                        <p className="text-sm text-zinc-300">{questionData.optionExplanations[letter]}</p>
-                      </div>
+                      </p>
+                      <p className="text-xs text-zinc-300">{explanation}</p>
                     </div>
                   ))}
+                  {questionData.conclusion && (
+                    <div className="mt-3 pt-3 border-t border-zinc-700">
+                      <p className="text-sm font-medium text-zinc-200">Conclusion:</p>
+                      <p className="text-xs text-zinc-300">{questionData.conclusion}</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-
-            {/* Conclusion */}
-            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-4">
-              <p className="text-sm text-zinc-300">{questionData.conclusion}</p>
             </div>
           </div>
         )}
