@@ -104,6 +104,129 @@ interface ChatRequest {
   examLevel?: string
 }
 
+function detectTrapWords(questionText: string, options: any[]) {
+  const traps: any[] = []
+  const textToScan = questionText + " " + options.map((o) => o.text).join(" ")
+  const questionLower = questionText.toLowerCase()
+
+  // Sequence/Priority words
+  const sequenceWords = ["FIRST", "NEXT", "BEFORE", "PRIORITY", "INITIALLY"]
+  sequenceWords.forEach((word) => {
+    if (questionLower.includes(word.toLowerCase())) {
+      traps.push({
+        word,
+        type: "sequence",
+        explanation: "This asks for ORDER, not just any correct action. Think about what comes FIRST in the sequence.",
+      })
+    }
+  })
+
+  // Comparison words
+  const comparisonWords = ["BEST", "MOST", "PRIMARY", "PRIMARILY"]
+  comparisonWords.forEach((word) => {
+    if (questionLower.includes(word.toLowerCase())) {
+      traps.push({
+        word,
+        type: "comparison",
+        explanation:
+          "Multiple options may work, but one is BETTER. Look for the option that is most aligned with ABA principles.",
+      })
+    }
+  })
+
+  // Absolute words
+  const absoluteWords = ["ALWAYS", "NEVER", "ONLY", "ALL", "NONE"]
+  absoluteWords.forEach((word) => {
+    if (questionLower.includes(word.toLowerCase())) {
+      traps.push({
+        word,
+        type: "absolute",
+        explanation:
+          "Absolute words are usually WRONG in ABA. Behavior depends on context - rarely is something 'always' or 'never' true.",
+      })
+    }
+  })
+
+  // ABA terminology traps
+  const abaTerms = [
+    { term: "negative", common: "Bad or harmful", aba: "SUBTRACT/Remove (like a minus sign in math)" },
+    {
+      term: "consequence",
+      common: "Punishment",
+      aba: "ANY event that follows behavior (can be reinforcement or punishment)",
+    },
+    {
+      term: "discrimination",
+      common: "Prejudice",
+      aba: "Distinguishing between different stimuli (responding differently to SD vs S-delta)",
+    },
+    {
+      term: "extinction",
+      common: "Disappear forever",
+      aba: "Stop reinforcing a behavior (may see extinction burst first)",
+    },
+    { term: "contingent", common: "Backup plan", aba: "Dependent relationship (IF behavior, THEN consequence)" },
+    { term: "positive", common: "Good or pleasant", aba: "ADD/Present (like a plus sign in math)" },
+    {
+      term: "punishment",
+      common: "Mean or harmful",
+      aba: "Decreases future behavior (can be adding OR removing something)",
+    },
+  ]
+
+  abaTerms.forEach(({ term, common, aba }) => {
+    if (textToScan.toLowerCase().includes(term)) {
+      traps.push({
+        word: term.charAt(0).toUpperCase() + term.slice(1),
+        type: "aba_terminology",
+        commonMeaning: common,
+        abaMeaning: aba,
+      })
+    }
+  })
+
+  return traps
+}
+
+function getHighlightWords(questionText: string): string[] {
+  const highlightPatterns = [
+    // Contrast words
+    "However",
+    "Although",
+    "But",
+    "Despite",
+    "Instead",
+    // Timing words
+    "Initially",
+    "Subsequently",
+    "Prior to",
+    "After",
+    "Before",
+    "First",
+    "Then",
+    "Finally",
+    // Trap words
+    "FIRST",
+    "BEST",
+    "MOST",
+    "ALWAYS",
+    "NEVER",
+    "ONLY",
+    "PRIMARY",
+    "PRIMARILY",
+    "NEXT",
+  ]
+
+  const found: string[] = []
+  highlightPatterns.forEach((word) => {
+    const regex = new RegExp(`\\b${word}\\b`, "gi")
+    if (regex.test(questionText)) {
+      found.push(word)
+    }
+  })
+  return found
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: ChatRequest = await request.json()
@@ -293,7 +416,17 @@ ${ragContext}
         }
 
         const quizData = JSON.parse(jsonString)
-        return NextResponse.json({ type: "quiz", ...quizData, usedRAG: !!ragContext })
+
+        const trapWords = detectTrapWords(quizData.question, quizData.options || [])
+        const highlightWords = getHighlightWords(quizData.question)
+
+        return NextResponse.json({
+          type: "quiz",
+          ...quizData,
+          trapWords,
+          highlightWords,
+          usedRAG: !!ragContext,
+        })
       } catch (e) {
         console.error("[v0] Failed to parse quiz response:", e)
         return NextResponse.json({ error: "Failed to parse quiz" }, { status: 500 })

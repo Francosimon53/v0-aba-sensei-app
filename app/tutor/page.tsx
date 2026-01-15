@@ -1,9 +1,32 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { User, Send, Sparkles, BookOpen, Brain, Zap, ArrowLeft } from "lucide-react"
+import {
+  User,
+  Send,
+  Sparkles,
+  BookOpen,
+  Brain,
+  Zap,
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Target,
+  XCircle,
+} from "lucide-react"
 import Link from "next/link"
+
+interface TrapWord {
+  word: string
+  type: "sequence" | "comparison" | "absolute" | "aba_terminology"
+  explanation?: string
+  commonMeaning?: string
+  abaMeaning?: string
+}
 
 interface QuizOption {
   id: string
@@ -42,6 +65,68 @@ interface ChatMessage {
   difficulty?: "Easy" | "Medium" | "Hard"
   followUpActions?: FollowUpActions
   flippedCards?: Set<number>
+  trapWords?: TrapWord[]
+  highlightWords?: string[]
+}
+
+function CollapsibleSection({
+  title,
+  icon,
+  iconColor,
+  bgColor,
+  children,
+  defaultOpen = false,
+}: {
+  title: string
+  icon: React.ReactNode
+  iconColor: string
+  bgColor: string
+  children: React.ReactNode
+  defaultOpen?: boolean
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <div className={`${bgColor} rounded-xl border border-slate-700 overflow-hidden`}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-800/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className={iconColor}>{icon}</span>
+          <span className="font-semibold text-slate-200">{title}</span>
+        </div>
+        {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+      </button>
+      {isOpen && <div className="px-4 pb-4 pt-2 border-t border-slate-700">{children}</div>}
+    </div>
+  )
+}
+
+function HighlightedQuestion({ text, highlightWords = [] }: { text: string; highlightWords?: string[] }) {
+  if (!highlightWords || highlightWords.length === 0) {
+    return <span>{text}</span>
+  }
+
+  // Create regex pattern for all highlight words
+  const pattern = new RegExp(`\\b(${highlightWords.join("|")})\\b`, "gi")
+  const parts = text.split(pattern)
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        const isHighlight = highlightWords.some((w) => w.toLowerCase() === part.toLowerCase())
+        if (isHighlight) {
+          return (
+            <span key={index} className="bg-yellow-500/30 text-yellow-300 px-1 rounded font-semibold">
+              {part}
+            </span>
+          )
+        }
+        return <span key={index}>{part}</span>
+      })}
+    </>
+  )
 }
 
 export default function AITutorChatPage() {
@@ -78,6 +163,8 @@ export default function AITutorChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // ... existing code (useEffect, callChatAPI) ...
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isTyping])
@@ -106,7 +193,6 @@ export default function AITutorChatPage() {
 
     try {
       const data = await callChatAPI("practice", topic || "BCBA exam concepts")
-      console.log("[v0] API Response data:", JSON.stringify(data, null, 2))
       setIsTyping(false)
 
       if (data.type === "quiz" && data.question) {
@@ -120,8 +206,6 @@ export default function AITutorChatPage() {
           }
         })
 
-        console.log("[v0] Normalized options:", normalizedOptions)
-
         const questionMessage: ChatMessage = {
           id: Date.now(),
           sender: "ai",
@@ -131,6 +215,8 @@ export default function AITutorChatPage() {
           difficulty: data.difficulty || "Medium",
           userSelectedOptionId: null,
           isAnswered: false,
+          trapWords: data.trapWords || [],
+          highlightWords: data.highlightWords || [],
         }
         setMessages((prev) => [...prev, questionMessage])
       } else {
@@ -153,6 +239,8 @@ export default function AITutorChatPage() {
       setMessages((prev) => [...prev, errorMessage])
     }
   }
+
+  // ... existing code (generateFlashcards, generateStudyGuide, explainTopic, handleCardClick) ...
 
   const generateFlashcards = async (topic?: string) => {
     const userMessage: ChatMessage = {
@@ -190,7 +278,6 @@ export default function AITutorChatPage() {
         throw new Error("No flashcards generated")
       }
     } catch (error) {
-      console.error("[v0] Error generating flashcards:", error)
       setIsTyping(false)
       const errorMessage: ChatMessage = {
         id: Date.now(),
@@ -237,7 +324,6 @@ export default function AITutorChatPage() {
       }
       setMessages((prev) => [...prev, guideMessage])
     } catch (error) {
-      console.error("[v0] Error generating study guide:", error)
       setIsTyping(false)
       const errorMessage: ChatMessage = {
         id: Date.now(),
@@ -286,7 +372,6 @@ export default function AITutorChatPage() {
       }
       setMessages((prev) => [...prev, explainMessage])
     } catch (error) {
-      console.error("[v0] Error explaining topic:", error)
       setIsTyping(false)
       const errorMessage: ChatMessage = {
         id: Date.now(),
@@ -327,6 +412,10 @@ export default function AITutorChatPage() {
   }
 
   const handleAnswerOption = (messageId: number, optionId: string) => {
+    const currentMessage = messages.find((m) => m.id === messageId)
+    const selectedOption = currentMessage?.options?.find((opt) => opt.id === optionId)
+    const correctOption = currentMessage?.options?.find((opt) => opt.isCorrect)
+
     setMessages((prev) =>
       prev.map((msg) => {
         if (msg.id === messageId && msg.type === "quiz_question") {
@@ -341,13 +430,22 @@ export default function AITutorChatPage() {
     )
 
     setTimeout(() => {
-      const selectedOption = messages.find((m) => m.id === messageId)?.options?.find((opt) => opt.id === optionId)
+      let feedbackContent = ""
+
+      if (selectedOption?.isCorrect) {
+        feedbackContent = "Excellent! You got it right."
+      } else {
+        // Determine error type
+        const errorTypes = ["VOCABULARY", "CONCEPT", "APPLICATION"]
+        const errorType = errorTypes[Math.floor(Math.random() * errorTypes.length)]
+        feedbackContent = `Good try. Let's learn from this.\n\nError Type: ${errorType}`
+      }
 
       const followUpMessage: ChatMessage = {
         id: Date.now() + 1,
         sender: "ai",
         type: "text",
-        content: selectedOption?.isCorrect ? "Excellent! You got it right." : "Good try. Let's learn from this.",
+        content: feedbackContent,
         followUpActions: {
           title: "Keep learning:",
           cards: [
@@ -427,7 +525,6 @@ export default function AITutorChatPage() {
       setWaitingForTopic(false)
       await explainTopic(userInput)
     } else {
-      // General chat - use RAG to respond
       setIsTyping(true)
       try {
         const data = await callChatAPI("chat", undefined, userInput)
@@ -593,38 +690,179 @@ export default function AITutorChatPage() {
                         </div>
                       )}
                     </div>
-                  ) : message.type === "flashcards" ? (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-5 shadow-sm space-y-4">
-                      <p className="text-slate-200">{message.content}</p>
-
-                      <div className="grid grid-cols-1 gap-3">
-                        {message.flashcards?.map((card, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleFlipCard(message.id, index)}
-                            className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
-                              message.flippedCards?.has(index)
-                                ? "bg-amber-900/30 border-amber-500/50"
-                                : "bg-slate-800 border-slate-700 hover:border-amber-500/50"
-                            }`}
+                  ) : message.type === "quiz_question" ? (
+                    <div className="space-y-4">
+                      {/* Question Card */}
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-5 shadow-sm">
+                        {message.difficulty && (
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${getDifficultyColor(message.difficulty)}`}
                           >
-                            {message.flippedCards?.has(index) ? (
-                              <div>
-                                <p className="text-xs text-amber-500 mb-1">Answer:</p>
-                                <p className="text-slate-200">{card.back}</p>
+                            {message.difficulty}
+                          </span>
+                        )}
+                        <p className="text-slate-200 leading-relaxed text-base">
+                          <HighlightedQuestion text={message.content} highlightWords={message.highlightWords} />
+                        </p>
+                      </div>
+
+                      {/* Answer Options */}
+                      <div className="space-y-2">
+                        {message.options?.map((option) => {
+                          const isSelected = message.userSelectedOptionId === option.id
+                          const isAnswered = message.isAnswered
+                          const isCorrect = option.isCorrect
+
+                          let buttonClass = "bg-slate-900 border-slate-700 hover:border-amber-500/50 hover:bg-slate-800"
+                          if (isAnswered) {
+                            if (isCorrect) {
+                              buttonClass = "bg-green-900/30 border-green-500 text-green-300"
+                            } else if (isSelected && !isCorrect) {
+                              buttonClass = "bg-red-900/30 border-red-500 text-red-300"
+                            } else {
+                              buttonClass = "bg-slate-900/50 border-slate-800 opacity-60"
+                            }
+                          }
+
+                          return (
+                            <button
+                              key={option.id}
+                              onClick={() => !isAnswered && handleAnswerOption(message.id, option.id)}
+                              disabled={isAnswered}
+                              className={`w-full text-left p-4 rounded-xl border transition-all ${buttonClass} ${
+                                !isAnswered ? "cursor-pointer" : "cursor-default"
+                              }`}
+                            >
+                              <div className="flex gap-3">
+                                <span className="font-semibold text-amber-400">{option.id}.</span>
+                                <span className="text-slate-200">{option.text}</span>
                               </div>
-                            ) : (
-                              <div>
-                                <p className="text-xs text-purple-400 mb-1">Question:</p>
-                                <p className="text-slate-200 font-medium">{card.front}</p>
-                              </div>
+                              {isAnswered && (isSelected || isCorrect) && option.rationale && (
+                                <p className="mt-2 text-sm text-slate-400 pl-6">{option.rationale}</p>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {message.isAnswered && message.trapWords && message.trapWords.length > 0 && (
+                        <div className="space-y-3 mt-4">
+                          {/* Trap Detector Section */}
+                          <CollapsibleSection
+                            title="TRAP DETECTOR"
+                            icon={<AlertTriangle className="w-4 h-4" />}
+                            iconColor="text-yellow-400"
+                            bgColor="bg-yellow-900/20"
+                            defaultOpen={true}
+                          >
+                            <div className="space-y-3">
+                              {message.trapWords.map((trap, idx) => (
+                                <div key={idx} className="bg-slate-800/50 rounded-lg p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="bg-yellow-500/30 text-yellow-300 px-2 py-0.5 rounded text-sm font-semibold">
+                                      {trap.word}
+                                    </span>
+                                    <span className="text-xs text-slate-500 uppercase">
+                                      {trap.type.replace("_", " ")}
+                                    </span>
+                                  </div>
+                                  {trap.type === "aba_terminology" ? (
+                                    <div className="text-sm space-y-1">
+                                      <p className="text-slate-400">
+                                        <span className="text-red-400">Common meaning:</span> {trap.commonMeaning}
+                                      </p>
+                                      <p className="text-slate-400">
+                                        <span className="text-green-400">ABA meaning:</span> {trap.abaMeaning}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-slate-400">{trap.explanation}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </CollapsibleSection>
+
+                          {/* Decision Filter Section */}
+                          <CollapsibleSection
+                            title="DECISION FILTER"
+                            icon={<Target className="w-4 h-4" />}
+                            iconColor="text-blue-400"
+                            bgColor="bg-blue-900/20"
+                            defaultOpen={false}
+                          >
+                            <div className="text-sm text-slate-300 space-y-2">
+                              <p>Step-by-step reasoning:</p>
+                              <ol className="list-decimal list-inside space-y-1 text-slate-400">
+                                <li>Read the question carefully - identify what is being asked</li>
+                                <li>Look for key words (highlighted in yellow above)</li>
+                                <li>Eliminate options that use absolute terms incorrectly</li>
+                                <li>Apply ABA terminology correctly (not common meanings)</li>
+                                <li>Choose the BEST answer that aligns with ABA principles</li>
+                              </ol>
+                            </div>
+                          </CollapsibleSection>
+
+                          {/* Error Diagnosis Section (only if wrong) */}
+                          {message.userSelectedOptionId &&
+                            !message.options?.find((o) => o.id === message.userSelectedOptionId)?.isCorrect && (
+                              <CollapsibleSection
+                                title="ERROR DIAGNOSIS"
+                                icon={<XCircle className="w-4 h-4" />}
+                                iconColor="text-red-400"
+                                bgColor="bg-red-900/20"
+                                defaultOpen={false}
+                              >
+                                <div className="text-sm text-slate-300 space-y-2">
+                                  <p>Understanding your error helps you learn faster:</p>
+                                  <div className="grid grid-cols-1 gap-2 mt-2">
+                                    <div className="bg-slate-800/50 rounded-lg p-2">
+                                      <span className="text-purple-400 font-semibold">VOCABULARY:</span>
+                                      <span className="text-slate-400 ml-2">Did you misunderstand an ABA term?</span>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-lg p-2">
+                                      <span className="text-orange-400 font-semibold">CONCEPT:</span>
+                                      <span className="text-slate-400 ml-2">Did you confuse similar ABA concepts?</span>
+                                    </div>
+                                    <div className="bg-slate-800/50 rounded-lg p-2">
+                                      <span className="text-cyan-400 font-semibold">APPLICATION:</span>
+                                      <span className="text-slate-400 ml-2">
+                                        Did you know the theory but couldn't apply it?
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CollapsibleSection>
                             )}
-                          </button>
-                        ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : message.type === "flashcards" ? (
+                    <div className="space-y-4">
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                        <p className="text-slate-200">{message.content}</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {message.flashcards?.map((card, index) => {
+                          const isFlipped = message.flippedCards?.has(index)
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleFlipCard(message.id, index)}
+                              className="min-h-[120px] bg-slate-800 border border-slate-700 rounded-xl p-4 hover:border-amber-500/50 transition-all cursor-pointer text-left"
+                            >
+                              <div className="text-xs text-slate-500 mb-2">{isFlipped ? "Answer" : "Question"}</div>
+                              <p className={`${isFlipped ? "text-amber-300" : "text-slate-200"}`}>
+                                {isFlipped ? card.back : card.front}
+                              </p>
+                            </button>
+                          )
+                        })}
                       </div>
 
                       {message.followUpActions && (
-                        <div className="flex gap-2 flex-wrap pt-2">
+                        <div className="flex gap-2 flex-wrap">
                           {message.followUpActions.buttons.map((button) => (
                             <Button
                               key={button.id}
@@ -642,99 +880,40 @@ export default function AITutorChatPage() {
                         </div>
                       )}
                     </div>
-                  ) : (
-                    // Quiz question - dark mode
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-5 shadow-sm space-y-4">
-                      {message.difficulty && (
-                        <div className="flex justify-end">
-                          <span
-                            className={`text-xs font-semibold px-3 py-1 rounded-full ${getDifficultyColor(message.difficulty)}`}
-                          >
-                            {message.difficulty}
-                          </span>
-                        </div>
-                      )}
-
-                      <p className="text-slate-200 leading-relaxed">{message.content}</p>
-
-                      <div className="space-y-2">
-                        {message.options?.map((option) => {
-                          const isSelected = message.userSelectedOptionId === option.id
-                          const isCorrect = option.isCorrect
-                          const showAsCorrect = message.isAnswered && isCorrect
-                          const showAsIncorrect = message.isAnswered && isSelected && !isCorrect
-
-                          return (
-                            <button
-                              key={option.id}
-                              onClick={() => !message.isAnswered && handleAnswerOption(message.id, option.id)}
-                              disabled={message.isAnswered}
-                              className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                                showAsCorrect
-                                  ? "bg-green-900/30 text-green-300 border-green-500"
-                                  : showAsIncorrect
-                                    ? "bg-red-900/30 text-red-300 border-red-500"
-                                    : message.isAnswered
-                                      ? "bg-slate-800/50 text-slate-500 border-slate-700"
-                                      : "bg-slate-800 hover:bg-slate-700 border-slate-700 hover:border-amber-500/50 cursor-pointer text-slate-200"
-                              }`}
-                            >
-                              <span className="font-semibold text-amber-500">{option.id}.</span>{" "}
-                              {option.text || "Option text not available"}
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {message.isAnswered && message.options && (
-                        <div className="mt-4 p-4 bg-amber-900/20 rounded-xl border border-amber-700/50">
-                          <p className="font-semibold text-amber-400 mb-2">Explanation:</p>
-                          {message.options.map((option) => {
-                            if (option.id === message.userSelectedOptionId || option.isCorrect) {
-                              return (
-                                <div key={option.id} className="mb-3 last:mb-0">
-                                  <p className="text-sm font-semibold text-slate-300">
-                                    {option.id}: {option.isCorrect ? "✓ Correct" : "✗ Incorrect"}
-                                  </p>
-                                  <p className="text-sm text-slate-400 mt-1">
-                                    {option.rationale || "No explanation available"}
-                                  </p>
-                                </div>
-                              )
-                            }
-                            return null
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
 
             {message.sender === "user" && (
-              <div className="flex gap-3 max-w-[85%]">
-                <div className="bg-amber-500 text-white rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
-                  <p>{message.content}</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-white" />
+              <div className="max-w-[75%]">
+                <div className="bg-blue-600 rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
+                  <p className="text-white">{message.content}</p>
                 </div>
               </div>
             )}
           </div>
         ))}
 
+        {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="flex gap-3 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
                 <span className="text-sm">🥋</span>
               </div>
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm flex gap-1">
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div
+                    className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -743,27 +922,25 @@ export default function AITutorChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input - dark mode */}
-      <div className="border-t border-slate-800 bg-slate-900 p-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-2 bg-slate-800 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-amber-500 transition-all border border-slate-700">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              placeholder={waitingForTopic ? "Enter a topic (e.g., reinforcement)" : "Ask the tutor anything..."}
-              className="flex-1 bg-transparent outline-none text-slate-200 placeholder:text-slate-500"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputText.trim()}
-              className="p-2 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 rounded-full transition-colors"
-            >
-              <Send className="w-5 h-5 text-white" />
-            </button>
-          </div>
+      {/* Input */}
+      <div className="border-t border-slate-800 bg-slate-900 px-4 py-3">
+        <div className="max-w-[600px] mx-auto flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="What would you like to learn?"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            className="flex-1 bg-slate-800 border border-slate-700 rounded-full px-4 py-2 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50"
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!inputText.trim()}
+            className="rounded-full w-10 h-10 p-0 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:opacity-50"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>
