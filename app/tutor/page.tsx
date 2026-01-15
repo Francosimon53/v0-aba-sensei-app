@@ -15,8 +15,6 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
-  Target,
-  XCircle,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -68,6 +66,27 @@ interface ChatMessage {
   trapWords?: TrapWord[]
   highlightWords?: string[]
 }
+
+const RBT_CATEGORIES = [
+  "Measurement",
+  "Assessment",
+  "Skill Acquisition",
+  "Behavior Reduction",
+  "Documentation",
+  "Professional Conduct",
+]
+
+const BCBA_CATEGORIES = [
+  "A - Philosophical Underpinnings",
+  "B - Concepts and Principles",
+  "C - Measurement, Data Display & Interpretation",
+  "D - Experimental Design",
+  "E - Ethics and Professional Conduct",
+  "F - Behavior Assessment",
+  "G - Behavior-Change Procedures",
+  "H - Selecting and Implementing Interventions",
+  "I - Personnel Supervision and Management",
+]
 
 function CollapsibleSection({
   title,
@@ -130,32 +149,8 @@ function HighlightedQuestion({ text, highlightWords = [] }: { text: string; high
 }
 
 export default function AITutorChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      sender: "ai",
-      type: "text",
-      content: "Hi! I'm your BCBA AI tutor. What would you like to practice today?",
-      followUpActions: {
-        title: "Choose an option:",
-        cards: [
-          {
-            id: "practice",
-            title: "Start Practice",
-            description: "Practice with BCBA exam questions",
-            iconType: "quiz_blue",
-          },
-          {
-            id: "topic",
-            title: "Learn a Topic",
-            description: "Ask me about any ABA concept",
-            iconType: "guide_green",
-          },
-        ],
-        buttons: [{ id: "practice", text: "Start now", primary: true }],
-      },
-    },
-  ])
+  const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [waitingForTopic, setWaitingForTopic] = useState(false)
@@ -163,7 +158,37 @@ export default function AITutorChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // ... existing code (useEffect, callChatAPI) ...
+  useEffect(() => {
+    const categories = examLevel === "rbt" ? RBT_CATEGORIES : BCBA_CATEGORIES
+    const levelName = examLevel.toUpperCase()
+
+    setMessages([
+      {
+        id: 1,
+        sender: "ai",
+        type: "text",
+        content: `Hi! I'm your ${levelName} AI tutor. What would you like to practice today?`,
+        followUpActions: {
+          title: "Choose an option:",
+          cards: [
+            {
+              id: "practice",
+              title: "Start Practice",
+              description: `Practice with ${levelName} exam questions`,
+              iconType: "quiz_blue",
+            },
+            {
+              id: "topic",
+              title: "Learn a Topic",
+              description: "Ask me about any ABA concept",
+              iconType: "guide_green",
+            },
+          ],
+          buttons: [{ id: "practice", text: "Start now", primary: true }],
+        },
+      },
+    ])
+  }, [examLevel])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -177,7 +202,7 @@ export default function AITutorChatPage() {
         action,
         topic: topic || currentTopic,
         message: message || topic,
-        examLevel: "bcba",
+        examLevel: examLevel, // Use state instead of hardcoded value
       }),
     })
 
@@ -190,9 +215,10 @@ export default function AITutorChatPage() {
 
   const loadPracticeQuestion = async (topic?: string) => {
     setIsTyping(true)
+    const defaultTopic = examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts"
 
     try {
-      const data = await callChatAPI("practice", topic || "BCBA exam concepts")
+      const data = await callChatAPI("practice", topic || defaultTopic)
       setIsTyping(false)
 
       if (data.type === "quiz" && data.question) {
@@ -240,20 +266,19 @@ export default function AITutorChatPage() {
     }
   }
 
-  // ... existing code (generateFlashcards, generateStudyGuide, explainTopic, handleCardClick) ...
-
   const generateFlashcards = async (topic?: string) => {
+    const defaultTopic = examLevel === "rbt" ? "RBT concepts" : "BCBA concepts"
     const userMessage: ChatMessage = {
       id: Date.now(),
       sender: "user",
       type: "text",
-      content: `Generate flashcards about: ${topic || currentTopic || "BCBA concepts"}`,
+      content: `Generate flashcards about: ${topic || currentTopic || defaultTopic}`,
     }
     setMessages((prev) => [...prev, userMessage])
     setIsTyping(true)
 
     try {
-      const data = await callChatAPI("flashcards", topic || currentTopic || "BCBA concepts")
+      const data = await callChatAPI("flashcards", topic || currentTopic || defaultTopic)
       setIsTyping(false)
 
       if (data.flashcards && data.flashcards.length > 0) {
@@ -295,17 +320,18 @@ export default function AITutorChatPage() {
   }
 
   const generateStudyGuide = async (topic?: string) => {
+    const defaultTopic = examLevel === "rbt" ? "RBT concepts" : "BCBA concepts"
     const userMessage: ChatMessage = {
       id: Date.now(),
       sender: "user",
       type: "text",
-      content: `Create study guide for: ${topic || currentTopic || "BCBA concepts"}`,
+      content: `Create study guide for: ${topic || currentTopic || defaultTopic}`,
     }
     setMessages((prev) => [...prev, userMessage])
     setIsTyping(true)
 
     try {
-      const data = await callChatAPI("studyguide", topic || currentTopic || "BCBA concepts")
+      const data = await callChatAPI("studyguide", topic || currentTopic || defaultTopic)
       setIsTyping(false)
 
       const guideMessage: ChatMessage = {
@@ -618,12 +644,33 @@ export default function AITutorChatPage() {
             <span className="text-xl">🥋</span>
           </div>
           <div>
-            <h1 className="font-semibold text-white">ABA Sensei</h1>
-            <p className="text-xs text-slate-500">AI Tutor with RAG</p>
+            <h1 className="font-semibold text-white">{examLevel === "rbt" ? "RBT" : "BCBA"} Tutor AI</h1>
+            <p className="text-xs text-slate-500">AI-Powered Exam Prep</p>
           </div>
         </div>
-        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
-          <User className="w-5 h-5 text-slate-400" />
+
+        <div className="flex items-center gap-2">
+          <div className="flex bg-slate-800 rounded-lg p-1">
+            <button
+              onClick={() => setExamLevel("rbt")}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                examLevel === "rbt" ? "bg-amber-500 text-slate-900" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              RBT
+            </button>
+            <button
+              onClick={() => setExamLevel("bcba")}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                examLevel === "bcba" ? "bg-amber-500 text-slate-900" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              BCBA
+            </button>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
+            <User className="w-5 h-5 text-slate-400" />
+          </div>
         </div>
       </div>
 
@@ -643,238 +690,176 @@ export default function AITutorChatPage() {
 
                       {message.followUpActions && (
                         <div className="mt-4 space-y-3">
-                          <h3 className="text-sm font-medium text-slate-400">{message.followUpActions.title}</h3>
-
                           {message.followUpActions.cards.length > 0 && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2">
                               {message.followUpActions.cards.map((card) => (
                                 <button
                                   key={card.id}
                                   onClick={() => handleCardClick(card.id)}
-                                  className="bg-slate-800 border border-slate-700 rounded-xl p-4 hover:bg-slate-700 hover:border-amber-500/50 transition-all cursor-pointer text-left group"
+                                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-3 text-left transition-all hover:scale-[1.02]"
                                 >
-                                  <div className="flex gap-3">
-                                    <div
-                                      className={`w-10 h-10 rounded-full ${getIconBgColor(card.iconType)} flex items-center justify-center flex-shrink-0`}
-                                    >
-                                      {getIconComponent(card.iconType)}
-                                    </div>
-                                    <div className="flex-1">
-                                      <h4 className="font-semibold text-slate-200 group-hover:text-amber-400 transition-colors">
-                                        {card.title}
-                                      </h4>
-                                      <p className="text-sm text-slate-500 mt-0.5">{card.description}</p>
-                                    </div>
+                                  <div
+                                    className={`w-8 h-8 rounded-lg ${getIconBgColor(card.iconType)} flex items-center justify-center mb-2`}
+                                  >
+                                    {getIconComponent(card.iconType)}
                                   </div>
+                                  <p className="text-sm font-medium text-slate-200">{card.title}</p>
+                                  <p className="text-xs text-slate-500 mt-0.5">{card.description}</p>
                                 </button>
                               ))}
                             </div>
                           )}
 
-                          <div className="flex gap-2 flex-wrap">
-                            {message.followUpActions.buttons.map((button) => (
-                              <Button
-                                key={button.id}
-                                onClick={() => handleActionButton(button.id)}
-                                variant={button.primary ? "default" : "outline"}
-                                className={`rounded-full text-sm ${
-                                  button.primary
-                                    ? "bg-amber-500 hover:bg-amber-600 text-white"
-                                    : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                                }`}
-                              >
-                                {button.text}
-                              </Button>
-                            ))}
-                          </div>
+                          {message.followUpActions.buttons.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {message.followUpActions.buttons.map((btn) => (
+                                <Button
+                                  key={btn.id}
+                                  onClick={() => handleActionButton(btn.id)}
+                                  variant={btn.primary ? "default" : "outline"}
+                                  size="sm"
+                                  className={
+                                    btn.primary
+                                      ? "bg-amber-500 hover:bg-amber-600 text-slate-900"
+                                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                                  }
+                                >
+                                  {btn.text}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   ) : message.type === "quiz_question" ? (
-                    <div className="space-y-4">
-                      {/* Question Card */}
-                      <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-5 shadow-sm">
-                        {message.difficulty && (
-                          <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${getDifficultyColor(message.difficulty)}`}
-                          >
-                            {message.difficulty}
-                          </span>
-                        )}
-                        <p className="text-slate-200 leading-relaxed text-base">
-                          <HighlightedQuestion text={message.content} highlightWords={message.highlightWords} />
-                        </p>
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-4 shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${getDifficultyColor(message.difficulty || "Medium")}`}
+                        >
+                          {message.difficulty}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/50 text-amber-400 border border-amber-700">
+                          {examLevel.toUpperCase()}
+                        </span>
                       </div>
 
-                      {/* Answer Options */}
+                      <p className="text-slate-200 leading-relaxed mb-4">
+                        <HighlightedQuestion text={message.content} highlightWords={message.highlightWords} />
+                      </p>
+
                       <div className="space-y-2">
                         {message.options?.map((option) => {
                           const isSelected = message.userSelectedOptionId === option.id
-                          const isAnswered = message.isAnswered
+                          const showResult = message.isAnswered
                           const isCorrect = option.isCorrect
 
-                          let buttonClass = "bg-slate-900 border-slate-700 hover:border-amber-500/50 hover:bg-slate-800"
-                          if (isAnswered) {
+                          let buttonClass = "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+                          if (showResult) {
                             if (isCorrect) {
-                              buttonClass = "bg-green-900/30 border-green-500 text-green-300"
+                              buttonClass = "bg-green-900/50 border-green-600 text-green-300"
                             } else if (isSelected && !isCorrect) {
-                              buttonClass = "bg-red-900/30 border-red-500 text-red-300"
+                              buttonClass = "bg-red-900/50 border-red-600 text-red-300"
                             } else {
-                              buttonClass = "bg-slate-900/50 border-slate-800 opacity-60"
+                              buttonClass = "bg-slate-800/50 border-slate-700 text-slate-500"
                             }
                           }
 
                           return (
                             <button
                               key={option.id}
-                              onClick={() => !isAnswered && handleAnswerOption(message.id, option.id)}
-                              disabled={isAnswered}
-                              className={`w-full text-left p-4 rounded-xl border transition-all ${buttonClass} ${
-                                !isAnswered ? "cursor-pointer" : "cursor-default"
-                              }`}
+                              onClick={() => !message.isAnswered && handleAnswerOption(message.id, option.id)}
+                              disabled={message.isAnswered}
+                              className={`w-full text-left p-3 rounded-xl border transition-all ${buttonClass} ${!message.isAnswered ? "hover:scale-[1.01]" : ""}`}
                             >
-                              <div className="flex gap-3">
-                                <span className="font-semibold text-amber-400">{option.id}.</span>
-                                <span className="text-slate-200">{option.text}</span>
-                              </div>
-                              {isAnswered && (isSelected || isCorrect) && option.rationale && (
-                                <p className="mt-2 text-sm text-slate-400 pl-6">{option.rationale}</p>
-                              )}
+                              <span className="font-semibold text-amber-400">{option.id}.</span> {option.text}
+                              {showResult && isCorrect && <span className="ml-2 text-green-400">✓</span>}
+                              {showResult && isSelected && !isCorrect && <span className="ml-2 text-red-400">✗</span>}
                             </button>
                           )
                         })}
                       </div>
 
-                      {message.isAnswered && message.trapWords && message.trapWords.length > 0 && (
-                        <div className="space-y-3 mt-4">
-                          {/* Trap Detector Section */}
-                          <CollapsibleSection
-                            title="TRAP DETECTOR"
-                            icon={<AlertTriangle className="w-4 h-4" />}
-                            iconColor="text-yellow-400"
-                            bgColor="bg-yellow-900/20"
-                            defaultOpen={true}
-                          >
-                            <div className="space-y-3">
-                              {message.trapWords.map((trap, idx) => (
-                                <div key={idx} className="bg-slate-800/50 rounded-lg p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="bg-yellow-500/30 text-yellow-300 px-2 py-0.5 rounded text-sm font-semibold">
-                                      {trap.word}
-                                    </span>
-                                    <span className="text-xs text-slate-500 uppercase">
-                                      {trap.type.replace("_", " ")}
-                                    </span>
-                                  </div>
-                                  {trap.type === "aba_terminology" ? (
-                                    <div className="text-sm space-y-1">
-                                      <p className="text-slate-400">
-                                        <span className="text-red-400">Common meaning:</span> {trap.commonMeaning}
-                                      </p>
-                                      <p className="text-slate-400">
-                                        <span className="text-green-400">ABA meaning:</span> {trap.abaMeaning}
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-slate-400">{trap.explanation}</p>
-                                  )}
-                                </div>
-                              ))}
+                      {/* Feedback sections after answering */}
+                      {message.isAnswered && (
+                        <div className="mt-4 space-y-3">
+                          {/* Rationale for selected answer */}
+                          {message.options && (
+                            <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                              <p className="text-sm text-slate-300">
+                                <span className="font-semibold text-amber-400">Explanation: </span>
+                                {message.options.find((o) => o.isCorrect)?.rationale || "No rationale available."}
+                              </p>
                             </div>
-                          </CollapsibleSection>
+                          )}
 
-                          {/* Decision Filter Section */}
-                          <CollapsibleSection
-                            title="DECISION FILTER"
-                            icon={<Target className="w-4 h-4" />}
-                            iconColor="text-blue-400"
-                            bgColor="bg-blue-900/20"
-                            defaultOpen={false}
-                          >
-                            <div className="text-sm text-slate-300 space-y-2">
-                              <p>Step-by-step reasoning:</p>
-                              <ol className="list-decimal list-inside space-y-1 text-slate-400">
-                                <li>Read the question carefully - identify what is being asked</li>
-                                <li>Look for key words (highlighted in yellow above)</li>
-                                <li>Eliminate options that use absolute terms incorrectly</li>
-                                <li>Apply ABA terminology correctly (not common meanings)</li>
-                                <li>Choose the BEST answer that aligns with ABA principles</li>
-                              </ol>
-                            </div>
-                          </CollapsibleSection>
-
-                          {/* Error Diagnosis Section (only if wrong) */}
-                          {message.userSelectedOptionId &&
-                            !message.options?.find((o) => o.id === message.userSelectedOptionId)?.isCorrect && (
-                              <CollapsibleSection
-                                title="ERROR DIAGNOSIS"
-                                icon={<XCircle className="w-4 h-4" />}
-                                iconColor="text-red-400"
-                                bgColor="bg-red-900/20"
-                                defaultOpen={false}
-                              >
-                                <div className="text-sm text-slate-300 space-y-2">
-                                  <p>Understanding your error helps you learn faster:</p>
-                                  <div className="grid grid-cols-1 gap-2 mt-2">
-                                    <div className="bg-slate-800/50 rounded-lg p-2">
-                                      <span className="text-purple-400 font-semibold">VOCABULARY:</span>
-                                      <span className="text-slate-400 ml-2">Did you misunderstand an ABA term?</span>
-                                    </div>
-                                    <div className="bg-slate-800/50 rounded-lg p-2">
-                                      <span className="text-orange-400 font-semibold">CONCEPT:</span>
-                                      <span className="text-slate-400 ml-2">Did you confuse similar ABA concepts?</span>
-                                    </div>
-                                    <div className="bg-slate-800/50 rounded-lg p-2">
-                                      <span className="text-cyan-400 font-semibold">APPLICATION:</span>
-                                      <span className="text-slate-400 ml-2">
-                                        Did you know the theory but couldn't apply it?
-                                      </span>
-                                    </div>
+                          {/* Trap Detector */}
+                          {message.trapWords && message.trapWords.length > 0 && (
+                            <CollapsibleSection
+                              title="TRAP DETECTOR"
+                              icon={<AlertTriangle className="w-4 h-4" />}
+                              iconColor="text-yellow-400"
+                              bgColor="bg-yellow-900/20"
+                              defaultOpen={false}
+                            >
+                              <div className="space-y-2">
+                                {message.trapWords.map((trap, idx) => (
+                                  <div key={idx} className="text-sm">
+                                    <span className="font-semibold text-yellow-300">"{trap.word}"</span>
+                                    <span className="text-slate-400 ml-2">({trap.type})</span>
+                                    {trap.explanation && <p className="text-slate-400 mt-1">{trap.explanation}</p>}
+                                    {trap.commonMeaning && trap.abaMeaning && (
+                                      <div className="mt-1 text-xs">
+                                        <p className="text-slate-500">Common: {trap.commonMeaning}</p>
+                                        <p className="text-amber-400">ABA: {trap.abaMeaning}</p>
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-                              </CollapsibleSection>
-                            )}
+                                ))}
+                              </div>
+                            </CollapsibleSection>
+                          )}
                         </div>
                       )}
                     </div>
                   ) : message.type === "flashcards" ? (
-                    <div className="space-y-4">
-                      <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                        <p className="text-slate-200">{message.content}</p>
-                      </div>
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-4 shadow-sm">
+                      <p className="text-slate-200 mb-4">{message.content}</p>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3">
                         {message.flashcards?.map((card, index) => {
                           const isFlipped = message.flippedCards?.has(index)
                           return (
                             <button
                               key={index}
                               onClick={() => handleFlipCard(message.id, index)}
-                              className="min-h-[120px] bg-slate-800 border border-slate-700 rounded-xl p-4 hover:border-amber-500/50 transition-all cursor-pointer text-left"
+                              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 text-left transition-all min-h-[80px]"
                             >
-                              <div className="text-xs text-slate-500 mb-2">{isFlipped ? "Answer" : "Question"}</div>
-                              <p className={`${isFlipped ? "text-amber-300" : "text-slate-200"}`}>
-                                {isFlipped ? card.back : card.front}
+                              <p className="text-sm text-slate-400 mb-1">
+                                {isFlipped ? "Answer" : "Question"} {index + 1}
                               </p>
+                              <p className="text-slate-200">{isFlipped ? card.back : card.front}</p>
                             </button>
                           )
                         })}
                       </div>
 
                       {message.followUpActions && (
-                        <div className="flex gap-2 flex-wrap">
-                          {message.followUpActions.buttons.map((button) => (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {message.followUpActions.buttons.map((btn) => (
                             <Button
-                              key={button.id}
-                              onClick={() => handleActionButton(button.id)}
-                              variant={button.primary ? "default" : "outline"}
-                              className={`rounded-full text-sm ${
-                                button.primary
-                                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                              key={btn.id}
+                              onClick={() => handleActionButton(btn.id)}
+                              variant={btn.primary ? "default" : "outline"}
+                              size="sm"
+                              className={
+                                btn.primary
+                                  ? "bg-amber-500 hover:bg-amber-600 text-slate-900"
                                   : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                              }`}
+                              }
                             >
-                              {button.text}
+                              {btn.text}
                             </Button>
                           ))}
                         </div>
@@ -886,16 +871,13 @@ export default function AITutorChatPage() {
             )}
 
             {message.sender === "user" && (
-              <div className="max-w-[75%]">
-                <div className="bg-blue-600 rounded-2xl rounded-tr-md px-4 py-3 shadow-sm">
-                  <p className="text-white">{message.content}</p>
-                </div>
+              <div className="bg-blue-600 text-white rounded-2xl rounded-tr-md px-4 py-3 max-w-[75%]">
+                <p>{message.content}</p>
               </div>
             )}
           </div>
         ))}
 
-        {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex gap-3">
@@ -904,12 +886,15 @@ export default function AITutorChatPage() {
               </div>
               <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <div
+                  <span
+                    className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
                     className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
                     style={{ animationDelay: "150ms" }}
                   />
-                  <div
+                  <span
                     className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
                     style={{ animationDelay: "300ms" }}
                   />
@@ -923,23 +908,23 @@ export default function AITutorChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-slate-800 bg-slate-900 px-4 py-3">
+      <div className="border-t border-slate-800 bg-slate-900 p-4">
         <div className="max-w-[600px] mx-auto flex gap-2">
           <input
             ref={inputRef}
             type="text"
-            placeholder="What would you like to learn?"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-            className="flex-1 bg-slate-800 border border-slate-700 rounded-full px-4 py-2 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50"
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder={waitingForTopic ? "Type a topic to learn about..." : "Ask me anything about ABA..."}
+            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!inputText.trim()}
-            className="rounded-full w-10 h-10 p-0 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-700 disabled:opacity-50"
+            disabled={!inputText.trim() || isTyping}
+            className="bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-xl px-4"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </Button>
         </div>
       </div>

@@ -239,8 +239,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Get RAG context based on the query
-    const ragQuery = topic || message || "BCBA exam concepts"
+    const ragQuery = topic || message || (examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts")
     const ragContext = await searchKnowledge(ragQuery, examLevel)
+
+    const examLevelContext =
+      examLevel === "rbt"
+        ? `You are preparing questions for the RBT (Registered Behavior Technician) exam.
+RBT is a paraprofessional certification focused on IMPLEMENTATION of behavior plans.
+RBT questions should focus on:
+- Following written behavior plans
+- Data collection during sessions
+- Recognizing when to ask supervisor for help
+- Professional conduct and scope of practice
+- Direct implementation skills (DTT, prompting, reinforcement delivery)
+Questions should be practical and implementation-focused, NOT analytical or design-based.
+Use simpler vocabulary appropriate for paraprofessional level.`
+        : `You are preparing questions for the BCBA (Board Certified Behavior Analyst) exam.
+BCBA is a graduate-level certification focused on DESIGNING and ANALYZING behavior programs.
+BCBA questions should focus on:
+- Assessment and analysis
+- Treatment design and modification
+- Supervision and ethics
+- Research and experimental design
+- Clinical decision-making
+Questions should require critical thinking and application of principles.`
 
     let systemPrompt = ""
     let userPrompt = ""
@@ -248,7 +270,9 @@ export async function POST(request: NextRequest) {
     // Build prompts based on action type
     switch (action) {
       case "practice":
-        systemPrompt = `You are an expert BCBA exam prep AI. You create realistic, application-based practice questions.
+        systemPrompt = `You are an expert ${examLevel.toUpperCase()} exam prep AI. You create realistic, application-based practice questions.
+
+${examLevelContext}
 
 ${
   ragContext
@@ -261,9 +285,10 @@ ${ragContext}
 - Create questions that test APPLICATION, not just recall
 - Use realistic clinical scenarios
 - Keep responses BRIEF and conversational
+- Match the difficulty and vocabulary to ${examLevel.toUpperCase()} level
 - Respond in the same language as the user's message`
 
-        userPrompt = `Create ONE practice question about: ${topic || "BCBA exam concepts"}
+        userPrompt = `Create ONE ${examLevel.toUpperCase()} practice question about: ${topic || `${examLevel.toUpperCase()} exam concepts`}
 
 Respond with ONLY valid JSON:
 {
@@ -279,7 +304,9 @@ Respond with ONLY valid JSON:
         break
 
       case "flashcards":
-        systemPrompt = `You are an expert BCBA tutor. Create concise flashcards for studying.
+        systemPrompt = `You are an expert ${examLevel.toUpperCase()} tutor. Create concise flashcards for studying.
+
+${examLevelContext}
 
 ${
   ragContext
@@ -292,6 +319,7 @@ ${ragContext}
 - Create 5 flashcards maximum
 - Front: Clear question or term
 - Back: Concise answer (1-2 sentences)
+- Match content to ${examLevel.toUpperCase()} level
 - Respond in the same language as the user`
 
         userPrompt = `Create flashcards about: ${topic || message}
@@ -306,7 +334,9 @@ Respond with ONLY valid JSON:
         break
 
       case "studyguide":
-        systemPrompt = `You are an expert BCBA tutor. Create brief, focused study guides.
+        systemPrompt = `You are an expert ${examLevel.toUpperCase()} tutor. Create brief, focused study guides.
+
+${examLevelContext}
 
 ${
   ragContext
@@ -317,7 +347,7 @@ ${ragContext}
     : ""
 }RULES:
 - Keep it SHORT (3-4 key points max)
-- Use simple language
+- Use simple language appropriate for ${examLevel.toUpperCase()} level
 - Include practical examples
 - Respond in the same language as the user`
 
@@ -334,7 +364,9 @@ Format:
         break
 
       case "explain":
-        systemPrompt = `You are a friendly BCBA tutor. Explain concepts simply and briefly.
+        systemPrompt = `You are a friendly ${examLevel.toUpperCase()} tutor. Explain concepts simply and briefly.
+
+${examLevelContext}
 
 ${
   ragContext
@@ -345,7 +377,7 @@ ${ragContext}
     : ""
 }RULES:
 - Maximum 2-3 short paragraphs
-- Use simple language and examples
+- Use simple language and examples appropriate for ${examLevel.toUpperCase()} level
 - End with ONE follow-up question to guide learning
 - Respond in the same language as the user
 - NO bullet point lists or headers`
@@ -354,7 +386,9 @@ ${ragContext}
         break
 
       default: // chat
-        systemPrompt = `You are ABA Sensei, a friendly BCBA exam tutor. 
+        systemPrompt = `You are ABA Sensei, a friendly ${examLevel.toUpperCase()} exam tutor. 
+
+${examLevelContext}
 
 ${
   ragContext
