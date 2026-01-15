@@ -17,7 +17,7 @@ interface QuizResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic } = await request.json()
+    const { topic, examType } = await request.json()
 
     if (!topic || typeof topic !== "string" || topic.trim().length === 0) {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 })
@@ -34,16 +34,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const prompt = `You are an expert BCBA exam prep AI creating a practice question about: ${topic}
+    const examLevel =
+      examType === "RBT" ? "RBT (Registered Behavior Technician)" : "BCBA (Board Certified Behavior Analyst)"
+    const prompt = `You are an expert ${examLevel} exam prep AI creating a practice question about: ${topic}
 
-Create a realistic, application-based BCBA exam question that tests understanding of this topic in a clinical context.
+Create a realistic, application-based ${examLevel} exam question that tests understanding of this topic in a clinical context.
 
 Requirements:
 1. Write a detailed clinical scenario (3-5 sentences) that demonstrates ${topic} in action
 2. Create 4 answer options (A, B, C, D) with ONLY ONE correct answer
 3. Each option needs a detailed rationale explaining why it's correct or incorrect
 4. Make the question test APPLICATION, not just recall
-5. Use realistic clinical situations
+5. Use realistic clinical situations appropriate for ${examLevel} level
+${examType === "RBT" ? "6. Focus on practical implementation skills and following supervision" : "6. Focus on analysis, design, and supervisory decision-making"}
 
 Respond with ONLY valid JSON in this exact format:
 {
@@ -111,7 +114,6 @@ Respond with ONLY valid JSON in this exact format:
 
     let quizData: QuizResponse
     try {
-      // Extract JSON from markdown code blocks if present
       let jsonString = content
       const codeBlockMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
       if (codeBlockMatch) {
@@ -125,7 +127,6 @@ Respond with ONLY valid JSON in this exact format:
 
       quizData = JSON.parse(jsonString)
 
-      // Validate structure
       if (
         !quizData.question ||
         !Array.isArray(quizData.options) ||
@@ -135,7 +136,6 @@ Respond with ONLY valid JSON in this exact format:
         throw new Error("Invalid quiz structure")
       }
 
-      // Ensure exactly one correct answer
       const correctCount = quizData.options.filter((opt) => opt.isCorrect).length
       if (correctCount !== 1) {
         throw new Error("Must have exactly one correct answer")

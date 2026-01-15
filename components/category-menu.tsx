@@ -75,6 +75,19 @@ export function CategoryMenu({ examType, onSelect, onBack, language }: CategoryM
 
   const categories = examType === "RBT" ? rbtCategories : bcbaCategories
 
+  const handleCategoryClick = (categoryName: string) => {
+    if (mode === "tutor") {
+      // Navigate to chat with topic parameter
+      const router = typeof window !== "undefined" ? window.location : null
+      if (router) {
+        window.location.href = `/tutor?topic=${encodeURIComponent(categoryName)}&examType=${examType}`
+      }
+    } else {
+      // Continue with existing exam mode flow
+      onSelect(categoryName, mode)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-4 sm:p-8 bg-card/50 backdrop-blur-sm border-border/50">
@@ -119,7 +132,7 @@ export function CategoryMenu({ examType, onSelect, onBack, language }: CategoryM
               return (
                 <Button
                   key={category.name}
-                  onClick={() => onSelect(category.name, mode)}
+                  onClick={() => handleCategoryClick(category.name)}
                   className="w-full h-auto py-3 px-3 sm:px-4 justify-start gap-3 bg-secondary hover:bg-accent hover:text-accent-foreground transition-all whitespace-normal text-left"
                   variant="secondary"
                 >
