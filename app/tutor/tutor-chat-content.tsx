@@ -100,6 +100,16 @@ export default function TutorChatContent() {
   const handleCardClick = async (cardId: string) => {
     if (cardId === "practice" || cardId === "start") {
       await loadPracticeQuestion()
+    } else if (cardId === "topic") {
+      // Enfocar el input para que el usuario escriba su tema
+      inputRef.current?.focus()
+      const aiMessage: ChatMessage = {
+        id: Date.now(),
+        sender: "ai",
+        type: "text",
+        content: "What ABA topic would you like to learn about? Type your question below.",
+      }
+      setMessages((prev) => [...prev, aiMessage])
     }
   }
 
@@ -115,15 +125,14 @@ export default function TutorChatContent() {
     }
 
     setIsTyping(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
 
     try {
-      const response = await fetch("/api/generate-topic-quiz", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          topic: topic || "BCBA exam concepts",
-          examType: examTypeFromUrl || "BCBA",
+          message: topic || "Generate a practice question for BCBA exam preparation",
+          examLevel: (examTypeFromUrl || "bcba").toLowerCase(),
         }),
       })
 
@@ -132,19 +141,35 @@ export default function TutorChatContent() {
       const data = await response.json()
       setIsTyping(false)
 
-      const questionMessage: ChatMessage = {
+      // Crear mensaje de AI con la respuesta
+      const aiMessage: ChatMessage = {
         id: Date.now(),
         sender: "ai",
-        type: "quiz_question",
-        content: data.question,
-        options: data.options,
-        difficulty: data.difficulty,
-        userSelectedOptionId: null,
-        isAnswered: false,
+        type: "text",
+        content: data.response,
+        followUpActions: {
+          title: "Continue Learning",
+          cards: [
+            {
+              id: "more",
+              title: "More Questions",
+              description: "Get another practice question",
+              iconType: "quiz_blue",
+            },
+            {
+              id: "explore",
+              title: "Explore Topic",
+              description: "Learn more about this concept",
+              iconType: "guide_green",
+            },
+          ],
+          buttons: [{ id: "more", text: "Next Question", primary: true }],
+        },
       }
 
-      setMessages((prev) => [...prev, questionMessage])
+      setMessages((prev) => [...prev, aiMessage])
     } catch (error) {
+      console.error("[v0] Error loading practice question:", error)
       setIsTyping(false)
       const errorMessage: ChatMessage = {
         id: Date.now(),
@@ -210,7 +235,7 @@ export default function TutorChatContent() {
     }
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return
 
     const userMessage: ChatMessage = {
@@ -220,31 +245,64 @@ export default function TutorChatContent() {
       content: inputText,
     }
     setMessages((prev) => [...prev, userMessage])
+    const messageToSend = inputText
     setInputText("")
 
     setIsTyping(true)
-    setTimeout(() => {
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: messageToSend,
+          examLevel: (examTypeFromUrl || "bcba").toLowerCase(),
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to get response")
+
+      const data = await response.json()
       setIsTyping(false)
+
       const aiMessage: ChatMessage = {
         id: Date.now() + 1,
         sender: "ai",
         type: "text",
-        content: `I understand you're interested in "${inputText}". Would you like to practice with questions on this topic?`,
-        followUpActions: {
-          title: "Options",
-          cards: [
-            {
-              id: "practice",
-              title: "Practice with Questions",
-              description: "Generate practice questions about this topic",
-              iconType: "quiz_blue",
-            },
-          ],
-          buttons: [{ id: "start", text: "Start", primary: true }],
-        },
+        content: data.response,
+        followUpActions: data.usedRag
+          ? {
+              title: "Learn More",
+              cards: [
+                {
+                  id: "practice",
+                  title: "Practice with Questions",
+                  description: "Test your knowledge on this topic",
+                  iconType: "quiz_blue",
+                },
+                {
+                  id: "related",
+                  title: "Related Concepts",
+                  description: "Explore related ABA principles",
+                  iconType: "guide_green",
+                },
+              ],
+              buttons: [{ id: "start", text: "Start Practice", primary: true }],
+            }
+          : undefined,
       }
       setMessages((prev) => [...prev, aiMessage])
-    }, 1500)
+    } catch (error) {
+      console.error("[v0] Error sending message:", error)
+      setIsTyping(false)
+      const errorMessage: ChatMessage = {
+        id: Date.now() + 1,
+        sender: "ai",
+        type: "text",
+        content: "Sorry, I had trouble processing your message. Please try again.",
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    }
   }
 
   const getDifficultyColor = (difficulty: string) => {
