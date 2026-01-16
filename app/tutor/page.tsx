@@ -1,20 +1,21 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
-  User,
-  Send,
   Sparkles,
   BookOpen,
   Brain,
   Zap,
   ArrowLeft,
   ChevronDown,
-  ChevronUp,
-  AlertTriangle,
+  ChevronRight,
+  Flame,
+  Trophy,
+  Target,
+  Check,
+  X,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -67,6 +68,14 @@ interface ChatMessage {
   highlightWords?: string[]
 }
 
+interface GameStats {
+  streak: number
+  xp: number
+  questionsAnswered: number
+  correctToday: number
+  dailyGoal: number
+}
+
 const RBT_CATEGORIES = [
   "Measurement",
   "Assessment",
@@ -115,7 +124,11 @@ function CollapsibleSection({
           <span className={iconColor}>{icon}</span>
           <span className="font-semibold text-slate-200">{title}</span>
         </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        {isOpen ? (
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        )}
       </button>
       {isOpen && <div className="px-4 pb-4 pt-2 border-t border-slate-700">{children}</div>}
     </div>
@@ -148,51 +161,33 @@ function HighlightedQuestion({ text, highlightWords = [] }: { text: string; high
   )
 }
 
-export default function AITutorChatPage() {
+export default function AITutorPage() {
   const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
+  const [gameStats, setGameStats] = useState<GameStats>({
+    streak: 3,
+    xp: 150,
+    questionsAnswered: 0,
+    correctToday: 0,
+    dailyGoal: 5,
+  })
+  const [currentQuestion, setCurrentQuestion] = useState<{
+    content: string
+    options: QuizOption[]
+    difficulty: string
+  } | null>(null)
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
+  const [isAnswered, setIsAnswered] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showXPAnimation, setShowXPAnimation] = useState(false)
+  const [showLearnMore, setShowLearnMore] = useState(false)
+  const [sessionStarted, setSessionStarted] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputText, setInputText] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [waitingForTopic, setWaitingForTopic] = useState(false)
   const [currentTopic, setCurrentTopic] = useState<string>("")
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    const categories = examLevel === "rbt" ? RBT_CATEGORIES : BCBA_CATEGORIES
-    const levelName = examLevel.toUpperCase()
-
-    setMessages([
-      {
-        id: 1,
-        sender: "ai",
-        type: "text",
-        content: `Hi! I'm your ${levelName} AI tutor. What would you like to practice today?`,
-        followUpActions: {
-          title: "Choose an option:",
-          cards: [
-            {
-              id: "practice",
-              title: "Start Practice",
-              description: `Practice with ${levelName} exam questions`,
-              iconType: "quiz_blue",
-            },
-            {
-              id: "topic",
-              title: "Learn a Topic",
-              description: "Ask me about any ABA concept",
-              iconType: "guide_green",
-            },
-          ],
-          buttons: [{ id: "practice", text: "Start now", primary: true }],
-        },
-      },
-    ])
-  }, [examLevel])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages, isTyping])
 
   const callChatAPI = async (action: string, topic?: string, message?: string) => {
     const response = await fetch("/api/chat", {
@@ -211,6 +206,77 @@ export default function AITutorChatPage() {
     }
 
     return response.json()
+  }
+
+  const loadQuestion = async () => {
+    setIsLoading(true)
+    setSelectedAnswer(null)
+    setIsAnswered(false)
+    setShowLearnMore(false)
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "practice",
+          topic: examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts",
+          examLevel,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.type === "quiz" && data.question) {
+        const normalizedOptions: QuizOption[] = (data.options || []).map((opt: any, index: number) => {
+          const letters = ["A", "B", "C", "D"]
+          return {
+            id: opt.id || letters[index],
+            text: opt.text || opt.answer || opt.content || `Option ${letters[index]}`,
+            isCorrect: opt.isCorrect === true || opt.correct === true,
+            rationale: opt.rationale || opt.explanation || "",
+          }
+        })
+
+        setCurrentQuestion({
+          content: data.question,
+          options: normalizedOptions,
+          difficulty: data.difficulty || "Medium",
+        })
+      }
+    } catch (error) {
+      console.error("Error loading question:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAnswer = (optionId: string) => {
+    if (isAnswered) return
+
+    setSelectedAnswer(optionId)
+    setIsAnswered(true)
+
+    const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
+    const isCorrect = selectedOption?.isCorrect
+
+    setGameStats((prev) => ({
+      ...prev,
+      questionsAnswered: prev.questionsAnswered + 1,
+      correctToday: isCorrect ? prev.correctToday + 1 : prev.correctToday,
+      xp: isCorrect ? prev.xp + 10 : prev.xp,
+      streak: isCorrect ? prev.streak : 0,
+    }))
+
+    if (isCorrect) {
+      setShowXPAnimation(true)
+      setTimeout(() => setShowXPAnimation(false), 1500)
+    }
+  }
+
+  const startSession = () => {
+    setSessionStarted(true)
+    loadQuestion()
   }
 
   const loadPracticeQuestion = async (topic?: string) => {
@@ -632,301 +698,286 @@ export default function AITutorChatPage() {
     }
   }
 
-  return (
-    <div className="flex flex-col h-screen bg-slate-950">
-      {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="p-2 hover:bg-slate-800 rounded-full transition-colors">
+  const progressPercent = (gameStats.correctToday / gameStats.dailyGoal) * 100
+
+  // Welcome screen
+  if (!sessionStarted) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col">
+        {/* Header */}
+        <header className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+          <Link href="/" className="p-2 -ml-2 hover:bg-slate-800 rounded-full transition">
             <ArrowLeft className="w-5 h-5 text-slate-400" />
           </Link>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
-            <span className="text-xl">🥋</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-amber-500">
+              <Flame className="w-5 h-5" />
+              <span className="font-bold">{gameStats.streak}</span>
+            </div>
+            <div className="flex items-center gap-1 text-yellow-500">
+              <Zap className="w-5 h-5" />
+              <span className="font-bold">{gameStats.xp}</span>
+            </div>
           </div>
-          <div>
-            <h1 className="font-semibold text-white">{examLevel === "rbt" ? "RBT" : "BCBA"} Tutor AI</h1>
-            <p className="text-xs text-slate-500">AI-Powered Exam Prep</p>
-          </div>
-        </div>
+        </header>
 
-        <div className="flex items-center gap-2">
-          <div className="flex bg-slate-800 rounded-lg p-1">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          {/* Level toggle */}
+          <div className="flex bg-slate-800 rounded-full p-1 mb-8">
             <button
               onClick={() => setExamLevel("rbt")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                examLevel === "rbt" ? "bg-amber-500 text-slate-900" : "text-slate-400 hover:text-slate-200"
+              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
+                examLevel === "rbt" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"
               }`}
             >
               RBT
             </button>
             <button
               onClick={() => setExamLevel("bcba")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                examLevel === "bcba" ? "bg-amber-500 text-slate-900" : "text-slate-400 hover:text-slate-200"
+              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
+                examLevel === "bcba" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"
               }`}
             >
               BCBA
             </button>
           </div>
-          <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
-            <User className="w-5 h-5 text-slate-400" />
-          </div>
-        </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-        {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
-            {message.sender === "ai" && (
-              <div className="flex gap-3 max-w-[85%]">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm">🥋</span>
-                </div>
-                <div className="flex-1">
-                  {message.type === "text" ? (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-                      <p className="text-slate-200 leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          {/* Logo and title */}
+          <div className="text-6xl mb-4">🥋</div>
+          <h1 className="text-2xl font-bold text-white mb-2">Ready to practice?</h1>
+          <p className="text-slate-400 text-center mb-8">
+            {gameStats.correctToday}/{gameStats.dailyGoal} questions today
+          </p>
 
-                      {message.followUpActions && (
-                        <div className="mt-4 space-y-3">
-                          {message.followUpActions.cards.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2">
-                              {message.followUpActions.cards.map((card) => (
-                                <button
-                                  key={card.id}
-                                  onClick={() => handleCardClick(card.id)}
-                                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-3 text-left transition-all hover:scale-[1.02]"
-                                >
-                                  <div
-                                    className={`w-8 h-8 rounded-lg ${getIconBgColor(card.iconType)} flex items-center justify-center mb-2`}
-                                  >
-                                    {getIconComponent(card.iconType)}
-                                  </div>
-                                  <p className="text-sm font-medium text-slate-200">{card.title}</p>
-                                  <p className="text-xs text-slate-500 mt-0.5">{card.description}</p>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          {message.followUpActions.buttons.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {message.followUpActions.buttons.map((btn) => (
-                                <Button
-                                  key={btn.id}
-                                  onClick={() => handleActionButton(btn.id)}
-                                  variant={btn.primary ? "default" : "outline"}
-                                  size="sm"
-                                  className={
-                                    btn.primary
-                                      ? "bg-amber-500 hover:bg-amber-600 text-slate-900"
-                                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                                  }
-                                >
-                                  {btn.text}
-                                </Button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : message.type === "quiz_question" ? (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-4 shadow-sm">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${getDifficultyColor(message.difficulty || "Medium")}`}
-                        >
-                          {message.difficulty}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/50 text-amber-400 border border-amber-700">
-                          {examLevel.toUpperCase()}
-                        </span>
-                      </div>
-
-                      <p className="text-slate-200 leading-relaxed mb-4">
-                        <HighlightedQuestion text={message.content} highlightWords={message.highlightWords} />
-                      </p>
-
-                      <div className="space-y-2">
-                        {message.options?.map((option) => {
-                          const isSelected = message.userSelectedOptionId === option.id
-                          const showResult = message.isAnswered
-                          const isCorrect = option.isCorrect
-
-                          let buttonClass = "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
-                          if (showResult) {
-                            if (isCorrect) {
-                              buttonClass = "bg-green-900/50 border-green-600 text-green-300"
-                            } else if (isSelected && !isCorrect) {
-                              buttonClass = "bg-red-900/50 border-red-600 text-red-300"
-                            } else {
-                              buttonClass = "bg-slate-800/50 border-slate-700 text-slate-500"
-                            }
-                          }
-
-                          return (
-                            <button
-                              key={option.id}
-                              onClick={() => !message.isAnswered && handleAnswerOption(message.id, option.id)}
-                              disabled={message.isAnswered}
-                              className={`w-full text-left p-3 rounded-xl border transition-all ${buttonClass} ${!message.isAnswered ? "hover:scale-[1.01]" : ""}`}
-                            >
-                              <span className="font-semibold text-amber-400">{option.id}.</span> {option.text}
-                              {showResult && isCorrect && <span className="ml-2 text-green-400">✓</span>}
-                              {showResult && isSelected && !isCorrect && <span className="ml-2 text-red-400">✗</span>}
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {/* Feedback sections after answering */}
-                      {message.isAnswered && (
-                        <div className="mt-4 space-y-3">
-                          {/* Rationale for selected answer */}
-                          {message.options && (
-                            <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
-                              <p className="text-sm text-slate-300">
-                                <span className="font-semibold text-amber-400">Explanation: </span>
-                                {message.options.find((o) => o.isCorrect)?.rationale || "No rationale available."}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Trap Detector */}
-                          {message.trapWords && message.trapWords.length > 0 && (
-                            <CollapsibleSection
-                              title="TRAP DETECTOR"
-                              icon={<AlertTriangle className="w-4 h-4" />}
-                              iconColor="text-yellow-400"
-                              bgColor="bg-yellow-900/20"
-                              defaultOpen={false}
-                            >
-                              <div className="space-y-2">
-                                {message.trapWords.map((trap, idx) => (
-                                  <div key={idx} className="text-sm">
-                                    <span className="font-semibold text-yellow-300">"{trap.word}"</span>
-                                    <span className="text-slate-400 ml-2">({trap.type})</span>
-                                    {trap.explanation && <p className="text-slate-400 mt-1">{trap.explanation}</p>}
-                                    {trap.commonMeaning && trap.abaMeaning && (
-                                      <div className="mt-1 text-xs">
-                                        <p className="text-slate-500">Common: {trap.commonMeaning}</p>
-                                        <p className="text-amber-400">ABA: {trap.abaMeaning}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </CollapsibleSection>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : message.type === "flashcards" ? (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md p-4 shadow-sm">
-                      <p className="text-slate-200 mb-4">{message.content}</p>
-
-                      <div className="grid grid-cols-1 gap-3">
-                        {message.flashcards?.map((card, index) => {
-                          const isFlipped = message.flippedCards?.has(index)
-                          return (
-                            <button
-                              key={index}
-                              onClick={() => handleFlipCard(message.id, index)}
-                              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 text-left transition-all min-h-[80px]"
-                            >
-                              <p className="text-sm text-slate-400 mb-1">
-                                {isFlipped ? "Answer" : "Question"} {index + 1}
-                              </p>
-                              <p className="text-slate-200">{isFlipped ? card.back : card.front}</p>
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {message.followUpActions && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {message.followUpActions.buttons.map((btn) => (
-                            <Button
-                              key={btn.id}
-                              onClick={() => handleActionButton(btn.id)}
-                              variant={btn.primary ? "default" : "outline"}
-                              size="sm"
-                              className={
-                                btn.primary
-                                  ? "bg-amber-500 hover:bg-amber-600 text-slate-900"
-                                  : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                              }
-                            >
-                              {btn.text}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            )}
-
-            {message.sender === "user" && (
-              <div className="bg-blue-600 text-white rounded-2xl rounded-tr-md px-4 py-3 max-w-[75%]">
-                <p>{message.content}</p>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
-                <span className="text-sm">🥋</span>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-md px-4 py-3">
-                <div className="flex gap-1">
-                  <span
-                    className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
-              </div>
+          {/* Progress ring */}
+          <div className="relative w-32 h-32 mb-8">
+            <svg className="w-full h-full -rotate-90">
+              <circle cx="64" cy="64" r="56" fill="none" stroke="#1e293b" strokeWidth="8" />
+              <circle
+                cx="64"
+                cy="64"
+                r="56"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={`${progressPercent * 3.52} 352`}
+                className="transition-all duration-500"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <Target className="w-8 h-8 text-amber-500 mb-1" />
+              <span className="text-white font-bold">{Math.round(progressPercent)}%</span>
             </div>
           </div>
-        )}
 
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="border-t border-slate-800 bg-slate-900 p-4">
-        <div className="max-w-[600px] mx-auto flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder={waitingForTopic ? "Type a topic to learn about..." : "Ask me anything about ABA..."}
-            className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
-          />
+          {/* Start button */}
           <Button
-            onClick={handleSendMessage}
-            disabled={!inputText.trim() || isTyping}
-            className="bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-xl px-4"
+            onClick={startSession}
+            className="w-full max-w-xs bg-amber-500 hover:bg-amber-600 text-black font-bold py-6 text-lg rounded-2xl"
           >
-            <Send className="w-5 h-5" />
+            Start Practice
           </Button>
+
+          {/* Daily goal card */}
+          <div className="mt-8 bg-slate-900 rounded-2xl p-4 w-full max-w-xs border border-slate-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">Daily Goal</p>
+                  <p className="text-slate-500 text-sm">
+                    {gameStats.correctToday}/{gameStats.dailyGoal} correct
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </div>
+          </div>
         </div>
+      </div>
+    )
+  }
+
+  // Question screen
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col">
+      {/* Header with progress */}
+      <header className="px-4 py-3 border-b border-slate-800">
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={() => setSessionStarted(false)} className="p-2 -ml-2 hover:bg-slate-800 rounded-full">
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-amber-500">
+              <Flame className="w-5 h-5" />
+              <span className="font-bold">{gameStats.streak}</span>
+            </div>
+            <div className="flex items-center gap-1 text-yellow-500 relative">
+              <Zap className="w-5 h-5" />
+              <span className="font-bold">{gameStats.xp}</span>
+              {/* XP Animation */}
+              {showXPAnimation && (
+                <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-400 font-bold animate-bounce">
+                  +10
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="flex gap-1">
+          {Array.from({ length: gameStats.dailyGoal }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 flex-1 rounded-full transition-all ${
+                i < gameStats.correctToday
+                  ? "bg-green-500"
+                  : i < gameStats.questionsAnswered
+                    ? "bg-red-500"
+                    : "bg-slate-700"
+              }`}
+            />
+          ))}
+        </div>
+      </header>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col p-4 max-w-lg mx-auto w-full">
+        {isLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-slate-400">Loading question...</p>
+          </div>
+        ) : currentQuestion ? (
+          <>
+            {/* Question */}
+            <div className="flex-1">
+              <div className="mb-6">
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${
+                    currentQuestion.difficulty === "Easy"
+                      ? "bg-green-900/50 text-green-400"
+                      : currentQuestion.difficulty === "Hard"
+                        ? "bg-red-900/50 text-red-400"
+                        : "bg-yellow-900/50 text-yellow-400"
+                  }`}
+                >
+                  {currentQuestion.difficulty}
+                </span>
+                <p className="text-white text-lg leading-relaxed">{currentQuestion.content}</p>
+              </div>
+
+              {/* Options */}
+              <div className="space-y-3">
+                {currentQuestion.options.map((option) => {
+                  const isSelected = selectedAnswer === option.id
+                  const isCorrect = option.isCorrect
+                  const showResult = isAnswered
+
+                  let bgColor = "bg-slate-800 hover:bg-slate-700 border-slate-700"
+                  if (showResult) {
+                    if (isCorrect) {
+                      bgColor = "bg-green-900/50 border-green-500"
+                    } else if (isSelected && !isCorrect) {
+                      bgColor = "bg-red-900/50 border-red-500"
+                    } else {
+                      bgColor = "bg-slate-800/50 border-slate-700 opacity-50"
+                    }
+                  } else if (isSelected) {
+                    bgColor = "bg-amber-900/50 border-amber-500"
+                  }
+
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => handleAnswer(option.id)}
+                      disabled={isAnswered}
+                      className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${bgColor}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                            showResult && isCorrect
+                              ? "bg-green-500 text-black"
+                              : showResult && isSelected && !isCorrect
+                                ? "bg-red-500 text-white"
+                                : "bg-slate-700 text-slate-300"
+                          }`}
+                        >
+                          {showResult && isCorrect ? (
+                            <Check className="w-4 h-4" />
+                          ) : showResult && isSelected && !isCorrect ? (
+                            <X className="w-4 h-4" />
+                          ) : (
+                            option.id
+                          )}
+                        </span>
+                        <span className="text-slate-200 pt-1">{option.text}</span>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Feedback - SHORT */}
+              {isAnswered && (
+                <div className="mt-6 space-y-4">
+                  {/* Quick feedback */}
+                  <div
+                    className={`p-4 rounded-2xl ${
+                      currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
+                        ? "bg-green-900/30 border border-green-800"
+                        : "bg-red-900/30 border border-red-800"
+                    }`}
+                  >
+                    <p className="text-white font-medium">
+                      {currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
+                        ? "Great job! 🎉"
+                        : "Not quite. The correct answer was " +
+                          currentQuestion.options.find((o) => o.isCorrect)?.id +
+                          "."}
+                    </p>
+                  </div>
+
+                  {/* Learn more - collapsible */}
+                  <button
+                    onClick={() => setShowLearnMore(!showLearnMore)}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition text-sm"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition ${showLearnMore ? "rotate-180" : ""}`} />
+                    {showLearnMore ? "Hide explanation" : "Learn more"}
+                  </button>
+
+                  {showLearnMore && (
+                    <div className="bg-slate-800/50 rounded-xl p-4 text-sm text-slate-300">
+                      {currentQuestion.options.find((o) => o.isCorrect)?.rationale || "This is the correct answer."}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom button */}
+            {isAnswered && (
+              <div className="pt-4 mt-auto">
+                <Button
+                  onClick={loadQuestion}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-6 text-lg rounded-2xl"
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-slate-400">No question loaded</p>
+          </div>
+        )}
       </div>
     </div>
   )
