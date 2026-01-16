@@ -97,6 +97,12 @@ const BCBA_CATEGORIES = [
   "I - Personnel Supervision and Management",
 ]
 
+interface TrapInfo {
+  word: string
+  type: "sequence" | "comparison" | "absolute"
+  explanation: string
+}
+
 function CollapsibleSection({
   title,
   icon,
@@ -180,6 +186,12 @@ export default function AITutorPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showXPAnimation, setShowXPAnimation] = useState(false)
   const [showLearnMore, setShowLearnMore] = useState(false)
+  const [showTrapAlert, setShowTrapAlert] = useState(false)
+  const [showQuickTip, setShowQuickTip] = useState(false)
+  const [showWhyWrong, setShowWhyWrong] = useState(false)
+  const [detectedTraps, setDetectedTraps] = useState<TrapInfo[]>([])
+  const [quickTip, setQuickTip] = useState<string>("")
+  const [errorDiagnosis, setErrorDiagnosis] = useState<string>("")
   const [sessionStarted, setSessionStarted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -251,32 +263,106 @@ export default function AITutorPage() {
     }
   }
 
+  const detectTrapWords = (questionText: string): TrapInfo[] => {
+    const traps: TrapInfo[] = []
+    const lowerText = questionText.toLowerCase()
+
+    const trapPatterns: Array<{ word: string; type: "sequence" | "comparison" | "absolute"; explanation: string }> = [
+      { word: "FIRST", type: "sequence", explanation: "Sequence matters - what comes BEFORE other steps?" },
+      { word: "NEXT", type: "sequence", explanation: "Look for the step that comes AFTER what's been done" },
+      { word: "BEST", type: "comparison", explanation: "Multiple options work, one is MORE appropriate" },
+      { word: "MOST", type: "comparison", explanation: "Several are correct, pick the STRONGEST choice" },
+      { word: "PRIMARY", type: "comparison", explanation: "Main reason, not secondary effects" },
+      { word: "ALWAYS", type: "absolute", explanation: "Absolutes are usually WRONG in ABA" },
+      { word: "NEVER", type: "absolute", explanation: "Absolutes are usually WRONG in ABA" },
+      { word: "ONLY", type: "absolute", explanation: "Watch out - rarely is there ONLY one way" },
+    ]
+
+    trapPatterns.forEach(({ word, type, explanation }) => {
+      if (lowerText.includes(word.toLowerCase())) {
+        traps.push({ word, type, explanation })
+      }
+    })
+
+    return traps
+  }
+
+  const generateQuickTip = (correctOption: QuizOption | undefined): string => {
+    if (!correctOption) return ""
+    const text = correctOption.text.toLowerCase()
+
+    // Generate simple memory tricks based on common ABA concepts
+    if (text.includes("generality")) return "Generality = behavior transfers across time, settings, and people"
+    if (text.includes("effectiveness")) return "Effectiveness = Does it actually WORK to change behavior?"
+    if (text.includes("applied")) return "Applied = Is it socially significant to the client?"
+    if (text.includes("technological")) return "Technological = Can another person replicate it exactly?"
+    if (text.includes("extinction")) return "Extinction = Stop the reinforcement, behavior decreases"
+    if (text.includes("reinforcement")) return "Reinforcement = Behavior INCREASES after consequence"
+    if (text.includes("punishment")) return "Punishment = Behavior DECREASES after consequence"
+
+    return correctOption.rationale?.split(".")[0] || "Review this concept in your study materials"
+  }
+
+  const diagnoseError = (selectedOption: QuizOption | undefined, correctOption: QuizOption | undefined): string => {
+    if (!selectedOption || !correctOption) return ""
+
+    const selectedText = selectedOption.text.toLowerCase()
+    const correctText = correctOption.text.toLowerCase()
+
+    // Simple heuristics for error types
+    if (
+      (selectedText.includes("positive") && correctText.includes("negative")) ||
+      (selectedText.includes("negative") && correctText.includes("positive"))
+    ) {
+      return "VOCABULARY: You confused positive (add) with negative (remove)"
+    }
+    if (
+      (selectedText.includes("reinforcement") && correctText.includes("punishment")) ||
+      (selectedText.includes("punishment") && correctText.includes("reinforcement"))
+    ) {
+      return "CONCEPT: Reinforcement increases behavior, punishment decreases it"
+    }
+    if (selectedText.includes("extinction") || correctText.includes("extinction")) {
+      return "CONCEPT: Extinction = withholding reinforcement, not adding punishment"
+    }
+
+    return "APPLICATION: The concept was correct, but applied to the wrong scenario"
+  }
+
   const handleAnswer = (optionId: string) => {
     if (isAnswered) return
 
     setSelectedAnswer(optionId)
     setIsAnswered(true)
+    setShowTrapAlert(false)
+    setShowQuickTip(false)
+    setShowWhyWrong(false)
+    setShowLearnMore(false)
 
     const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
+    const correctOption = currentQuestion?.options.find((o) => o.isCorrect)
     const isCorrect = selectedOption?.isCorrect
+
+    if (currentQuestion) {
+      setDetectedTraps(detectTrapWords(currentQuestion.content))
+      setQuickTip(generateQuickTip(correctOption))
+      if (!isCorrect) {
+        setErrorDiagnosis(diagnoseError(selectedOption, correctOption))
+      }
+    }
 
     setGameStats((prev) => ({
       ...prev,
       questionsAnswered: prev.questionsAnswered + 1,
       correctToday: isCorrect ? prev.correctToday + 1 : prev.correctToday,
       xp: isCorrect ? prev.xp + 10 : prev.xp,
-      streak: isCorrect ? prev.streak : 0,
+      streak: isCorrect ? prev.streak + 1 : 0,
     }))
 
     if (isCorrect) {
       setShowXPAnimation(true)
       setTimeout(() => setShowXPAnimation(false), 1500)
     }
-  }
-
-  const startSession = () => {
-    setSessionStarted(true)
-    loadQuestion()
   }
 
   const loadPracticeQuestion = async (topic?: string) => {
@@ -407,10 +493,23 @@ export default function AITutorPage() {
         content: data.content,
         followUpActions: {
           title: "Continue learning:",
-          cards: [],
+          cards: [
+            {
+              id: "flashcards",
+              title: "Flashcards",
+              description: "Create flashcards on this topic",
+              iconType: "flashcards_purple",
+            },
+            {
+              id: "studyguide",
+              title: "Study Guide",
+              description: "Get a study guide on this topic",
+              iconType: "guide_green",
+            },
+          ],
           buttons: [
-            { id: "flashcards", text: "Flashcards" },
-            { id: "practice", text: "Practice questions", primary: true },
+            { id: "review", text: "Review Quiz" },
+            { id: "practice", text: "Practice Questions", primary: true },
           ],
         },
       }
@@ -700,6 +799,10 @@ export default function AITutorPage() {
 
   const progressPercent = (gameStats.correctToday / gameStats.dailyGoal) * 100
 
+  const startSession = () => {
+    setSessionStarted(true)
+  }
+
   // Welcome screen
   if (!sessionStarted) {
     return (
@@ -925,7 +1028,7 @@ export default function AITutorPage() {
 
               {/* Feedback - SHORT */}
               {isAnswered && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-6 space-y-3">
                   {/* Quick feedback */}
                   <div
                     className={`p-4 rounded-2xl ${
@@ -936,12 +1039,71 @@ export default function AITutorPage() {
                   >
                     <p className="text-white font-medium">
                       {currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                        ? "Great job! 🎉"
+                        ? "Great job!"
                         : "Not quite. The correct answer was " +
                           currentQuestion.options.find((o) => o.isCorrect)?.id +
                           "."}
                     </p>
                   </div>
+
+                  {detectedTraps.length > 0 && (
+                    <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setShowTrapAlert(!showTrapAlert)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-yellow-900/30 transition"
+                      >
+                        <span className="flex items-center gap-2 text-yellow-400 font-medium text-sm">
+                          <span>🚨</span> Trap Alert
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-yellow-500 transition ${showTrapAlert ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {showTrapAlert && (
+                        <div className="px-4 pb-3 text-sm text-yellow-300/90">
+                          {detectedTraps.map((trap, i) => (
+                            <p key={i}>
+                              <span className="font-bold">{trap.word}</span> = {trap.explanation}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {quickTip && (
+                    <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setShowQuickTip(!showQuickTip)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-900/30 transition"
+                      >
+                        <span className="flex items-center gap-2 text-blue-400 font-medium text-sm">
+                          <span>🎯</span> Quick Tip
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-blue-500 transition ${showQuickTip ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {showQuickTip && <div className="px-4 pb-3 text-sm text-blue-300/90">{quickTip}</div>}
+                    </div>
+                  )}
+
+                  {!currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect && errorDiagnosis && (
+                    <div className="bg-red-900/20 border border-red-700/50 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setShowWhyWrong(!showWhyWrong)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-red-900/30 transition"
+                      >
+                        <span className="flex items-center gap-2 text-red-400 font-medium text-sm">
+                          <span>📊</span> Why Wrong?
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-red-500 transition ${showWhyWrong ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {showWhyWrong && <div className="px-4 pb-3 text-sm text-red-300/90">{errorDiagnosis}</div>}
+                    </div>
+                  )}
 
                   {/* Learn more - collapsible */}
                   <button
@@ -949,7 +1111,7 @@ export default function AITutorPage() {
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition text-sm"
                   >
                     <ChevronDown className={`w-4 h-4 transition ${showLearnMore ? "rotate-180" : ""}`} />
-                    {showLearnMore ? "Hide explanation" : "Learn more"}
+                    {showLearnMore ? "Hide explanation" : "Full explanation"}
                   </button>
 
                   {showLearnMore && (
