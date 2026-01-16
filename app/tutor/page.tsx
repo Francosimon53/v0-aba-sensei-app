@@ -27,6 +27,16 @@ interface TrapWord {
   abaMeaning?: string
 }
 
+// Added TrapAnalysis interface
+interface TrapAnalysis {
+  hasTrap: boolean
+  trapType: "terminology" | "conceptual" | "structure" | null
+  trapWord: string | null
+  trapExplanation: string | null
+  quickTip: string
+  commonConfusion: string | null
+}
+
 interface QuizOption {
   id: string
   text: string
@@ -66,6 +76,7 @@ interface ChatMessage {
   flippedCards?: Set<number>
   trapWords?: TrapWord[]
   highlightWords?: string[]
+  trapAnalysis?: TrapAnalysis
 }
 
 interface GameStats {
@@ -263,35 +274,16 @@ export default function AITutorPage() {
     }
   }
 
-  const detectTrapWords = (questionText: string): TrapInfo[] => {
-    const traps: TrapInfo[] = []
-    const lowerText = questionText.toLowerCase()
+  // Delete lines 266-288
 
-    const trapPatterns: Array<{ word: string; type: "sequence" | "comparison" | "absolute"; explanation: string }> = [
-      { word: "FIRST", type: "sequence", explanation: "Sequence matters - what comes BEFORE other steps?" },
-      { word: "NEXT", type: "sequence", explanation: "Look for the step that comes AFTER what's been done" },
-      { word: "BEST", type: "comparison", explanation: "Multiple options work, one is MORE appropriate" },
-      { word: "MOST", type: "comparison", explanation: "Several are correct, pick the STRONGEST choice" },
-      { word: "PRIMARY", type: "comparison", explanation: "Main reason, not secondary effects" },
-      { word: "ALWAYS", type: "absolute", explanation: "Absolutes are usually WRONG in ABA" },
-      { word: "NEVER", type: "absolute", explanation: "Absolutes are usually WRONG in ABA" },
-      { word: "ONLY", type: "absolute", explanation: "Watch out - rarely is there ONLY one way" },
-    ]
+  function generateQuickTip(trapAnalysis?: TrapAnalysis, correctOption?: QuizOption): string {
+    // Prefer AI-generated tip if available
+    if (trapAnalysis?.quickTip) return trapAnalysis.quickTip
 
-    trapPatterns.forEach(({ word, type, explanation }) => {
-      if (lowerText.includes(word.toLowerCase())) {
-        traps.push({ word, type, explanation })
-      }
-    })
-
-    return traps
-  }
-
-  const generateQuickTip = (correctOption: QuizOption | undefined): string => {
     if (!correctOption) return ""
     const text = correctOption.text.toLowerCase()
 
-    // Generate simple memory tricks based on common ABA concepts
+    // Fallback to simple heuristics
     if (text.includes("generality")) return "Generality = behavior transfers across time, settings, and people"
     if (text.includes("effectiveness")) return "Effectiveness = Does it actually WORK to change behavior?"
     if (text.includes("applied")) return "Applied = Is it socially significant to the client?"
@@ -303,13 +295,22 @@ export default function AITutorPage() {
     return correctOption.rationale?.split(".")[0] || "Review this concept in your study materials"
   }
 
-  const diagnoseError = (selectedOption: QuizOption | undefined, correctOption: QuizOption | undefined): string => {
+  function diagnoseError(
+    selectedOption: QuizOption | undefined,
+    correctOption: QuizOption | undefined,
+    trapAnalysis?: TrapAnalysis,
+  ): string {
+    // Prefer AI-generated confusion analysis
+    if (trapAnalysis?.commonConfusion) {
+      return `CONCEPT: ${trapAnalysis.commonConfusion}`
+    }
+
     if (!selectedOption || !correctOption) return ""
 
     const selectedText = selectedOption.text.toLowerCase()
     const correctText = correctOption.text.toLowerCase()
 
-    // Simple heuristics for error types
+    // Fallback heuristics
     if (
       (selectedText.includes("positive") && correctText.includes("negative")) ||
       (selectedText.includes("negative") && correctText.includes("positive"))
@@ -344,10 +345,15 @@ export default function AITutorPage() {
     const isCorrect = selectedOption?.isCorrect
 
     if (currentQuestion) {
-      setDetectedTraps(detectTrapWords(currentQuestion.content))
-      setQuickTip(generateQuickTip(correctOption))
+      const trapAnalysis = currentQuestion.trapAnalysis // Assuming trapAnalysis is available on currentQuestion
+      setDetectedTraps(
+        trapAnalysis?.hasTrap
+          ? [{ word: trapAnalysis.trapWord!, type: trapAnalysis.trapType!, explanation: trapAnalysis.trapExplanation! }]
+          : [],
+      ) // This might need adjustment based on how trapAnalysis is structured
+      setQuickTip(generateQuickTip(trapAnalysis, correctOption))
       if (!isCorrect) {
-        setErrorDiagnosis(diagnoseError(selectedOption, correctOption))
+        setErrorDiagnosis(diagnoseError(selectedOption, correctOption, trapAnalysis))
       }
     }
 
@@ -393,7 +399,7 @@ export default function AITutorPage() {
           difficulty: data.difficulty || "Medium",
           userSelectedOptionId: null,
           isAnswered: false,
-          trapWords: data.trapWords || [],
+          trapAnalysis: data.trapAnalysis || null,
           highlightWords: data.highlightWords || [],
         }
         setMessages((prev) => [...prev, questionMessage])
@@ -608,59 +614,47 @@ export default function AITutorPage() {
     const correctOption = currentMessage?.options?.find((opt) => opt.isCorrect)
 
     setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id === messageId && msg.type === "quiz_question") {
-          return {
-            ...msg,
-            userSelectedOptionId: optionId,
-            isAnswered: true,
-          }
-        }
-        return msg
-      }),
+      prev.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              userSelectedOptionId: optionId,
+              isAnswered: true,
+              followUpActions: {
+                title: "Continue learning:",
+                cards: [],
+                buttons: [
+                  { id: "more", text: "More Questions" },
+                  { id: "flashcards", text: "Flashcards" },
+                  { id: "practice", text: "Next Question", primary: true },
+                ],
+              },
+            }
+          : msg,
+      ),
     )
 
-    setTimeout(() => {
-      let feedbackContent = ""
+    const isCorrect = selectedOption?.isCorrect
 
-      if (selectedOption?.isCorrect) {
-        feedbackContent = "Excellent! You got it right."
-      } else {
-        // Determine error type
-        const errorTypes = ["VOCABULARY", "CONCEPT", "APPLICATION"]
-        const errorType = errorTypes[Math.floor(Math.random() * errorTypes.length)]
-        feedbackContent = `Good try. Let's learn from this.\n\nError Type: ${errorType}`
-      }
+    const trapAnalysis = currentMessage?.trapAnalysis
+    setQuickTip(generateQuickTip(trapAnalysis, correctOption))
 
-      const followUpMessage: ChatMessage = {
-        id: Date.now() + 1,
-        sender: "ai",
-        type: "text",
-        content: feedbackContent,
-        followUpActions: {
-          title: "Keep learning:",
-          cards: [
-            {
-              id: "flashcards",
-              title: "Flashcards",
-              description: "Create flashcards to review this topic",
-              iconType: "flashcards_purple",
-            },
-            {
-              id: "studyguide",
-              title: "Study Guide",
-              description: "Generate a study guide on this topic",
-              iconType: "guide_green",
-            },
-          ],
-          buttons: [
-            { id: "review", text: "Review Quiz" },
-            { id: "more", text: "More Questions", primary: true },
-          ],
-        },
-      }
-      setMessages((prev) => [...prev, followUpMessage])
-    }, 1000)
+    if (!isCorrect) {
+      setErrorDiagnosis(diagnoseError(selectedOption, correctOption, trapAnalysis))
+    }
+
+    setGameStats((prev) => ({
+      ...prev,
+      questionsAnswered: prev.questionsAnswered + 1,
+      correctToday: isCorrect ? prev.correctToday + 1 : prev.correctToday,
+      xp: isCorrect ? prev.xp + 10 : prev.xp,
+      streak: isCorrect ? prev.streak + 1 : 0,
+    }))
+
+    if (isCorrect) {
+      setShowXPAnimation(true)
+      setTimeout(() => setShowXPAnimation(false), 1500)
+    }
   }
 
   const handleFlipCard = (messageId: number, cardIndex: number) => {

@@ -104,90 +104,6 @@ interface ChatRequest {
   examLevel?: string
 }
 
-function detectTrapWords(questionText: string, options: any[]) {
-  const traps: any[] = []
-  const textToScan = questionText + " " + options.map((o) => o.text).join(" ")
-  const questionLower = questionText.toLowerCase()
-
-  // Sequence/Priority words
-  const sequenceWords = ["FIRST", "NEXT", "BEFORE", "PRIORITY", "INITIALLY"]
-  sequenceWords.forEach((word) => {
-    if (questionLower.includes(word.toLowerCase())) {
-      traps.push({
-        word,
-        type: "sequence",
-        explanation: "This asks for ORDER, not just any correct action. Think about what comes FIRST in the sequence.",
-      })
-    }
-  })
-
-  // Comparison words
-  const comparisonWords = ["BEST", "MOST", "PRIMARY", "PRIMARILY"]
-  comparisonWords.forEach((word) => {
-    if (questionLower.includes(word.toLowerCase())) {
-      traps.push({
-        word,
-        type: "comparison",
-        explanation:
-          "Multiple options may work, but one is BETTER. Look for the option that is most aligned with ABA principles.",
-      })
-    }
-  })
-
-  // Absolute words
-  const absoluteWords = ["ALWAYS", "NEVER", "ONLY", "ALL", "NONE"]
-  absoluteWords.forEach((word) => {
-    if (questionLower.includes(word.toLowerCase())) {
-      traps.push({
-        word,
-        type: "absolute",
-        explanation:
-          "Absolute words are usually WRONG in ABA. Behavior depends on context - rarely is something 'always' or 'never' true.",
-      })
-    }
-  })
-
-  // ABA terminology traps
-  const abaTerms = [
-    { term: "negative", common: "Bad or harmful", aba: "SUBTRACT/Remove (like a minus sign in math)" },
-    {
-      term: "consequence",
-      common: "Punishment",
-      aba: "ANY event that follows behavior (can be reinforcement or punishment)",
-    },
-    {
-      term: "discrimination",
-      common: "Prejudice",
-      aba: "Distinguishing between different stimuli (responding differently to SD vs S-delta)",
-    },
-    {
-      term: "extinction",
-      common: "Disappear forever",
-      aba: "Stop reinforcing a behavior (may see extinction burst first)",
-    },
-    { term: "contingent", common: "Backup plan", aba: "Dependent relationship (IF behavior, THEN consequence)" },
-    { term: "positive", common: "Good or pleasant", aba: "ADD/Present (like a plus sign in math)" },
-    {
-      term: "punishment",
-      common: "Mean or harmful",
-      aba: "Decreases future behavior (can be adding OR removing something)",
-    },
-  ]
-
-  abaTerms.forEach(({ term, common, aba }) => {
-    if (textToScan.toLowerCase().includes(term)) {
-      traps.push({
-        word: term.charAt(0).toUpperCase() + term.slice(1),
-        type: "aba_terminology",
-        commonMeaning: common,
-        abaMeaning: aba,
-      })
-    }
-  })
-
-  return traps
-}
-
 function getHighlightWords(questionText: string): string[] {
   const highlightPatterns = [
     // Contrast words
@@ -270,7 +186,7 @@ Questions should require critical thinking and application of principles.`
     // Build prompts based on action type
     switch (action) {
       case "practice":
-        systemPrompt = `You are an expert ${examLevel.toUpperCase()} exam prep AI. You create realistic, application-based practice questions.
+        systemPrompt = `You are an expert ${examLevel.toUpperCase()} exam prep AI. You create realistic, application-based practice questions AND analyze them for potential traps.
 
 ${examLevelContext}
 
@@ -284,9 +200,35 @@ ${ragContext}
 }IMPORTANT RULES:
 - Create questions that test APPLICATION, not just recall
 - Use realistic clinical scenarios
-- Keep responses BRIEF and conversational
 - Match the difficulty and vocabulary to ${examLevel.toUpperCase()} level
-- Respond in the same language as the user's message`
+- Respond in the same language as the user's message
+
+TRAP ANALYSIS RULES - Analyze the specific question you create for:
+
+1. ABA TERMINOLOGY TRAPS - Words with different meanings in ABA vs everyday English:
+   - "Negative" = subtract/remove (not "bad")
+   - "Consequence" = any event after behavior (not "punishment")
+   - "Discrimination" = distinguish stimuli (not "prejudice")
+   - "Extinction" = stop reinforcing (not "disappear")
+   - "Contingent" = if-then dependent (not "backup plan")
+   - "Punishment" = decreases behavior
+   - "Reinforcement" = increases behavior
+   - "Positive/Negative" = add/remove (not good/bad)
+
+2. CONCEPTUAL CONFUSION TRAPS - Similar concepts students confuse:
+   - MO vs SD
+   - Positive vs Negative (add vs subtract)
+   - DRA vs DRI vs DRO vs DRL
+   - Generality vs Effectiveness vs Applied
+   - Validity vs Reliability vs Accuracy
+
+3. QUESTION STRUCTURE TRAPS:
+   - Sequence: FIRST, NEXT, BEFORE (order matters)
+   - Comparison: BEST, MOST, PRIMARY (multiple correct, one better)
+   - Absolutes: ALWAYS, NEVER (usually wrong in ABA)
+   - Pivots: However, Although, But (meaning changes)
+
+Only include trapAnalysis if there's something genuinely tricky about THIS specific question. Keep it to 1-2 lines.`
 
         userPrompt = `Create ONE ${examLevel.toUpperCase()} practice question about: ${topic || `${examLevel.toUpperCase()} exam concepts`}
 
@@ -299,7 +241,15 @@ Respond with ONLY valid JSON:
     {"id": "B", "text": "Option text", "isCorrect": false, "rationale": "Brief explanation"},
     {"id": "C", "text": "Option text", "isCorrect": false, "rationale": "Brief explanation"},
     {"id": "D", "text": "Option text", "isCorrect": false, "rationale": "Brief explanation"}
-  ]
+  ],
+  "trapAnalysis": {
+    "hasTrap": true or false,
+    "trapType": "terminology" | "conceptual" | "structure" | null,
+    "trapWord": "The specific word/concept that makes this tricky" or null,
+    "trapExplanation": "1 line explaining why this is tricky" or null,
+    "quickTip": "1-line memory trick for the correct answer",
+    "commonConfusion": "What students often confuse this with" or null
+  }
 }`
         break
 
@@ -360,7 +310,7 @@ Format:
 2. Key Point 2 (1-2 sentences)
 3. Key Point 3 (1-2 sentences)
 
-💡 Quick Tip: One practical application tip`
+Quick Tip: One practical application tip`
         break
 
       case "explain":
@@ -451,13 +401,11 @@ ${ragContext}
 
         const quizData = JSON.parse(jsonString)
 
-        const trapWords = detectTrapWords(quizData.question, quizData.options || [])
         const highlightWords = getHighlightWords(quizData.question)
 
         return NextResponse.json({
           type: "quiz",
           ...quizData,
-          trapWords,
           highlightWords,
           usedRAG: !!ragContext,
         })
