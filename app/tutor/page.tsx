@@ -795,6 +795,7 @@ export default function AITutorPage() {
 
   const startSession = () => {
     setSessionStarted(true)
+    loadQuestion() // Load first question when session starts
   }
 
   // Welcome screen
