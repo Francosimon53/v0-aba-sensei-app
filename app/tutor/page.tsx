@@ -34,6 +34,12 @@ interface TrapAnalysis {
   commonConfusion: string | null
 }
 
+interface ChatHistoryMessage {
+  id: number
+  role: "user" | "assistant"
+  content: string
+}
+
 interface QuizOption {
   id: string
   text: string
@@ -155,6 +161,8 @@ export default function AITutorPage() {
   const [isAskingSensei, setIsAskingSensei] = useState(false) // Loading state for sensei response
   const messagesEndRef = useRef<HTMLDivElement>(null) // This ref is no longer used
   const inputRef = useRef<HTMLInputElement>(null) // Ref for sensei input
+  const [chatHistory, setChatHistory] = useState<ChatHistoryMessage[]>([])
+  const chatEndRef = useRef<HTMLDivElement>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([]) // This state is no longer used
   const [inputText, setInputText] = useState("") // This state is no longer used
   const [isTyping, setIsTyping] = useState(false) // This state is no longer used
@@ -228,6 +236,7 @@ export default function AITutorPage() {
     setDetectedTraps([]) // Clear previous traps
     setQuickTip("") // Clear previous quick tip
     setErrorDiagnosis("") // Clear previous error diagnosis
+    setChatHistory([])
 
     try {
       const response = await fetch("/api/chat", {
@@ -321,26 +330,94 @@ export default function AITutorPage() {
   }
 
   const handleAskSensei = async () => {
-    if (!senseiQuestion.trim() || !currentQuestion) return
+    if (!senseiQuestion.trim()) return
 
+    const userMessage = senseiQuestion.trim()
+    setSenseiQuestion("")
     setIsAskingSensei(true)
+
+    // Add user message to chat history
+    const userChatMessage: ChatHistoryMessage = {
+      id: Date.now(),
+      role: "user",
+      content: userMessage,
+    }
+    setChatHistory((prev) => [...prev, userChatMessage])
+
+    // Scroll to bottom
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
+
     try {
+      // Build context-aware message
+      let contextMessage = userMessage
+
+      // If there's a current question, add context
+      if (currentQuestion) {
+        const selectedOption = currentQuestion.options.find((o) => o.id === selectedAnswer)
+        const correctOption = currentQuestion.options.find((o) => o.isCorrect)
+
+        if (isAnswered && selectedOption && !selectedOption.isCorrect) {
+          // User answered wrong - they might be asking why
+          contextMessage = `Context: The student just answered a question incorrectly.
+Question: "${currentQuestion.content}"
+Their answer: "${selectedOption.text}" (incorrect)
+Correct answer: "${correctOption?.text}"
+
+Student's follow-up question: ${userMessage}
+
+Respond in 2-3 sentences max, conversationally. Reference the specific question if relevant.`
+        } else if (isAnswered) {
+          // User answered correctly
+          contextMessage = `Context: The student just answered a question correctly.
+Question: "${currentQuestion.content}"
+Correct answer: "${correctOption?.text}"
+
+Student's follow-up question: ${userMessage}
+
+Respond in 2-3 sentences max, conversationally.`
+        } else {
+          // Question is showing but not yet answered
+          contextMessage = `Context: The student is viewing this question but hasn't answered yet.
+Question: "${currentQuestion.content}"
+
+Student's question: ${userMessage}
+
+Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
+        }
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "chat",
-          message: `Regarding this question: "${currentQuestion.content}" - ${senseiQuestion}`,
+          message: contextMessage,
           examLevel,
         }),
       })
+
       const data = await response.json()
-      setSenseiResponse(data.content || "I couldn't process that question. Please try again.")
+      const aiResponse = data.content || "I couldn't process that question. Please try again."
+
+      // Add AI response to chat history
+      const aiChatMessage: ChatHistoryMessage = {
+        id: Date.now() + 1,
+        role: "assistant",
+        content: aiResponse,
+      }
+      setChatHistory((prev) => [...prev, aiChatMessage])
+
+      // Scroll to bottom
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
     } catch (error) {
-      setSenseiResponse("Sorry, I had trouble answering. Please try again.")
+      const errorMessage: ChatHistoryMessage = {
+        id: Date.now() + 1,
+        role: "assistant",
+        content: "Sorry, I had trouble answering. Please try again.",
+      }
+      setChatHistory((prev) => [...prev, errorMessage])
     } finally {
       setIsAskingSensei(false)
-      setSenseiQuestion("")
     }
   }
 
@@ -578,13 +655,57 @@ export default function AITutorPage() {
                     </div>
                   )}
 
-                  {/* Sensei response to follow-up question */}
-                  {senseiResponse && (
-                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
-                      <p className="text-zinc-300 text-sm leading-relaxed">{senseiResponse}</p>
+                  {chatHistory.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-zinc-800/30">
+                      {chatHistory.slice(-4).map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`p-3 rounded-xl text-sm ${
+                            msg.role === "user"
+                              ? "bg-zinc-800/50 text-zinc-300 ml-4"
+                              : "bg-zinc-900/50 text-zinc-400 border border-zinc-800/30"
+                          }`}
+                        >
+                          {msg.role === "assistant" && (
+                            <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                          )}
+                          <p className="leading-relaxed">{msg.content}</p>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
                     </div>
                   )}
                 </>
+              ) : !isAnswered && currentQuestion ? (
+                <div className="space-y-3">
+                  <div className="flex flex-col items-center justify-center py-4 text-center">
+                    <MessageSquare className="w-8 h-8 text-zinc-800 mb-2" />
+                    <p className="text-zinc-600 text-sm">Answer to see full reasoning</p>
+                    <p className="text-zinc-700 text-xs mt-1">Or ask a question below</p>
+                  </div>
+
+                  {/* Chat history display (before answering) */}
+                  {chatHistory.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-zinc-800/30">
+                      {chatHistory.slice(-4).map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`p-3 rounded-xl text-sm ${
+                            msg.role === "user"
+                              ? "bg-zinc-800/50 text-zinc-300 ml-4"
+                              : "bg-zinc-900/50 text-zinc-400 border border-zinc-800/30"
+                          }`}
+                        >
+                          {msg.role === "assistant" && (
+                            <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                          )}
+                          <p className="leading-relaxed">{msg.content}</p>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <MessageSquare className="w-10 h-10 text-zinc-800 mb-3" />
@@ -594,7 +715,7 @@ export default function AITutorPage() {
             </div>
           )}
 
-          {/* Ask Sensei input */}
+          {/* Ask Sensei input - Now always enabled when there's a question */}
           <div className="p-3 border-t border-zinc-800/30 mt-auto">
             <div className="flex items-center gap-2 bg-zinc-900 rounded-xl px-3 py-2 border border-zinc-800/50">
               <input
@@ -602,15 +723,15 @@ export default function AITutorPage() {
                 type="text"
                 value={senseiQuestion}
                 onChange={(e) => setSenseiQuestion(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAskSensei()}
-                placeholder="Ask the Sensei..."
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAskSensei()}
+                placeholder={isAnswered ? "Ask a follow-up..." : "Ask the Sensei..."}
                 className="flex-1 bg-transparent text-zinc-200 text-sm placeholder:text-zinc-600 outline-none"
-                disabled={!isAnswered || isAskingSensei}
+                disabled={!currentQuestion || isAskingSensei}
               />
               <button
                 onClick={handleAskSensei}
-                disabled={!isAnswered || isAskingSensei || !senseiQuestion.trim()}
-                className="p-1 text-zinc-500 hover:text-[#d4a853] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+                disabled={!currentQuestion || isAskingSensei || !senseiQuestion.trim()}
+                className="p-1.5 text-zinc-500 hover:text-[#d4a853] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 {isAskingSensei ? (
                   <div className="w-4 h-4 border-2 border-amber-500/60 border-t-transparent rounded-full animate-spin" />
@@ -619,6 +740,7 @@ export default function AITutorPage() {
                 )}
               </button>
             </div>
+            {!currentQuestion && <p className="text-zinc-700 text-xs mt-1 text-center">Load a question first</p>}
           </div>
         </div>
 
