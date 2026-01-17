@@ -595,8 +595,8 @@ export default function AITutorPage() {
           )}
 
           {/* Ask Sensei input */}
-          <div className="p-4 border-t border-zinc-800/30 mt-auto">
-            <div className="flex items-center gap-2 bg-zinc-900 rounded-xl px-4 py-2.5 border border-zinc-800/50">
+          <div className="p-3 border-t border-zinc-800/30 mt-auto">
+            <div className="flex items-center gap-2 bg-zinc-900 rounded-xl px-3 py-2 border border-zinc-800/50">
               <input
                 ref={inputRef}
                 type="text"
@@ -625,8 +625,8 @@ export default function AITutorPage() {
         {/* RIGHT PANEL - Quiz Area */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
           {/* Progress bar */}
-          <div className="p-4 border-b border-zinc-800/30 shrink-0">
-            <div className="flex items-center gap-1.5 mb-2">
+          <div className="p-3 border-b border-zinc-800/30 shrink-0">
+            <div className="flex items-center gap-1 mb-2">
               {Array.from({ length: gameStats.dailyGoal }).map((_, i) => {
                 const historyItem = questionHistory[i]
                 let bgColor = "bg-zinc-800"
@@ -635,7 +635,7 @@ export default function AITutorPage() {
                 } else if (i === currentQuestionNumber - 1) {
                   bgColor = "bg-zinc-500"
                 }
-                return <div key={i} className={`w-2 h-2 rounded-full transition-all duration-150 ${bgColor}`} />
+                return <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all duration-150 ${bgColor}`} />
               })}
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -656,7 +656,7 @@ export default function AITutorPage() {
           </div>
 
           {/* Question content */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="flex-1 overflow-y-auto p-4">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="w-10 h-10 border-2 border-zinc-700 border-t-amber-500/60 rounded-full animate-spin mb-4" />
@@ -665,9 +665,9 @@ export default function AITutorPage() {
             ) : currentQuestion ? (
               <div className="max-w-[800px] mx-auto">
                 {/* Difficulty badge */}
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium border ${getDifficultyStyles(currentQuestion.difficulty)}`}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getDifficultyStyles(currentQuestion.difficulty)}`}
                   >
                     {currentQuestion.difficulty === "Easy"
                       ? "Easy"
@@ -678,13 +678,13 @@ export default function AITutorPage() {
                 </div>
 
                 {/* Question text */}
-                <div className="mb-6">
-                  <p className="text-zinc-600 text-xs mb-2">{currentQuestionNumber}.</p>
-                  <p className="text-white text-lg md:text-xl leading-relaxed">{currentQuestion.content}</p>
+                <div className="mb-4">
+                  <p className="text-zinc-600 text-xs mb-1">{currentQuestionNumber}.</p>
+                  <p className="text-white text-base leading-relaxed">{currentQuestion.content}</p>
                 </div>
 
                 {/* Options */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {currentQuestion.options.map((option) => {
                     const isSelected = selectedAnswer === option.id
                     const isCorrect = option.isCorrect
@@ -708,11 +708,11 @@ export default function AITutorPage() {
                         <button
                           onClick={() => handleAnswer(option.id)}
                           disabled={isAnswered}
-                          className={`w-full p-4 rounded-xl border text-left transition-all duration-150 hover:shadow-lg hover:shadow-black/20 ${cardStyles}`}
+                          className={`w-full py-3 px-4 rounded-xl border text-left transition-all duration-150 hover:shadow-lg hover:shadow-black/20 ${cardStyles}`}
                         >
                           <div className="flex items-start gap-3">
                             <span
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all duration-150 ${
+                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all duration-150 ${
                                 showResult && isCorrect
                                   ? "bg-green-500 text-black"
                                   : showResult && isSelected && !isCorrect
@@ -723,14 +723,14 @@ export default function AITutorPage() {
                               }`}
                             >
                               {showResult && isCorrect ? (
-                                <Check className="w-3.5 h-3.5" />
+                                <Check className="w-3 h-3" />
                               ) : showResult && isSelected && !isCorrect ? (
-                                <X className="w-3.5 h-3.5" />
+                                <X className="w-3 h-3" />
                               ) : (
                                 option.id
                               )}
                             </span>
-                            <span className="text-zinc-200 text-sm pt-0.5 leading-relaxed">{option.text}</span>
+                            <span className="text-zinc-200 text-sm leading-relaxed">{option.text}</span>
                           </div>
                         </button>
 
@@ -756,12 +756,12 @@ export default function AITutorPage() {
           </div>
 
           {/* Navigation buttons */}
-          <div className="p-4 border-t border-zinc-800/30 shrink-0">
+          <div className="p-3 border-t border-zinc-800/30 shrink-0">
             <div className="flex items-center justify-between max-w-[800px] mx-auto gap-4">
               <Button
                 onClick={handlePreviousQuestion}
                 variant="ghost"
-                className="px-5 py-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 bg-transparent transition-all duration-150"
+                className="px-4 py-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 bg-transparent transition-all duration-150"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -769,7 +769,7 @@ export default function AITutorPage() {
               <Button
                 onClick={handleNextQuestion}
                 disabled={!isAnswered}
-                className="px-6 py-2 bg-[#b8942d] hover:bg-[#d4a853] text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+                className="px-4 py-2 bg-[#b8942d] hover:bg-[#d4a853] text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 Next
                 <ChevronRight className="w-4 h-4 ml-2" />

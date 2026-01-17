@@ -239,9 +239,31 @@ STRUCTURE TRAPS - Question phrasing tricks:
 - Include ONE intuitive analogy in the correct answer's rationale
 - Keep trapAnalysis brief: 1-2 lines only if genuinely tricky`
 
-        userPrompt = `Create ONE ${examLevel.toUpperCase()} practice question about: ${topic || `${examLevel.toUpperCase()} exam concepts`}
+        userPrompt = `Create ONE unique ${examLevel.toUpperCase()} practice question.
 
-IMPORTANT: The CORRECT answer's rationale MUST include:
+IMPORTANT - VARY THE QUESTION TYPE. Randomly choose ONE of these formats:
+1. Clinical scenario asking "What should the BCBA do FIRST?"
+2. Definition-based: "Which term BEST describes...?"
+3. Ethical dilemma: "What is the MOST appropriate action?"
+4. Data interpretation: "Based on this data, what conclusion...?"
+5. Procedure identification: "This technique is an example of...?"
+6. Comparison: "What is the PRIMARY difference between X and Y?"
+
+ALSO VARY THE DOMAIN - rotate through:
+- Measurement & Data
+- Experimental Design  
+- Ethics & Professional Conduct
+- Behavior Assessment
+- Behavior-Change Procedures
+- Reinforcement & Punishment concepts
+- Verbal Behavior
+- Supervision
+
+Topic hint: ${topic || "random ABA concept"}
+
+DO NOT repeat the same question structure or topic as before. Be creative.
+
+The CORRECT answer's rationale MUST include:
 1. Why it's correct (1 sentence)
 2. An intuitive analogy starting with "Think of it like..." (1 sentence)  
 3. A quick exam tip (1 sentence)
