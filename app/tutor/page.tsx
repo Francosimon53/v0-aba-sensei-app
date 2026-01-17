@@ -354,50 +354,50 @@ export default function AITutorPage() {
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
-        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+        return "bg-green-500/10 text-green-400/90 border-green-500/20"
       case "Hard":
-        return "bg-red-500/20 text-red-400 border-red-500/30"
+        return "bg-red-500/10 text-red-400/90 border-red-500/20"
       default: // Medium
-        return "bg-amber-500/20 text-amber-400 border-amber-500/30"
+        return "bg-amber-500/10 text-amber-400/90 border-amber-500/20"
     }
   }
 
   // Welcome screen
   if (!sessionStarted) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col">
+      <div className="min-h-screen bg-black flex flex-col">
         {/* Header */}
-        <header className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-          <Link href="/" className="p-2 -ml-2 hover:bg-slate-800 rounded-full transition">
-            <ArrowLeft className="w-5 h-5 text-slate-400" />
+        <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between">
+          <Link href="/" className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150">
+            <ArrowLeft className="w-5 h-5 text-zinc-500" />
           </Link>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 text-amber-500">
-              <Flame className="w-5 h-5" />
-              <span className="font-bold">{gameStats.streak}</span>
+            <div className="flex items-center gap-1.5 text-amber-500/90">
+              <Flame className="w-4 h-4" />
+              <span className="font-medium text-sm">{gameStats.streak}</span>
             </div>
-            <div className="flex items-center gap-1 text-yellow-500">
-              <Zap className="w-5 h-5" />
-              <span className="font-bold">{gameStats.xp}</span>
+            <div className="flex items-center gap-1.5 text-amber-400/80">
+              <Zap className="w-4 h-4" />
+              <span className="font-medium text-sm">{gameStats.xp}</span>
             </div>
           </div>
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           {/* Level toggle */}
-          <div className="flex bg-slate-800 rounded-full p-1 mb-8">
+          <div className="flex bg-zinc-900 rounded-full p-1 mb-8 border border-zinc-800">
             <button
               onClick={() => setExamLevel("rbt")}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
-                examLevel === "rbt" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
+                examLevel === "rbt" ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               RBT
             </button>
             <button
               onClick={() => setExamLevel("bcba")}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
-                examLevel === "bcba" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white"
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
+                examLevel === "bcba" ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               BCBA
@@ -405,57 +405,57 @@ export default function AITutorPage() {
           </div>
 
           {/* Logo and title */}
-          <div className="text-6xl mb-4">🥋</div>
-          <h1 className="text-2xl font-bold text-white mb-2">Ready to practice?</h1>
-          <p className="text-slate-400 text-center mb-8">
+          <div className="text-5xl mb-4 opacity-90">🥋</div>
+          <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">Ready to practice?</h1>
+          <p className="text-zinc-500 text-center mb-8">
             {gameStats.correctToday}/{gameStats.dailyGoal} questions today
           </p>
 
           {/* Progress ring */}
           <div className="relative w-32 h-32 mb-8">
             <svg className="w-full h-full -rotate-90">
-              <circle cx="64" cy="64" r="56" fill="none" stroke="#1e293b" strokeWidth="8" />
+              <circle cx="64" cy="64" r="56" fill="none" stroke="#1f1f1f" strokeWidth="6" />
               <circle
                 cx="64"
                 cy="64"
                 r="56"
                 fill="none"
-                stroke="#f59e0b"
-                strokeWidth="8"
+                stroke="#d4a853"
+                strokeWidth="6"
                 strokeLinecap="round"
                 strokeDasharray={`${progressPercent * 3.52} 352`}
                 className="transition-all duration-500"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <Target className="w-8 h-8 text-amber-500 mb-1" />
-              <span className="text-white font-bold">{Math.round(progressPercent)}%</span>
+              <Target className="w-7 h-7 text-amber-500/80 mb-1" />
+              <span className="text-white font-medium">{Math.round(progressPercent)}%</span>
             </div>
           </div>
 
           {/* Start button */}
           <Button
             onClick={startSession}
-            className="w-full max-w-xs bg-amber-500 hover:bg-amber-600 text-black font-bold py-6 text-lg rounded-2xl"
+            className="w-full max-w-xs bg-[#b8942d] hover:bg-[#d4a853] text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
           >
             Start Practice
           </Button>
 
           {/* Daily goal card */}
-          <div className="mt-8 bg-slate-900 rounded-2xl p-4 w-full max-w-xs border border-slate-800">
+          <div className="mt-8 bg-zinc-900/80 rounded-xl p-4 w-full max-w-xs border border-zinc-800/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-amber-500" />
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                  <Trophy className="w-5 h-5 text-amber-500/80" />
                 </div>
                 <div>
-                  <p className="text-white font-medium">Daily Goal</p>
-                  <p className="text-slate-500 text-sm">
+                  <p className="text-white font-medium text-sm">Daily Goal</p>
+                  <p className="text-zinc-500 text-xs">
                     {gameStats.correctToday}/{gameStats.dailyGoal} correct
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-600" />
+              <ChevronRight className="w-4 h-4 text-zinc-600" />
             </div>
           </div>
         </div>
@@ -464,25 +464,28 @@ export default function AITutorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="h-screen bg-black flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+      <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <button onClick={() => setSessionStarted(false)} className="p-2 -ml-2 hover:bg-slate-800 rounded-full">
-            <X className="w-5 h-5 text-slate-400" />
+          <button
+            onClick={() => setSessionStarted(false)}
+            className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150"
+          >
+            <X className="w-5 h-5 text-zinc-600" />
           </button>
-          <span className="text-slate-400 text-sm font-medium">{examLevel.toUpperCase()} Practice</span>
+          <span className="text-zinc-500 text-sm">{examLevel.toUpperCase()} Practice</span>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 text-amber-500">
-            <Flame className="w-5 h-5" />
-            <span className="font-bold">{gameStats.streak}</span>
+          <div className="flex items-center gap-1.5 text-amber-500/90">
+            <Flame className="w-4 h-4" />
+            <span className="font-medium text-sm">{gameStats.streak}</span>
           </div>
-          <div className="flex items-center gap-1 text-yellow-500 relative">
-            <Zap className="w-5 h-5" />
-            <span className="font-bold">{gameStats.xp}</span>
+          <div className="flex items-center gap-1.5 text-amber-400/80 relative">
+            <Zap className="w-4 h-4" />
+            <span className="font-medium text-sm">{gameStats.xp}</span>
             {showXPAnimation && (
-              <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-emerald-400 font-bold animate-bounce">
+              <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-400 font-medium text-sm animate-bounce">
                 +10
               </span>
             )}
@@ -493,26 +496,28 @@ export default function AITutorPage() {
       {/* Two-panel layout */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* LEFT PANEL - Sensei Explanation */}
-        <div className="w-full md:w-[35%] bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col">
+        <div className="w-full md:w-[320px] bg-black border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0">
           {/* Panel header */}
-          <div className="p-4 border-b border-slate-800">
+          <div className="p-4 border-b border-zinc-800/30">
             <button
               onClick={() => setShowReasoning(!showReasoning)}
-              className="flex items-center gap-2 text-slate-200 hover:text-white transition"
+              className="flex items-center gap-2 text-zinc-200 hover:text-white transition-all duration-150"
             >
-              <span className="text-xl">🥋</span>
-              <span className="font-semibold">ABA Sensei</span>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition ${showReasoning ? "rotate-180" : ""}`} />
+              <span className="text-lg">🥋</span>
+              <span className="font-medium text-[#d4a853]">ABA Sensei</span>
+              <ChevronDown
+                className={`w-4 h-4 text-zinc-600 transition-transform duration-150 ${showReasoning ? "rotate-180" : ""}`}
+              />
             </button>
-            <p className="text-slate-500 text-sm mt-1">{showReasoning ? "Show Reasoning" : "Hide Reasoning"}</p>
+            <p className="text-zinc-600 text-xs mt-1">{showReasoning ? "Reasoning" : "Hidden"}</p>
           </div>
 
           {/* Explanation content */}
           {showReasoning && (
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-amber-500/60 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : isAnswered && currentQuestion ? (
                 <>
@@ -520,14 +525,14 @@ export default function AITutorPage() {
                   <div
                     className={`p-4 rounded-xl ${
                       currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                        ? "bg-emerald-500/10 border border-emerald-500/30"
-                        : "bg-red-500/10 border border-red-500/30"
+                        ? "bg-green-500/10 border border-green-500/20"
+                        : "bg-red-500/10 border border-red-500/20"
                     }`}
                   >
                     <p
-                      className={`font-semibold ${
+                      className={`font-medium text-sm ${
                         currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                          ? "text-emerald-400"
+                          ? "text-green-400"
                           : "text-red-400"
                       }`}
                     >
@@ -535,7 +540,7 @@ export default function AITutorPage() {
                         ? "Correct!"
                         : "Not quite"}
                     </p>
-                    <p className="text-slate-300 text-sm mt-2">
+                    <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
                       {currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
                         ? currentQuestion.options.find((o) => o.isCorrect)?.rationale
                         : `The correct answer is ${currentQuestion.options.find((o) => o.isCorrect)?.id}. ${currentQuestion.options.find((o) => o.isCorrect)?.rationale}`}
@@ -544,21 +549,21 @@ export default function AITutorPage() {
 
                   {/* Definition section */}
                   {quickTip && (
-                    <div className="bg-slate-800/50 rounded-xl p-4">
-                      <p className="text-amber-400 font-medium text-sm mb-2">Definition:</p>
-                      <p className="text-slate-300 text-sm">{quickTip}</p>
+                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
+                      <p className="text-[#d4a853] font-medium text-xs mb-2 uppercase tracking-wide">Definition</p>
+                      <p className="text-zinc-400 text-sm leading-relaxed">{quickTip}</p>
                     </div>
                   )}
 
                   {/* Trap Alert */}
                   {detectedTraps.length > 0 && (
-                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-                      <p className="text-yellow-400 font-medium text-sm mb-2 flex items-center gap-2">
-                        <span>🚨</span> Trap Detected
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                      <p className="text-amber-400/90 font-medium text-xs mb-2 flex items-center gap-2 uppercase tracking-wide">
+                        <span>⚠</span> Trap Detected
                       </p>
                       {detectedTraps.map((trap, i) => (
-                        <p key={i} className="text-slate-300 text-sm">
-                          <span className="text-yellow-300 font-semibold">&quot;{trap.word}&quot;</span> -{" "}
+                        <p key={i} className="text-zinc-400 text-sm leading-relaxed">
+                          <span className="text-amber-300/80 font-medium">&quot;{trap.word}&quot;</span> -{" "}
                           {trap.explanation}
                         </p>
                       ))}
@@ -567,31 +572,31 @@ export default function AITutorPage() {
 
                   {/* Why wrong */}
                   {!currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect && errorDiagnosis && (
-                    <div className="bg-slate-800/50 rounded-xl p-4">
-                      <p className="text-red-400 font-medium text-sm mb-2">Why it's wrong:</p>
-                      <p className="text-slate-300 text-sm italic">{errorDiagnosis}</p>
+                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
+                      <p className="text-red-400/80 font-medium text-xs mb-2 uppercase tracking-wide">Why it's wrong</p>
+                      <p className="text-zinc-400 text-sm leading-relaxed italic">{errorDiagnosis}</p>
                     </div>
                   )}
 
                   {/* Sensei response to follow-up question */}
                   {senseiResponse && (
-                    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                      <p className="text-slate-300 text-sm">{senseiResponse}</p>
+                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
+                      <p className="text-zinc-300 text-sm leading-relaxed">{senseiResponse}</p>
                     </div>
                   )}
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <MessageSquare className="w-12 h-12 text-slate-700 mb-3" />
-                  <p className="text-slate-500 text-sm">Answer the question to see the Sensei's explanation</p>
+                  <MessageSquare className="w-10 h-10 text-zinc-800 mb-3" />
+                  <p className="text-zinc-600 text-sm">Answer the question to see reasoning</p>
                 </div>
               )}
             </div>
           )}
 
           {/* Ask Sensei input */}
-          <div className="p-4 border-t border-slate-800 mt-auto">
-            <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-4 py-2">
+          <div className="p-4 border-t border-zinc-800/30 mt-auto">
+            <div className="flex items-center gap-2 bg-zinc-900 rounded-xl px-4 py-2.5 border border-zinc-800/50">
               <input
                 ref={inputRef}
                 type="text"
@@ -599,16 +604,16 @@ export default function AITutorPage() {
                 onChange={(e) => setSenseiQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAskSensei()}
                 placeholder="Ask the Sensei..."
-                className="flex-1 bg-transparent text-slate-200 text-sm placeholder:text-slate-500 outline-none"
+                className="flex-1 bg-transparent text-zinc-200 text-sm placeholder:text-zinc-600 outline-none"
                 disabled={!isAnswered || isAskingSensei}
               />
               <button
                 onClick={handleAskSensei}
                 disabled={!isAnswered || isAskingSensei || !senseiQuestion.trim()}
-                className="p-1 text-slate-400 hover:text-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="p-1 text-zinc-500 hover:text-[#d4a853] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 {isAskingSensei ? (
-                  <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-amber-500/60 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
@@ -618,33 +623,31 @@ export default function AITutorPage() {
         </div>
 
         {/* RIGHT PANEL - Quiz Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
           {/* Progress bar */}
-          <div className="p-4 border-b border-slate-800">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex gap-1 flex-1">
-                {Array.from({ length: gameStats.dailyGoal }).map((_, i) => {
-                  const historyItem = questionHistory[i]
-                  let bgColor = "bg-slate-700"
-                  if (historyItem) {
-                    bgColor = historyItem.isCorrect ? "bg-emerald-500" : "bg-red-500"
-                  } else if (i === currentQuestionNumber - 1) {
-                    bgColor = "bg-amber-500"
-                  }
-                  return <div key={i} className={`h-2 flex-1 rounded-full transition-all ${bgColor}`} />
-                })}
-              </div>
+          <div className="p-4 border-b border-zinc-800/30 shrink-0">
+            <div className="flex items-center gap-1.5 mb-2">
+              {Array.from({ length: gameStats.dailyGoal }).map((_, i) => {
+                const historyItem = questionHistory[i]
+                let bgColor = "bg-zinc-800"
+                if (historyItem) {
+                  bgColor = historyItem.isCorrect ? "bg-green-500/60" : "bg-red-500/60"
+                } else if (i === currentQuestionNumber - 1) {
+                  bgColor = "bg-zinc-500"
+                }
+                return <div key={i} className={`w-2 h-2 rounded-full transition-all duration-150 ${bgColor}`} />
+              })}
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-zinc-500">
                 {currentQuestionNumber} of {gameStats.dailyGoal}
               </span>
               <div className="flex items-center gap-3">
-                <span className="text-red-400 flex items-center gap-1">
+                <span className="text-red-400/70 flex items-center gap-1">
                   <X className="w-3 h-3" />
                   {gameStats.questionsAnswered - gameStats.correctToday}
                 </span>
-                <span className="text-emerald-400 flex items-center gap-1">
+                <span className="text-green-400/70 flex items-center gap-1">
                   <Check className="w-3 h-3" />
                   {gameStats.correctToday}
                 </span>
@@ -656,12 +659,12 @@ export default function AITutorPage() {
           <div className="flex-1 overflow-y-auto p-4 md:p-6">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-slate-400">Loading question...</p>
+                <div className="w-10 h-10 border-2 border-zinc-700 border-t-amber-500/60 rounded-full animate-spin mb-4" />
+                <p className="text-zinc-600 text-sm">Loading question...</p>
               </div>
             ) : currentQuestion ? (
-              <div className="max-w-2xl mx-auto">
-                {/* Difficulty badge and question number */}
+              <div className="max-w-[800px] mx-auto">
+                {/* Difficulty badge */}
                 <div className="flex items-center gap-3 mb-4">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium border ${getDifficultyStyles(currentQuestion.difficulty)}`}
@@ -676,8 +679,8 @@ export default function AITutorPage() {
 
                 {/* Question text */}
                 <div className="mb-6">
-                  <p className="text-slate-400 text-sm mb-2">{currentQuestionNumber}.</p>
-                  <p className="text-white text-lg leading-relaxed">{currentQuestion.content}</p>
+                  <p className="text-zinc-600 text-xs mb-2">{currentQuestionNumber}.</p>
+                  <p className="text-white text-lg md:text-xl leading-relaxed">{currentQuestion.content}</p>
                 </div>
 
                 {/* Options */}
@@ -687,17 +690,17 @@ export default function AITutorPage() {
                     const isCorrect = option.isCorrect
                     const showResult = isAnswered
 
-                    let cardStyles = "bg-slate-800/50 border-slate-700 hover:border-slate-600 hover:bg-slate-800"
+                    let cardStyles = "bg-zinc-900 border-zinc-800 hover:brightness-110"
                     if (showResult) {
                       if (isCorrect) {
-                        cardStyles = "bg-emerald-500/10 border-emerald-500"
+                        cardStyles = "bg-green-500/10 border-green-500/40"
                       } else if (isSelected && !isCorrect) {
-                        cardStyles = "bg-red-500/10 border-red-500"
+                        cardStyles = "bg-red-500/10 border-red-500/40"
                       } else {
-                        cardStyles = "bg-slate-800/30 border-slate-700/50 opacity-50"
+                        cardStyles = "bg-zinc-900/30 border-zinc-800/30 opacity-40"
                       }
                     } else if (isSelected) {
-                      cardStyles = "bg-amber-500/10 border-amber-500"
+                      cardStyles = "bg-zinc-900 border-[#d4a853]"
                     }
 
                     return (
@@ -705,35 +708,35 @@ export default function AITutorPage() {
                         <button
                           onClick={() => handleAnswer(option.id)}
                           disabled={isAnswered}
-                          className={`w-full p-4 rounded-xl border-2 text-left transition-all ${cardStyles}`}
+                          className={`w-full p-4 rounded-xl border text-left transition-all duration-150 hover:shadow-lg hover:shadow-black/20 ${cardStyles}`}
                         >
                           <div className="flex items-start gap-3">
                             <span
-                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all duration-150 ${
                                 showResult && isCorrect
-                                  ? "bg-emerald-500 text-black"
+                                  ? "bg-green-500 text-black"
                                   : showResult && isSelected && !isCorrect
                                     ? "bg-red-500 text-white"
                                     : isSelected
-                                      ? "bg-amber-500 text-black"
-                                      : "bg-slate-700 text-slate-300"
+                                      ? "bg-[#d4a853] text-black"
+                                      : "bg-zinc-800 text-zinc-400"
                               }`}
                             >
                               {showResult && isCorrect ? (
-                                <Check className="w-4 h-4" />
+                                <Check className="w-3.5 h-3.5" />
                               ) : showResult && isSelected && !isCorrect ? (
-                                <X className="w-4 h-4" />
+                                <X className="w-3.5 h-3.5" />
                               ) : (
                                 option.id
                               )}
                             </span>
-                            <span className="text-slate-200 pt-1">{option.text}</span>
+                            <span className="text-zinc-200 text-sm pt-0.5 leading-relaxed">{option.text}</span>
                           </div>
                         </button>
 
                         {/* Inline feedback for wrong answer */}
                         {showResult && isSelected && !isCorrect && (
-                          <div className="mt-2 ml-11 text-sm text-red-400/80">
+                          <div className="mt-2 ml-10 text-xs text-red-400/70">
                             <span className="font-medium">Not quite</span> - {option.rationale || errorDiagnosis}
                           </div>
                         )}
@@ -744,8 +747,8 @@ export default function AITutorPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-slate-400">Could not load question</p>
-                <Button onClick={loadQuestion} className="mt-4 bg-amber-500 hover:bg-amber-600 text-black">
+                <p className="text-zinc-500 text-sm">Could not load question</p>
+                <Button onClick={loadQuestion} className="mt-4 bg-[#b8942d] hover:bg-[#d4a853] text-black text-sm">
                   Retry
                 </Button>
               </div>
@@ -753,12 +756,12 @@ export default function AITutorPage() {
           </div>
 
           {/* Navigation buttons */}
-          <div className="p-4 border-t border-slate-800">
-            <div className="flex items-center justify-between max-w-2xl mx-auto gap-4">
+          <div className="p-4 border-t border-zinc-800/30 shrink-0">
+            <div className="flex items-center justify-between max-w-[800px] mx-auto gap-4">
               <Button
                 onClick={handlePreviousQuestion}
-                variant="outline"
-                className="px-6 py-5 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white bg-transparent"
+                variant="ghost"
+                className="px-5 py-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 bg-transparent transition-all duration-150"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -766,7 +769,7 @@ export default function AITutorPage() {
               <Button
                 onClick={handleNextQuestion}
                 disabled={!isAnswered}
-                className="px-8 py-5 bg-amber-500 hover:bg-amber-600 text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-[#b8942d] hover:bg-[#d4a853] text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 Next
                 <ChevronRight className="w-4 h-4 ml-2" />
