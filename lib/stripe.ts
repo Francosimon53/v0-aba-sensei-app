@@ -17,7 +17,7 @@ export const PLANS = {
   },
   pro_monthly: {
     name: "Pro Monthly",
-    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY!,
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "price_1SrN6K8qlKShXAKkjXYjMSl3",
     price: 19,
     features: [
       "Unlimited practice questions",
@@ -29,7 +29,7 @@ export const PLANS = {
   },
   pro_annual: {
     name: "Pro Annual",
-    priceId: process.env.STRIPE_PRICE_PRO_ANNUAL!,
+    priceId: process.env.STRIPE_PRICE_PRO_ANNUAL || "price_1SrN7b8qlKShXAKkckjmKs4e",
     price: 149,
     features: [
       "Everything in Pro Monthly",

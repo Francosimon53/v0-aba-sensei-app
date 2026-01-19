@@ -107,6 +107,7 @@ export default function PricingPage() {
 
     // User is logged in - start checkout
     setLoading(plan.id)
+    console.log("[v0] handlePlanClick - plan:", plan.id, "priceId:", plan.priceId, "userId:", user.id)
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
