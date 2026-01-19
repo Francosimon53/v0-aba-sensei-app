@@ -2,45 +2,121 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { generateText } from "ai"
 
-
 export const runtime = "nodejs"
 
-// BCBA exam topics for variety in question generation
-const BCBA_TOPICS = [
-  "reinforcement schedules (FR, VR, FI, VI)",
-  "punishment procedures and ethical considerations",
-  "stimulus control and discrimination training",
-  "motivating operations (EO and AO)",
-  "functional behavior assessment (FBA)",
-  "verbal behavior (mand, tact, echoic, intraverbal)",
-  "generalization and maintenance",
-  "single-subject experimental designs (reversal, multiple baseline)",
-  "differential reinforcement (DRA, DRI, DRO, DRL)",
-  "extinction and extinction bursts",
-  "prompting and prompt fading",
-  "shaping and chaining (forward, backward, total task)",
-  "token economies",
-  "behavioral measurement (frequency, duration, latency, IRT)",
-  "interobserver agreement (IOA)",
-  "ethics and professional conduct",
-  "supervision requirements",
-  "preference assessments",
-  "skill acquisition programs",
-  "behavior reduction procedures"
-]
+// BCBA exam topics organized by Task List 6th Edition domains
+const BCBA_TOPIC_CATEGORIES = {
+  "Foundations (Section 1)": [
+    "identify and distinguish among behavior, response class, and response",
+    "identify and distinguish among stimulus class, stimulus, and stimulus feature",
+    "identify and distinguish among verbal operants (mand, tact, echoic, intraverbal, autoclitic)",
+    "identify and distinguish unconditioned reinforcement from conditioned reinforcement",
+    "identify and distinguish unconditioned punishment from conditioned punishment",
+    "identify and distinguish between positive and negative reinforcement and punishment",
+    "identify and distinguish motivating operations (EO vs AO)",
+    "identify and distinguish discriminative stimuli from motivating operations",
+  ],
+  "Measurement, Data Display & Interpretation (Section 2)": [
+    "select and define target behaviors in observable and measurable terms",
+    "select appropriate measurement procedures (frequency, duration, latency, IRT, trials-to-criterion)",
+    "identify and address measurement artifacts (reactivity, observer drift, observer bias)",
+    "evaluate the validity and reliability of measurement procedures",
+    "select visual display of data (line graphs, bar graphs, cumulative records)",
+    "interpret and make data-based decisions from graphs",
+  ],
+  "Experimental Design (Section 3)": [
+    "identify and distinguish between internal and external validity",
+    "describe reversal/withdrawal designs (ABAB) and their applications",
+    "describe multiple baseline designs (across behaviors, settings, subjects)",
+    "describe multielement (alternating treatments) designs",
+    "describe changing criterion designs",
+    "evaluate threats to internal validity",
+  ],
+  "Ethics & Professional Conduct (Section 4)": [
+    "apply the BACB Professional and Ethical Compliance Code",
+    "identify and address ethical violations and dual relationships",
+    "describe the process of obtaining informed consent",
+    "establish professional boundaries with clients, families, and supervisees",
+    "describe supervision requirements and responsibilities of supervisors/supervisees",
+    "make decisions about discontinuing services or transitioning clients",
+  ],
+  "Behavior Assessment (Section 5)": [
+    "conduct preference assessments (paired stimulus, multiple stimulus, free operant)",
+    "describe components and purposes of functional behavior assessment (FBA)",
+    "conduct indirect assessments (interviews, questionnaires, rating scales)",
+    "conduct direct observations (ABC data, scatterplots, descriptive analysis)",
+    "describe and analyze results of functional analysis (FA)",
+    "identify the function of problem behavior based on assessment results",
+  ],
+  "Behavior-Change Procedures (Section 6)": [
+    "describe and implement differential reinforcement procedures (DRA, DRI, DRO, DRL, DRH)",
+    "describe and implement extinction procedures and address extinction bursts",
+    "describe and implement shaping and chaining procedures (forward, backward, total task)",
+    "describe and implement prompting and prompt-fading procedures",
+    "describe and implement stimulus control transfer procedures",
+    "describe and implement generalization and maintenance strategies",
+    "describe and implement token economy systems",
+    "describe and implement contingency contracts",
+    "describe and implement Antecedent-Based Interventions (NCR, high-p sequence, Functional Communication Training)",
+  ],
+  "Personnel Supervision & Management (Section 7)": [
+    "develop competency-based training for staff and caregivers",
+    "deliver performance feedback to trainees effectively",
+    "describe Behavioral Skills Training (BST) components and applications",
+    "evaluate the effects of supervision on trainee performance",
+  ],
+}
 
-const RBT_TOPICS = [
-  "data collection methods",
-  "discrete trial training (DTT)",
-  "natural environment training (NET)",
-  "prompting hierarchies",
-  "reinforcement delivery",
-  "professional boundaries",
-  "documentation requirements",
-  "crisis intervention basics",
-  "following behavior plans",
-  "communicating with supervisors"
-]
+// RBT exam topics organized by Task List 2nd Edition
+const RBT_TOPIC_CATEGORIES = {
+  "Measurement (Section A)": [
+    "record continuous data (frequency, duration)",
+    "record discontinuous data (partial interval, whole interval, momentary time sampling)",
+    "record permanent products",
+    "enter data and update graphs",
+  ],
+  "Assessment (Section B)": [
+    "assist with preference assessments",
+    "assist with functional behavior assessments",
+    "assist with individualized assessment procedures",
+  ],
+  "Skill Acquisition (Section C)": [
+    "implement discrete trial teaching (DTT) procedures",
+    "implement naturalistic teaching procedures (NET, incidental teaching)",
+    "implement task analysis and chaining procedures",
+    "implement discrimination training",
+    "implement prompting and prompt fading procedures",
+    "implement generalization and maintenance procedures",
+    "assist with token economy implementation",
+  ],
+  "Behavior Reduction (Section D)": [
+    "implement interventions based on modification of antecedents",
+    "implement differential reinforcement procedures (DRA, DRO)",
+    "implement extinction procedures as directed",
+    "implement crisis/emergency procedures according to protocol",
+  ],
+  "Documentation & Reporting (Section E)": [
+    "document services per organization requirements",
+    "report changes in client behavior to supervisor",
+    "generate objective session notes",
+  ],
+  "Professional Conduct (Section F)": [
+    "describe the role and scope of practice of the RBT",
+    "respond appropriately to feedback and maintain supervision requirements",
+    "maintain professional boundaries with clients and caregivers",
+    "maintain client dignity and confidentiality",
+  ],
+}
+
+// Helper function to get a random topic from categories
+function getRandomTopic(examLevel: string): { category: string; topic: string } {
+  const categories = examLevel === "rbt" ? RBT_TOPIC_CATEGORIES : BCBA_TOPIC_CATEGORIES
+  const categoryNames = Object.keys(categories)
+  const randomCategory = categoryNames[Math.floor(Math.random() * categoryNames.length)]
+  const topicsInCategory = categories[randomCategory as keyof typeof categories]
+  const randomTopic = topicsInCategory[Math.floor(Math.random() * topicsInCategory.length)]
+  return { category: randomCategory, topic: randomTopic }
+}
 
 // Initialize Supabase client with service role key for RAG queries
 function getSupabaseClient() {
@@ -218,9 +294,8 @@ Questions should require critical thinking and application of principles.`
     let systemPrompt = ""
     let userPrompt = ""
 
-    // Select random topic for practice questions
-    const topics = examLevel === "rbt" ? RBT_TOPICS : BCBA_TOPICS
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)]
+    // Select random topic for practice questions using categorized topics
+    const { category: topicCategory, topic: randomTopic } = getRandomTopic(examLevel)
 
     // Build prompts based on action type
     switch (action) {
@@ -287,10 +362,13 @@ STRUCTURE TRAPS - Question phrasing tricks:
 This simulates the real exam experience where questions are in English.
 
 ═══════════════════════════════════════════════════════
-🎯 MANDATORY TOPIC FOR THIS QUESTION: ${randomTopic}
+🎯 MANDATORY TOPIC FOR THIS QUESTION
+Category: ${topicCategory}
+Specific Task: ${randomTopic}
 ═══════════════════════════════════════════════════════
 
 Create ONE unique ${examLevel.toUpperCase()} practice question specifically about: ${randomTopic}
+This is from the ${topicCategory} section of the ${examLevel.toUpperCase()} Task List.
 
 ⛔ DO NOT create a question about "dimensions of ABA" or "7 dimensions"
 ⛔ DO NOT ask "which dimension is demonstrated"
