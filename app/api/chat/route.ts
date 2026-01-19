@@ -294,8 +294,9 @@ Questions should require critical thinking and application of principles.`
     let systemPrompt = ""
     let userPrompt = ""
 
-    // Get category from request body
+    // Get category and difficulty from request body
     const requestedCategory = body.category
+    const requestedDifficulty = body.difficulty || "Medium"
 
     // Select random topic for practice questions using categorized topics
     // If a specific category is requested, filter to only that category
@@ -384,13 +385,19 @@ STRUCTURE TRAPS - Question phrasing tricks:
 - Include ONE intuitive analogy in the correct answer's rationale
 - Keep trapAnalysis brief: 1-2 lines only if genuinely tricky`
 
-        userPrompt = `═══════════════════════════════════════════════════════
+        userPrompt = `DIFFICULTY LEVEL: ${requestedDifficulty}
+
+Easy = Basic definitions and simple scenarios. Test recall of key terms.
+Medium = Application questions with clinical scenarios. Requires understanding concepts.
+Hard = Complex multi-step scenarios, tricky wording, requires deep analysis. Exam-level difficulty.
+
+═══════════════════════════════════════════════════════
 🎯 MANDATORY TOPIC FOR THIS QUESTION
 Category: ${topicCategory}
 Specific Task: ${randomTopic}
 ═══════════════════════════════════════════════════════
 
-Create ONE unique ${examLevel.toUpperCase()} practice question specifically about: ${randomTopic}
+Create ONE unique ${examLevel.toUpperCase()} practice question at ${requestedDifficulty} difficulty specifically about: ${randomTopic}
 This is from the ${topicCategory} section of the ${examLevel.toUpperCase()} Task List.
 
 ⛔ DO NOT create a question about "dimensions of ABA" or "7 dimensions"
@@ -416,7 +423,7 @@ The CORRECT answer's rationale MUST include:
 Respond with ONLY valid JSON:
 {
   "question": "Clinical scenario ending with a question (3-4 sentences max)",
-  "difficulty": "Medium",
+  "difficulty": "${requestedDifficulty}",
   "options": [
     {"id": "A", "text": "Option text", "isCorrect": true, "rationale": "Why correct. Think of it like [analogy]. Exam tip: [tip]"},
     {"id": "B", "text": "Option text", "isCorrect": false, "rationale": "Why wrong in 1-2 sentences"},

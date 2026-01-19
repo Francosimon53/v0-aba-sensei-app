@@ -43,6 +43,7 @@ export default function StudyPage() {
   const [examType, setExamType] = useState<ExamType>("BCBA")
   const [mode, setMode] = useState<Mode>("tutor")
   const [category, setCategory] = useState("")
+  const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium")
   const [tasks, setTasks] = useState<Task[]>([])
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0)
   const [loadingTasks, setLoadingTasks] = useState(false)
@@ -126,7 +127,7 @@ export default function StudyPage() {
       setTasks([])
     } finally {
       setLoadingTasks(false)
-      setStep(3) // Go to question screen
+      setStep(2.5) // Go to difficulty selection
     }
   }
 
@@ -252,6 +253,75 @@ export default function StudyPage() {
       {step === 1 && <ExamTypeSelection onSelect={handleExamTypeSelect} onBack={handleBack} language={language} />}
       {step === 2 && (
         <CategoryMenu examType={examType} onSelect={handleCategorySelect} onBack={handleBack} language={language} />
+      )}
+      {step === 2.5 && (
+        <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+          <div className="text-center max-w-md">
+            <div className="text-5xl mb-4">⚙️</div>
+            <h2 className="text-2xl font-bold text-white mb-2">Select Difficulty</h2>
+            <p className="text-white/60 mb-8">Choose how challenging you want these questions to be</p>
+
+            <div className="grid grid-cols-1 gap-3">
+              {/* Easy */}
+              <button
+                onClick={() => {
+                  setDifficulty("Easy")
+                  setStep(3)
+                }}
+                className="relative p-4 rounded-xl border-2 border-zinc-800 bg-zinc-900 hover:border-green-500 hover:bg-green-500/10 transition-all text-left"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">🌱</div>
+                  <div>
+                    <div className="font-semibold text-white">Easy</div>
+                    <div className="text-xs text-white/60">Basic definitions and fundamentals</div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Medium */}
+              <button
+                onClick={() => {
+                  setDifficulty("Medium")
+                  setStep(3)
+                }}
+                className="relative p-4 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-left"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">🔥</div>
+                  <div>
+                    <div className="font-semibold text-amber-400">Medium (Recommended)</div>
+                    <div className="text-xs text-white/60">Application with clinical scenarios</div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Hard */}
+              <button
+                onClick={() => {
+                  setDifficulty("Hard")
+                  setStep(3)
+                }}
+                className="relative p-4 rounded-xl border-2 border-zinc-800 bg-zinc-900 hover:border-red-500 hover:bg-red-500/10 transition-all text-left"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">💀</div>
+                  <div>
+                    <div className="font-semibold text-white">Hard</div>
+                    <div className="text-xs text-white/60">Complex exam-level questions</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setStep(2)}
+              className="mt-6 text-white/60 hover:text-white/80 text-sm flex items-center justify-center gap-2 mx-auto"
+            >
+              ← Back
+            </button>
+          </div>
+        </div>
       )}
       {step === 3 && (
         <QuestionScreen

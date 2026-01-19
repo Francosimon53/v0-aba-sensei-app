@@ -129,6 +129,7 @@ interface TrapInfo {
 export default function AITutorPage() {
   const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium")
   const [gameStats, setGameStats] = useState<GameStats>({
     streak: 3,
     xp: 150,
@@ -248,6 +249,7 @@ export default function AITutorPage() {
           topic: examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts",
           examLevel,
           category: selectedCategory !== "all" ? selectedCategory : null,
+          difficulty: difficulty,
         }),
       })
 
@@ -523,6 +525,76 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                   {cat}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Difficulty selector */}
+          <div className="mt-6 w-full max-w-md mb-8">
+            <p className="text-zinc-400 text-sm mb-3 text-center">Difficulty Level</p>
+
+            <div className="grid grid-cols-3 gap-3">
+              {/* Easy */}
+              <button
+                onClick={() => setDifficulty("Easy")}
+                className={`relative p-4 rounded-xl border-2 transition-all ${
+                  difficulty === "Easy"
+                    ? "border-green-500 bg-green-500/10"
+                    : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
+                }`}
+              >
+                <div className="text-2xl mb-1">🌱</div>
+                <div className={`font-semibold ${difficulty === "Easy" ? "text-green-400" : "text-white"}`}>
+                  Easy
+                </div>
+                <div className="text-xs text-zinc-500">Fundamentals</div>
+                {difficulty === "Easy" && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-black" />
+                  </div>
+                )}
+              </button>
+
+              {/* Medium */}
+              <button
+                onClick={() => setDifficulty("Medium")}
+                className={`relative p-4 rounded-xl border-2 transition-all ${
+                  difficulty === "Medium"
+                    ? "border-amber-500 bg-amber-500/10"
+                    : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
+                }`}
+              >
+                <div className="text-2xl mb-1">🔥</div>
+                <div className={`font-semibold ${difficulty === "Medium" ? "text-amber-400" : "text-white"}`}>
+                  Medium
+                </div>
+                <div className="text-xs text-zinc-500">Application</div>
+                {difficulty === "Medium" && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-black" />
+                  </div>
+                )}
+              </button>
+
+              {/* Hard */}
+              <button
+                onClick={() => setDifficulty("Hard")}
+                className={`relative p-4 rounded-xl border-2 transition-all ${
+                  difficulty === "Hard"
+                    ? "border-red-500 bg-red-500/10"
+                    : "border-zinc-800 bg-zinc-900 hover:border-zinc-700"
+                }`}
+              >
+                <div className="text-2xl mb-1">💀</div>
+                <div className={`font-semibold ${difficulty === "Hard" ? "text-red-400" : "text-white"}`}>
+                  Hard
+                </div>
+                <div className="text-xs text-zinc-500">Exam-level</div>
+                {difficulty === "Hard" && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-black" />
+                  </div>
+                )}
+              </button>
             </div>
           </div>
 
