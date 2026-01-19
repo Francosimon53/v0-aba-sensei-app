@@ -5,6 +5,43 @@ import { generateText } from "ai"
 
 export const runtime = "nodejs"
 
+// BCBA exam topics for variety in question generation
+const BCBA_TOPICS = [
+  "reinforcement schedules (FR, VR, FI, VI)",
+  "punishment procedures and ethical considerations",
+  "stimulus control and discrimination training",
+  "motivating operations (EO and AO)",
+  "functional behavior assessment (FBA)",
+  "verbal behavior (mand, tact, echoic, intraverbal)",
+  "generalization and maintenance",
+  "single-subject experimental designs (reversal, multiple baseline)",
+  "differential reinforcement (DRA, DRI, DRO, DRL)",
+  "extinction and extinction bursts",
+  "prompting and prompt fading",
+  "shaping and chaining (forward, backward, total task)",
+  "token economies",
+  "behavioral measurement (frequency, duration, latency, IRT)",
+  "interobserver agreement (IOA)",
+  "ethics and professional conduct",
+  "supervision requirements",
+  "preference assessments",
+  "skill acquisition programs",
+  "behavior reduction procedures"
+]
+
+const RBT_TOPICS = [
+  "data collection methods",
+  "discrete trial training (DTT)",
+  "natural environment training (NET)",
+  "prompting hierarchies",
+  "reinforcement delivery",
+  "professional boundaries",
+  "documentation requirements",
+  "crisis intervention basics",
+  "following behavior plans",
+  "communicating with supervisors"
+]
+
 // Initialize Supabase client with service role key for RAG queries
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -181,6 +218,10 @@ Questions should require critical thinking and application of principles.`
     let systemPrompt = ""
     let userPrompt = ""
 
+    // Select random topic for practice questions
+    const topics = examLevel === "rbt" ? RBT_TOPICS : BCBA_TOPICS
+    const randomTopic = topics[Math.floor(Math.random() * topics.length)]
+
     // Build prompts based on action type
     switch (action) {
       case "practice":
@@ -245,29 +286,26 @@ STRUCTURE TRAPS - Question phrasing tricks:
 
 This simulates the real exam experience where questions are in English.
 
-Create ONE unique ${examLevel.toUpperCase()} practice question.
+═══════════════════════════════════════════════════════
+🎯 MANDATORY TOPIC FOR THIS QUESTION: ${randomTopic}
+═══════════════════════════════════════════════════════
 
-IMPORTANT - VARY THE QUESTION TYPE. Randomly choose ONE of these formats:
-1. Clinical scenario asking "What should the BCBA do FIRST?"
+Create ONE unique ${examLevel.toUpperCase()} practice question specifically about: ${randomTopic}
+
+⛔ DO NOT create a question about "dimensions of ABA" or "7 dimensions"
+⛔ DO NOT ask "which dimension is demonstrated"
+⛔ DO NOT create generic questions
+✅ Focus ONLY on: ${randomTopic}
+
+VARY THE QUESTION FORMAT - choose ONE:
+1. Clinical scenario: "What should the ${examLevel.toUpperCase()} do FIRST?"
 2. Definition-based: "Which term BEST describes...?"
 3. Ethical dilemma: "What is the MOST appropriate action?"
 4. Data interpretation: "Based on this data, what conclusion...?"
 5. Procedure identification: "This technique is an example of...?"
 6. Comparison: "What is the PRIMARY difference between X and Y?"
 
-ALSO VARY THE DOMAIN - rotate through:
-- Measurement & Data
-- Experimental Design  
-- Ethics & Professional Conduct
-- Behavior Assessment
-- Behavior-Change Procedures
-- Reinforcement & Punishment concepts
-- Verbal Behavior
-- Supervision
-
-Topic hint: ${topic || "random ABA concept"}
-
-DO NOT repeat the same question structure or topic as before. Be creative.
+${topic ? `Additional topic context: ${topic}` : ""}
 
 The CORRECT answer's rationale MUST include:
 1. Why it's correct (1 sentence)
