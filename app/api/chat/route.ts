@@ -108,35 +108,44 @@ const RBT_TOPIC_CATEGORIES = {
   ],
 }
 
-// Practitioner and client names for varied scenarios
+// Practitioner and client names for varied scenarios - realistic ABA titles
 const PRACTITIONER_NAMES = [
-  "Dr. Johnson", "Dr. Williams", "Dr. Brown", "Dr. Davis", "Dr. Miller",
-  "Dr. Wilson", "Dr. Moore", "Dr. Taylor", "Dr. Anderson", "Dr. Thomas",
-  "Dr. Jackson", "Dr. White", "Dr. Harris", "Dr. Clark", "Dr. Thompson",
-  "Dr. Garcia", "Dr. Rodriguez", "Dr. Lee", "Dr. Walker", "Dr. Hall",
-  "Ms. Chen", "Mr. Patel", "Ms. Kim", "Mr. O'Brien", "Ms. Santos",
-  "Dr. Rivera", "Dr. Cooper", "Dr. Reed", "Dr. Bell", "Dr. Murphy"
+  // BCBAs (most common)
+  "Sarah, a BCBA,", "Michael, a BCBA,", "Jennifer, a BCBA,", "David, a BCBA,",
+  "Emily, a BCBA,", "James, a BCBA,", "Jessica, a BCBA,", "Robert, a BCBA,",
+  "Amanda, a BCBA,", "Christopher, a BCBA,", "Ashley, a BCBA,", "Matthew, a BCBA,",
+  "Lauren, a BCBA,", "Daniel, a BCBA,", "Rachel, a BCBA,", "Andrew, a BCBA,",
+  // BCaBAs
+  "Maria, a BCaBA,", "Kevin, a BCaBA,", "Nicole, a BCaBA,", "Brandon, a BCaBA,",
+  "Stephanie, a BCaBA,", "Tyler, a BCaBA,",
+  // RBTs (for RBT-level questions)
+  "Carlos, an RBT,", "Brittany, an RBT,", "Marcus, an RBT,", "Samantha, an RBT,",
+  "Alex, an RBT,", "Taylor, an RBT,",
+  // Supervisors
+  "The supervising BCBA", "The clinic supervisor", "The lead BCBA",
+  // Generic but professional
+  "A behavior analyst", "The behavior analyst", "A certified behavior analyst"
 ]
 
 const CLIENT_NAMES = [
-  "Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley", "Jamie",
-  "Marcus", "Sophia", "Ethan", "Olivia", "Liam", "Emma", "Noah", "Ava",
+  "Tommy", "Sophia", "Ethan", "Olivia", "Liam", "Emma", "Noah", "Ava",
   "Maya", "Lucas", "Isabella", "Aiden", "Mia", "Jackson", "Charlotte", "Leo",
-  "Benjamin", "Amelia", "Daniel", "Harper", "Michael", "Evelyn"
+  "Benjamin", "Amelia", "Daniel", "Harper", "Michael", "Evelyn", "Jake",
+  "Lily", "Ryan", "Chloe", "Nathan", "Zoe", "Connor", "Grace"
 ]
 
 const SETTINGS = [
-  "a public elementary school", "a private clinic", "a home-based program",
-  "an autism center", "a hospital outpatient unit", "a group home",
-  "a middle school resource room", "an early intervention program",
-  "a vocational training center", "a residential facility",
-  "a preschool classroom", "an inclusive daycare", "a behavioral health clinic"
+  "at a public elementary school", "in a private clinic", "during a home-based session",
+  "at an autism center", "in a group home", "at a middle school",
+  "during an early intervention session", "at a vocational training center",
+  "in a preschool classroom", "at an inclusive daycare", "in a behavioral health clinic",
+  "during a community outing", "at an after-school program"
 ]
 
 const CLIENT_AGES = [
-  "4-year-old", "5-year-old", "6-year-old", "7-year-old", "8-year-old",
-  "9-year-old", "10-year-old", "12-year-old", "14-year-old", "16-year-old",
-  "young adult", "teenager", "preschool-aged", "school-aged"
+  "3-year-old", "4-year-old", "5-year-old", "6-year-old", "7-year-old",
+  "8-year-old", "9-year-old", "10-year-old", "11-year-old", "12-year-old",
+  "13-year-old", "15-year-old", "17-year-old", "young adult"
 ]
 
 // Helper function to get a random topic from categories
@@ -436,17 +445,23 @@ Specific Task: ${randomTopic}
 
 ═══════════════════════════════════════════════════════
 👤 SCENARIO REQUIREMENTS - MANDATORY
-Practitioner name: ${randomPractitioner}
-Client name: ${randomClient}
-Client age: ${randomAge}
-Setting: ${randomSetting}
+- Start the question with: ${randomPractitioner}
+- Client name: ${randomClient}
+- Client age: ${randomAge}
+- Setting: ${randomSetting}
 ═══════════════════════════════════════════════════════
 
 BANNED - NEVER USE:
+- "Dr." or "Doctor" (very rare in ABA field)
 - "Dr. Martinez" (permanently banned)
-- "8-year-old Alex" (overused combination)
+- "therapist" (use "behavior analyst" or "RBT" instead)
 
-You MUST use the exact names/details provided above. Create a realistic, unique scenario.
+Example good openings:
+- "Sarah, a BCBA, is working with a 6-year-old client named Tommy in a private clinic..."
+- "Marcus, an RBT, observes that his client Sophia..."
+- "The supervising BCBA notices that during a home-based session..."
+
+You MUST use the exact names/details provided above. Create a realistic ABA scenario.
 
 Create ONE unique ${examLevel.toUpperCase()} practice question at ${requestedDifficulty} difficulty specifically about: ${randomTopic}
 This is from the ${topicCategory} section of the ${examLevel.toUpperCase()} Task List.
