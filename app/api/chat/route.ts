@@ -237,7 +237,15 @@ STRUCTURE TRAPS - Question phrasing tricks:
 - Include ONE intuitive analogy in the correct answer's rationale
 - Keep trapAnalysis brief: 1-2 lines only if genuinely tricky`
 
-        userPrompt = `Create ONE unique ${examLevel.toUpperCase()} practice question.
+        userPrompt = `CRITICAL LANGUAGE RULE:
+- Question text: ALWAYS IN ENGLISH (real exam simulation)
+- Option texts: ALWAYS IN ENGLISH (real exam simulation)  
+- Rationales and explanations: Match user's language for better understanding
+- trapAnalysis and quickTip: Match user's language
+
+This simulates the real exam experience where questions are in English.
+
+Create ONE unique ${examLevel.toUpperCase()} practice question.
 
 IMPORTANT - VARY THE QUESTION TYPE. Randomly choose ONE of these formats:
 1. Clinical scenario asking "What should the BCBA do FIRST?"
