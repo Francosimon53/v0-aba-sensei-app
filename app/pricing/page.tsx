@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Check } from "lucide-react"
 import Link from "next/link"
 
-const plans = [
+const PLANS = [
   {
+    id: "free",
     name: "Free",
     price: "$0",
     period: "forever",
@@ -18,11 +19,11 @@ const plans = [
       "Access to study mode",
       "Community support",
     ],
-    cta: "Current Plan",
     priceId: null,
     popular: false,
   },
   {
+    id: "pro_monthly",
     name: "Pro Monthly",
     price: "$19",
     period: "/month",
@@ -35,11 +36,11 @@ const plans = [
       "Priority support",
       "Cancel anytime",
     ],
-    cta: "Start Pro Trial",
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY || "price_1SrN6K8qlKShXAKkjXYjMSl3",
     popular: true,
   },
   {
+    id: "pro_annual",
     name: "Pro Annual",
     price: "$149",
     period: "/year",
@@ -51,7 +52,6 @@ const plans = [
       "Performance reports",
       "Early access to new features",
     ],
-    cta: "Get Annual",
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL || "price_1SrN7b8qlKShXAKkckjmKs4e",
     popular: false,
   },
@@ -59,26 +59,59 @@ const plans = [
 
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
+  const [userTier, setUserTier] = useState<string>("free")
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const router = useRouter()
 
-  const handleSubscribe = async (priceId: string | null) => {
-    if (!priceId) return
-
-    setLoading(priceId)
-
-    try {
+  useEffect(() => {
+    const checkAuth = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/auth/login?redirect=/pricing")
-        return
+      
+      if (user) {
+        setUser(user)
+        // Fetch user's current subscription tier
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("subscription_tier")
+          .eq("id", user.id)
+          .single()
+        
+        if (profile?.subscription_tier) {
+          setUserTier(profile.subscription_tier)
+        }
       }
+      setIsCheckingAuth(false)
+    }
+    checkAuth()
+  }, [])
 
+  const handlePlanClick = async (plan: typeof PLANS[0]) => {
+    // Free plan - no Stripe needed
+    if (!plan.priceId) {
+      if (!user) {
+        router.push("/auth/sign-up")
+      }
+      // If logged in and on free plan, button is disabled anyway
+      return
+    }
+
+    // Paid plans
+    if (!user) {
+      // Not logged in - redirect to signup with plan info
+      const planParam = plan.id === "pro_monthly" ? "pro" : "annual"
+      router.push(`/auth/sign-up?plan=${planParam}`)
+      return
+    }
+
+    // User is logged in - start checkout
+    setLoading(plan.id)
+    try {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId, userId: user.id }),
+        body: JSON.stringify({ priceId: plan.priceId, userId: user.id }),
       })
 
       const data = await response.json()
@@ -86,13 +119,52 @@ export default function PricingPage() {
       if (data.url) {
         window.location.href = data.url
       } else {
-        console.error("No checkout URL returned")
+        console.error("No checkout URL returned:", data.error)
       }
     } catch (error) {
       console.error("Checkout error:", error)
     } finally {
       setLoading(null)
     }
+  }
+
+  const getButtonText = (plan: typeof PLANS[0]) => {
+    if (loading === plan.id) return "Loading..."
+    
+    // Check if this is the user's current plan
+    const isCurrentPlan = 
+      (plan.id === "free" && userTier === "free") ||
+      (plan.id === "pro_monthly" && userTier === "pro") ||
+      (plan.id === "pro_annual" && userTier === "annual")
+    
+    if (isCurrentPlan) return "Current Plan"
+    
+    // Not current plan - show action text
+    if (plan.id === "free") {
+      return user ? "Downgrade" : "Get Started"
+    }
+    if (plan.id === "pro_monthly") {
+      return "Start Pro Trial"
+    }
+    return "Get Annual"
+  }
+
+  const isButtonDisabled = (plan: typeof PLANS[0]) => {
+    // Disabled while loading
+    if (loading === plan.id) return true
+    
+    // Current plan is disabled
+    const isCurrentPlan = 
+      (plan.id === "free" && userTier === "free") ||
+      (plan.id === "pro_monthly" && userTier === "pro") ||
+      (plan.id === "pro_annual" && userTier === "annual")
+    
+    if (isCurrentPlan) return true
+    
+    // Free "Downgrade" is disabled for logged in users (they need to cancel in Stripe)
+    if (plan.id === "free" && user && userTier !== "free") return true
+    
+    return false
   }
 
   return (
@@ -116,7 +188,7 @@ export default function PricingPage() {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
+          {PLANS.map((plan) => (
             <div
               key={plan.name}
               className={`relative rounded-2xl p-8 ${
@@ -153,17 +225,17 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() => handleSubscribe(plan.priceId)}
-                disabled={!plan.priceId || loading === plan.priceId}
+                onClick={() => handlePlanClick(plan)}
+                disabled={isButtonDisabled(plan)}
                 className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                  plan.popular
+                  isButtonDisabled(plan)
+                    ? "bg-zinc-800/50 text-zinc-500 cursor-not-allowed"
+                    : plan.popular
                     ? "bg-amber-500 hover:bg-amber-600 text-black"
-                    : plan.priceId
-                    ? "bg-zinc-800 hover:bg-zinc-700 text-white"
-                    : "bg-zinc-800/50 text-zinc-500 cursor-not-allowed"
-                } ${loading === plan.priceId ? "opacity-50" : ""}`}
+                    : "bg-zinc-800 hover:bg-zinc-700 text-white"
+                } ${loading === plan.id ? "opacity-50" : ""}`}
               >
-                {loading === plan.priceId ? "Loading..." : plan.cta}
+                {isCheckingAuth ? "..." : getButtonText(plan)}
               </button>
             </div>
           ))}
