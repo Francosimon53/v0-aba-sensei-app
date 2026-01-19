@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { generateText } from "ai"
+
 
 export const runtime = "nodejs"
 
@@ -17,15 +19,15 @@ function getSupabaseClient() {
 
 // Generate embedding for a query using OpenAI
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return null
+  const openaiApiKey = process.env.OPENAI_API_KEY
+  if (!openaiApiKey) return null
 
   try {
     const response = await fetch("https://api.openai.com/v1/embeddings", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
         model: "text-embedding-3-small",
@@ -148,11 +150,7 @@ export async function POST(request: NextRequest) {
     const body: ChatRequest = await request.json()
     const { message, action, topic, examLevel = "bcba" } = body
 
-    const apiKey = process.env.ANTHROPIC_API_KEY
-
-    if (!apiKey || apiKey === "your_anthropic_api_key_here" || apiKey.length < 20) {
-      return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured" }, { status: 500 })
-    }
+    // Vercel AI Gateway handles API keys automatically for supported providers
 
     // Get RAG context based on the query
     const ragQuery = topic || message || (examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts")
@@ -417,31 +415,14 @@ Remember: You're a supportive mentor, not a textbook. Keep it real and conversat
         userPrompt = message
     }
 
-    // Call Claude API
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1500,
-        temperature: action === "practice" ? 0.8 : 0.7,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
+    // Call Google Gemini via Vercel AI Gateway
+    const { text: content } = await generateText({
+      model: "google/gemini-2.5-flash",
+      system: systemPrompt,
+      prompt: userPrompt,
+      maxTokens: 1500,
+      temperature: action === "practice" ? 0.8 : 0.7,
     })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[v0] Claude API error:", errorText)
-      return NextResponse.json({ error: `AI API error: ${response.status}` }, { status: response.status })
-    }
-
-    const data = await response.json()
-    const content = data.content?.[0]?.text
 
     if (!content) {
       return NextResponse.json({ error: "AI returned empty response" }, { status: 500 })
