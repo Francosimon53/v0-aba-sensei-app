@@ -661,16 +661,18 @@ Remember: You're a supportive mentor, not a textbook. Keep it real and conversat
           if (jsonMatch) jsonString = jsonMatch[0].trim()
         }
 
-        const quizData = JSON.parse(jsonString)
-
-        const highlightWords = getHighlightWords(quizData.question)
-
-        return NextResponse.json({
-          type: "quiz",
-          ...quizData,
-          highlightWords,
-          usedRAG: !!ragContext,
-        })
+  const quizData = JSON.parse(jsonString)
+  
+  const highlightWords = getHighlightWords(quizData.question)
+  
+  return NextResponse.json({
+    type: "quiz",
+    ...quizData,
+    highlightWords,
+    usedRAG: !!ragContext,
+    category: topicCategory,
+    topic: randomTopic,
+  })
       } catch (e) {
         console.error("[v0] Failed to parse quiz response:", e)
         return NextResponse.json({ error: "Failed to parse quiz" }, { status: 500 })

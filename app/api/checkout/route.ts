@@ -10,25 +10,19 @@ const supabaseAdmin = createClient(
 export async function POST(request: Request) {
   try {
     const { priceId, userId } = await request.json()
-    console.log("[v0] Checkout API received - priceId:", priceId, "userId:", userId)
 
     if (!priceId || !userId) {
-      console.log("[v0] Missing priceId or userId")
       return NextResponse.json({ error: "Missing priceId or userId" }, { status: 400 })
     }
 
     // Get user email from Supabase
-    console.log("[v0] Fetching profile for userId:", userId)
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("email, stripe_customer_id")
       .eq("id", userId)
       .single()
 
-    console.log("[v0] Profile result:", profile, "error:", profileError)
-
     if (!profile?.email) {
-      console.log("[v0] User not found or no email")
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
@@ -37,7 +31,6 @@ export async function POST(request: Request) {
     
     if (priceId.startsWith("price_")) {
       stripePriceId = priceId
-      console.log("[v0] Using direct priceId:", stripePriceId)
     } else {
       // Find the actual Stripe price ID from PLANS
       for (const plan of Object.values(PLANS)) {
@@ -48,10 +41,7 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log("[v0] Final stripePriceId:", stripePriceId)
-
     if (!stripePriceId) {
-      console.log("[v0] Invalid plan - no stripePriceId found")
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
 
@@ -74,8 +64,6 @@ export async function POST(request: Request) {
 
     // Get the app URL from env or request origin
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin
-    console.log("[v0] App URL:", appUrl)
-    console.log("[v0] Creating Stripe checkout session with customerId:", customerId, "priceId:", stripePriceId)
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -100,7 +88,6 @@ export async function POST(request: Request) {
       },
     })
 
-    console.log("[v0] Checkout session created:", session.id, "url:", session.url)
     return NextResponse.json({ url: session.url })
   } catch (error) {
     console.error("[v0] Checkout error:", error)

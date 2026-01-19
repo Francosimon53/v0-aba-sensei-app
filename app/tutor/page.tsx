@@ -141,7 +141,9 @@ export default function AITutorPage() {
     content: string
     options: QuizOption[]
     difficulty: string
-    trapAnalysis?: TrapAnalysis // Added trapAnalysis to currentQuestion
+    trapAnalysis?: TrapAnalysis
+    category?: string
+    topic?: string
   } | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
@@ -270,7 +272,9 @@ export default function AITutorPage() {
           content: data.question,
           options: normalizedOptions,
           difficulty: data.difficulty || "Medium",
-          trapAnalysis: data.trapAnalysis || null, // Include trapAnalysis
+          trapAnalysis: data.trapAnalysis || null,
+          category: data.category || null,
+          topic: data.topic || null,
         })
       }
     } catch (error) {
@@ -908,6 +912,15 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         : "Medium"}
                   </span>
                 </div>
+
+                {/* Category/Domain Badge */}
+                {currentQuestion.category && (
+                  <div className="mb-3">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-700 text-zinc-300">
+                      {currentQuestion.category}
+                    </span>
+                  </div>
+                )}
 
                 {/* Question text */}
                 <div className="mb-4">

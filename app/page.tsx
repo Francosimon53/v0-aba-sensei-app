@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
+import { ParticleBackground } from "@/components/particle-background"
 
 export const categoryToDomain: Record<string, string> = {
   // BCBA categories
@@ -67,7 +68,10 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black relative">
+      {/* Animated Particle Background */}
+      <ParticleBackground />
+
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-900">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -90,7 +94,7 @@ export default function Page() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
+      <section className="relative z-10 pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-8">
             <span className="text-amber-500 text-sm font-medium">AI-Powered Exam Prep</span>
@@ -126,7 +130,7 @@ export default function Page() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-12 border-y border-zinc-900">
+      <section className="relative z-10 py-12 border-y border-zinc-900">
         <div className="max-w-4xl mx-auto px-6">
           <div className="grid grid-cols-3 gap-8 text-center">
             <div>
@@ -146,7 +150,7 @@ export default function Page() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-6">
+      <section className="relative z-10 py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-white text-center mb-12">Everything you need to pass</h2>
 
@@ -173,7 +177,7 @@ export default function Page() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-6 bg-zinc-950">
+      <section id="pricing" className="relative z-10 py-20 px-6 bg-zinc-950">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">Simple, transparent pricing</h2>
@@ -284,7 +288,7 @@ export default function Page() {
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-20 px-6">
+      <section className="relative z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="text-5xl mb-6">"</div>
           <p className="text-2xl text-white mb-8 leading-relaxed">
@@ -299,7 +303,7 @@ export default function Page() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 px-6 bg-gradient-to-b from-zinc-950 to-black">
+      <section className="relative z-10 py-20 px-6 bg-gradient-to-b from-zinc-950 to-black">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">Ready to pass your exam?</h2>
           <p className="text-xl text-zinc-400 mb-10">Join thousands of behavior analysts who passed with ABA Sensei.</p>
@@ -313,7 +317,7 @@ export default function Page() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-zinc-900">
+      <footer className="relative z-10 py-12 px-6 border-t border-zinc-900">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <span className="text-xl">🥋</span>

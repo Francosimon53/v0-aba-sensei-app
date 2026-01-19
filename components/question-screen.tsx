@@ -1046,6 +1046,14 @@ export default function QuestionScreen({
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Question Card */}
         <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800/50">
+          {/* Category/Task Badge */}
+          {currentTask && (
+            <div className="mb-3">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-700 text-zinc-300">
+                Task {currentTask.task_id} &bull; {getDomainName(currentTask.task_id)}
+              </span>
+            </div>
+          )}
           <p className="text-[16px] leading-relaxed text-zinc-200">{questionData.question}</p>
 
           {/* Hint Button */}
