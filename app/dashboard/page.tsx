@@ -199,9 +199,14 @@ export default function DashboardPage() {
           <span className="text-2xl">🥋</span>
           <span className="font-semibold text-white">ABA Sensei</span>
         </div>
-        <button onClick={handleLogout} className="text-zinc-500 hover:text-white text-sm transition-colors">
-          Logout
-        </button>
+        <div className="flex items-center gap-4">
+          <Link href="/pricing" className="text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors">
+            Upgrade
+          </Link>
+          <button onClick={handleLogout} className="text-zinc-500 hover:text-white text-sm transition-colors">
+            Logout
+          </button>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
