@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { LanguageSelection } from "@/components/language-selection"
 import { ExamTypeSelection } from "@/components/exam-type-selection"
 import { CategoryMenu } from "@/components/category-menu"
 import QuestionScreen from "@/components/question-screen"
@@ -39,8 +38,8 @@ export const categoryToDomain: Record<string, string> = {
 }
 
 export default function StudyPage() {
-  const [step, setStep] = useState(0) // 0 = loading
-  const [language, setLanguage] = useState<Language>("English")
+  const [step, setStep] = useState(0) // 0 = loading, 1 = exam type, 2 = category, 3 = questions
+  const [language] = useState<Language>("English") // Fixed to English only
   const [examType, setExamType] = useState<ExamType>("BCBA")
   const [mode, setMode] = useState<Mode>("tutor")
   const [category, setCategory] = useState("")
@@ -70,27 +69,12 @@ export default function StudyPage() {
       // Load user profile and preferences
       const profile = await getUserProfile(user.id)
 
-      if (profile?.onboarding_completed && profile?.preferred_language && profile?.exam_level) {
-        // User has completed onboarding, check for resume
-        const langMap: Record<string, Language> = {
-          en: "English",
-          es: "Español",
-          pt: "Português",
-          fr: "Français",
-        }
-        setLanguage(langMap[profile.preferred_language] || "English")
+      if (profile?.onboarding_completed && profile?.exam_level) {
+        // User has completed onboarding, skip to category selection
         setExamType(profile.exam_level.toUpperCase() as ExamType)
-
-        // Check if we should resume
-        const lastProgress = await getUserLastProgress(user.id)
-        if (lastProgress) {
-          // Go directly to category selection
-          setStep(3)
-        } else {
-          setStep(3) // Skip to category selection
-        }
+        setStep(2) // Go to category selection
       } else {
-        // New user, start onboarding
+        // New user, start with exam type selection
         setStep(1)
       }
     }
@@ -98,24 +82,16 @@ export default function StudyPage() {
     checkAuthAndLoadPreferences()
   }, [router])
 
-  const handleLanguageSelect = async (lang: Language) => {
-    setLanguage(lang)
-    if (userId) {
-      const langCode = { English: "en", Español: "es", Português: "pt", Français: "fr" }[lang]
-      await updateUserProfile(userId, { preferred_language: langCode })
-    }
-    setStep(2)
-  }
-
   const handleExamTypeSelect = async (type: ExamType) => {
     setExamType(type)
     if (userId) {
       await updateUserProfile(userId, {
         exam_level: type.toLowerCase(),
+        preferred_language: "en", // Always English
         onboarding_completed: true,
       })
     }
-    setStep(3)
+    setStep(2) // Go to category selection
   }
 
   const handleCategorySelect = async (cat: string, selectedMode: Mode) => {
@@ -150,12 +126,12 @@ export default function StudyPage() {
       setTasks([])
     } finally {
       setLoadingTasks(false)
-      setStep(4)
+      setStep(3) // Go to question screen
     }
   }
 
   const handleBack = async () => {
-    if (step === 4 && currentSession) {
+    if (step === 3 && currentSession) {
       // Complete the session when leaving question screen
       const duration = Math.floor((Date.now() - sessionStats.startTime) / 1000)
       await updateStudySession(currentSession.id, sessionStats.total, sessionStats.correct, duration, "completed")
@@ -273,12 +249,11 @@ export default function StudyPage() {
         Logout
       </button> */}
 
-      {step === 1 && <LanguageSelection onSelect={handleLanguageSelect} />}
-      {step === 2 && <ExamTypeSelection onSelect={handleExamTypeSelect} onBack={handleBack} language={language} />}
-      {step === 3 && (
+      {step === 1 && <ExamTypeSelection onSelect={handleExamTypeSelect} onBack={handleBack} language={language} />}
+      {step === 2 && (
         <CategoryMenu examType={examType} onSelect={handleCategorySelect} onBack={handleBack} language={language} />
       )}
-      {step === 4 && (
+      {step === 3 && (
         <QuestionScreen
           examType={examType}
           category={category}

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { LanguageSelection } from "@/components/language-selection"
-import type { Language } from "@/types"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export const categoryToDomain: Record<string, string> = {
   // BCBA categories
@@ -40,50 +40,42 @@ export default function Page() {
         // User is logged in, redirect to dashboard
         router.push("/dashboard")
       } else {
-        // Show language selection for guests
+        // Show welcome screen for guests
         setIsLoading(false)
       }
     }
     checkAuth()
   }, [router])
 
-  const handleLanguageSelect = (lang: Language) => {
-    // Save language to localStorage for retrieval after login
-    localStorage.setItem("aba_sensei_language", lang)
-    // Redirect to login page
-    router.push("/auth/login")
-  }
-
   if (isLoading) {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4 animate-pulse">🥋</div>
-          <p className="text-white/60">Loading...</p>
+          <p className="text-zinc-500">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen gradient-bg">
-      {/* Login/Signup buttons for guests */}
-      <div className="absolute top-4 right-4 flex gap-2 z-50">
-        <button
-          onClick={() => router.push("/auth/login")}
-          className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
-        >
-          Login
-        </button>
-        <button
-          onClick={() => router.push("/auth/sign-up")}
-          className="px-4 py-2 text-sm bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-medium rounded-lg hover:from-amber-600 hover:to-yellow-600 transition-colors"
-        >
-          Sign Up
-        </button>
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6">
+      <div className="text-6xl mb-4">🥋</div>
+      <h1 className="text-3xl font-bold text-white mb-2">ABA Sensei</h1>
+      <p className="text-zinc-400 mb-8">Master your BCBA & RBT exam</p>
+      
+      <div className="space-y-4 w-full max-w-xs">
+        <Link href="/dashboard">
+          <Button className="w-full bg-[#d4a853] hover:bg-[#c49845] text-black font-bold py-4">
+            Get Started
+          </Button>
+        </Link>
+        <Link href="/auth/login">
+          <Button variant="outline" className="w-full border-zinc-800 text-white py-4 hover:bg-zinc-900 bg-transparent">
+            Login
+          </Button>
+        </Link>
       </div>
-
-      <LanguageSelection onSelect={handleLanguageSelect} />
     </div>
   )
 }
