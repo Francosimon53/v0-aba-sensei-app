@@ -63,6 +63,7 @@ export default function LoginPage() {
 
       console.log("[v0] Redirecting to dashboard")
       router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
       console.log("[v0] Login catch error:", error)
       setError(error instanceof Error ? error.message : "An error occurred")

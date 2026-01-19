@@ -138,7 +138,17 @@ export default function StudyPage() {
       await updateStudySession(currentSession.id, sessionStats.total, sessionStats.correct, duration, "completed")
       setCurrentSession(null)
     }
-    if (step > 1) setStep(step - 1)
+    // Handle step navigation properly
+    if (step === 3) {
+      setStep(2.5) // From questions back to difficulty
+    } else if (step === 2.5) {
+      setStep(2) // From difficulty back to category
+    } else if (step > 1) {
+      setStep(step - 1)
+    } else {
+      // Step 1 or less - go back to dashboard
+      router.push("/dashboard")
+    }
   }
 
   const handleQuestionAnswered = async (selectedOption: string, isCorrect: boolean, timeSpentSeconds: number) => {
