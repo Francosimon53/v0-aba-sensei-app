@@ -27,18 +27,27 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("[v0] Login button clicked, starting login process")
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
+      console.log("[v0] Attempting to sign in with email:", email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      if (error) throw error
+      
+      if (error) {
+        console.log("[v0] Login error:", error)
+        throw error
+      }
+
+      console.log("[v0] Login successful, user:", data.user?.id)
 
       if (data.user && savedLanguage) {
+        console.log("[v0] Updating user profile with language:", savedLanguage)
         const langCode: Record<string, string> = {
           English: "en",
           Español: "es",
@@ -52,8 +61,10 @@ export default function LoginPage() {
         localStorage.removeItem("aba_sensei_language")
       }
 
+      console.log("[v0] Redirecting to dashboard")
       router.push("/dashboard")
     } catch (error: unknown) {
+      console.log("[v0] Login catch error:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
       setIsLoading(false)
