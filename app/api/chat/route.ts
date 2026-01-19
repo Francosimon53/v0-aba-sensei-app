@@ -294,8 +294,38 @@ Questions should require critical thinking and application of principles.`
     let systemPrompt = ""
     let userPrompt = ""
 
+    // Get category from request body
+    const requestedCategory = body.category
+
     // Select random topic for practice questions using categorized topics
-    const { category: topicCategory, topic: randomTopic } = getRandomTopic(examLevel)
+    // If a specific category is requested, filter to only that category
+    let topicCategory: string
+    let randomTopic: string
+
+    if (requestedCategory && requestedCategory !== "all") {
+      // User selected a specific category - filter to it
+      const categories = examLevel === "rbt" ? RBT_TOPIC_CATEGORIES : BCBA_TOPIC_CATEGORIES
+      const matchingCategory = Object.keys(categories).find((cat) => 
+        cat.toLowerCase().includes(requestedCategory.toLowerCase()) ||
+        requestedCategory.toLowerCase().includes(cat.toLowerCase())
+      )
+      
+      if (matchingCategory) {
+        topicCategory = matchingCategory
+        const topicsInCategory = categories[matchingCategory as keyof typeof categories]
+        randomTopic = topicsInCategory[Math.floor(Math.random() * topicsInCategory.length)]
+      } else {
+        // Fallback to random if category not found
+        const result = getRandomTopic(examLevel)
+        topicCategory = result.category
+        randomTopic = result.topic
+      }
+    } else {
+      // No specific category - pick randomly from all
+      const result = getRandomTopic(examLevel)
+      topicCategory = result.category
+      randomTopic = result.topic
+    }
 
     // Build prompts based on action type
     switch (action) {

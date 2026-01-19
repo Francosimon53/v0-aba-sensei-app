@@ -348,40 +348,40 @@ export default function DashboardPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+              <Card className="relative bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-md p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 group">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative">
-                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Total Questions</div>
-                  <div className="text-3xl font-bold text-white">{userStats?.totalQuestions || 0}</div>
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-2 font-medium">Total Questions</div>
+                  <div className="text-4xl font-bold text-white tracking-tight">{userStats?.totalQuestions || 0}</div>
                 </div>
               </Card>
 
-              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+              <Card className="relative bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-md p-6 hover:border-amber-500/30 hover:bg-zinc-900/80 transition-all duration-300 group">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative">
-                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Accuracy</div>
-                  <div className="text-3xl font-bold text-yellow-400">{userStats?.accuracyRate || 0}%</div>
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-2 font-medium">Accuracy</div>
+                  <div className="text-4xl font-bold text-[#d4a853] tracking-tight">{userStats?.accuracyRate || 0}%</div>
                 </div>
               </Card>
 
-              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+              <Card className="relative bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-md p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 group">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative">
-                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Current Streak</div>
-                  <div className="text-3xl font-bold text-white flex items-center gap-2">
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-2 font-medium">Current Streak</div>
+                  <div className="text-4xl font-bold text-white flex items-center gap-2 tracking-tight">
                     {userStats?.currentStreak || 0}
-                    <span className="text-xl">🔥</span>
+                    <span className="text-2xl">🔥</span>
                   </div>
                 </div>
               </Card>
 
-              <Card className="relative bg-gradient-to-br from-white/10 to-white/5 border-white/20 backdrop-blur-md p-5 hover:border-yellow-400/30 transition-all duration-300">
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-400/5 to-transparent pointer-events-none" />
+              <Card className="relative bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-md p-6 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300 group">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative">
-                  <div className="text-white/50 text-xs uppercase tracking-wider mb-2">Best Streak</div>
-                  <div className="text-3xl font-bold text-white flex items-center gap-2">
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-2 font-medium">Best Streak</div>
+                  <div className="text-4xl font-bold text-white flex items-center gap-2 tracking-tight">
                     {userStats?.bestStreak || 0}
-                    <span className="text-xl">⭐</span>
+                    <span className="text-2xl">⭐</span>
                   </div>
                 </div>
               </Card>
@@ -389,75 +389,74 @@ export default function DashboardPage() {
 
             <div className="mb-10">
               <h3 className="text-xl font-bold text-white mb-6">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Button
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
                   onClick={() => router.push(lastCategory ? `/study?category=${lastCategory}` : "/study")}
-                  className="h-14 bg-gradient-to-br from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold shadow-lg shadow-yellow-500/20 transition-all duration-300"
+                  className="group"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">📚</span>
-                    <span>Continue Studying</span>
+                  <div className="bg-gradient-to-br from-[#d4a853] to-[#b8942d] rounded-2xl p-6 hover:scale-[1.02] transition-transform duration-300 shadow-lg shadow-amber-500/20">
+                    <span className="text-3xl block mb-2">📚</span>
+                    <h3 className="text-xl font-bold text-black mb-1">Study Mode</h3>
+                    <p className="text-black/70 text-sm">Practice by category</p>
                   </div>
-                </Button>
+                </button>
 
-                <Button
-                  onClick={() => router.push("/study")}
-                  className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">🎯</span>
-                    <span>New Category</span>
+                <button onClick={() => router.push("/study?mode=exam")} className="group">
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 hover:scale-[1.02] transition-all duration-300">
+                    <span className="text-3xl block mb-2">🎯</span>
+                    <h3 className="text-xl font-bold text-white mb-1">Exam Mode</h3>
+                    <p className="text-zinc-400 text-sm">Simulate real exam</p>
                   </div>
-                </Button>
+                </button>
 
-                <Button
-                  onClick={() => router.push("/study?mode=exam")}
-                  className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">🎓</span>
-                    <span>Exam Mode</span>
+                <button onClick={() => router.push("/tutor")} className="group">
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-amber-500/50 hover:scale-[1.02] transition-all duration-300">
+                    <span className="text-3xl block mb-2">🥋</span>
+                    <h3 className="text-xl font-bold text-white mb-1">AI Sensei</h3>
+                    <p className="text-zinc-400 text-sm">Personalized tutoring</p>
                   </div>
-                </Button>
-
-                <Button
-                  onClick={() => router.push("/tutor")}
-                  className="h-14 bg-transparent hover:bg-white/10 text-white font-semibold border border-white/20 hover:border-yellow-400/50 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">✨</span>
-                    <span>AI Tutor</span>
-                  </div>
-                </Button>
+                </button>
               </div>
             </div>
 
             <div>
               <h3 className="text-xl font-bold text-white mb-6">Recent Activity</h3>
               {recentSessions.length === 0 ? (
-                <Card className="bg-white/5 border-white/10 backdrop-blur-sm p-8 text-center">
-                  <p className="text-white/60">No recent sessions. Start studying to see your activity here!</p>
+                <Card className="bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-sm p-12 text-center">
+                  <div className="text-4xl mb-3">📊</div>
+                  <p className="text-zinc-400 text-lg mb-2">No activity yet</p>
+                  <p className="text-zinc-500 text-sm">Your recent study sessions will appear here</p>
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {recentSessions.map((session) => (
+                  {recentSessions.slice(0, 5).map((session) => (
                     <Card
                       key={session.id}
-                      className="bg-white/5 border-white/10 backdrop-blur-sm p-4 hover:border-yellow-400/30 transition-all"
+                      className="bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-sm p-5 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all duration-300"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-white font-medium mb-1">{session.categoryId || "General Study"}</div>
-                          <div className="text-sm text-white/50">
-                            {session.correctAnswers}/{session.totalQuestions} correct (
-                            {Math.round((session.correctAnswers / session.totalQuestions) * 100)}%) ·{" "}
-                            {formatDuration(session.durationSeconds)} · {formatDate(session.startedAt)}
+                          <div className="text-white font-semibold mb-1.5 text-base">
+                            {session.categoryId || "General Study"}
+                          </div>
+                          <div className="text-sm text-zinc-400 flex items-center gap-2">
+                            <span className="font-medium">
+                              {session.correctAnswers}/{session.totalQuestions}
+                            </span>
+                            <span className="text-zinc-600">·</span>
+                            <span className={session.correctAnswers / session.totalQuestions >= 0.7 ? "text-emerald-400" : "text-zinc-400"}>
+                              {Math.round((session.correctAnswers / session.totalQuestions) * 100)}%
+                            </span>
+                            <span className="text-zinc-600">·</span>
+                            <span>{formatDuration(session.durationSeconds)}</span>
+                            <span className="text-zinc-600">·</span>
+                            <span>{formatDate(session.startedAt)}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {session.mode === "exam" && (
-                            <span className="px-2 py-1 rounded text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                              Exam Mode
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                              Exam
                             </span>
                           )}
                         </div>

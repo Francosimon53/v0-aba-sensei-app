@@ -128,6 +128,7 @@ interface TrapInfo {
 
 export default function AITutorPage() {
   const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [gameStats, setGameStats] = useState<GameStats>({
     streak: 3,
     xp: 150,
@@ -246,6 +247,7 @@ export default function AITutorPage() {
           action: "practice",
           topic: examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts",
           examLevel,
+          category: selectedCategory !== "all" ? selectedCategory : null,
         }),
       })
 
@@ -464,7 +466,10 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           {/* Level toggle */}
           <div className="flex bg-zinc-900 rounded-full p-1 mb-8 border border-zinc-800">
             <button
-              onClick={() => setExamLevel("rbt")}
+              onClick={() => {
+                setExamLevel("rbt")
+                setSelectedCategory("all")
+              }}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
                 examLevel === "rbt" ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:text-zinc-300"
               }`}
@@ -472,7 +477,10 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               RBT
             </button>
             <button
-              onClick={() => setExamLevel("bcba")}
+              onClick={() => {
+                setExamLevel("bcba")
+                setSelectedCategory("all")
+              }}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-150 ${
                 examLevel === "bcba" ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:text-zinc-300"
               }`}
@@ -484,9 +492,39 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           {/* Logo and title */}
           <div className="text-5xl mb-4 opacity-90">🥋</div>
           <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">Ready to practice?</h1>
-          <p className="text-zinc-500 text-center mb-8">
+          <p className="text-zinc-500 text-center mb-6">
             {gameStats.correctToday}/{gameStats.dailyGoal} questions today
           </p>
+
+          {/* Category selection */}
+          <div className="w-full max-w-md mb-8">
+            <p className="text-zinc-400 text-sm text-center mb-3">Select Category</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
+                  selectedCategory === "all"
+                    ? "bg-[#d4a853] text-black"
+                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                }`}
+              >
+                All Categories
+              </button>
+              {(examLevel === "bcba" ? BCBA_CATEGORIES : RBT_CATEGORIES).map((cat, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
+                    selectedCategory === cat
+                      ? "bg-[#d4a853] text-black"
+                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Progress ring */}
           <div className="relative w-32 h-32 mb-8">
