@@ -37,9 +37,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} font-sans antialiased`}>
+      <body className={`${inter.className} font-sans antialiased bg-black`}>
         <GlobalBackground />
-        <div className="relative z-10">{children}</div>
+        <main className="relative z-10 min-h-screen">{children}</main>
         <Analytics />
       </body>
     </html>

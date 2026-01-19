@@ -1,7 +1,7 @@
 "use client"
 
-import { ParticleBackground } from "./particle-background"
+import { WaveBackground } from "./wave-background"
 
 export function GlobalBackground() {
-  return <ParticleBackground />
+  return <WaveBackground />
 }
