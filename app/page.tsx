@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
-import { ParticleBackground } from "@/components/particle-background"
 
 export const categoryToDomain: Record<string, string> = {
   // BCBA categories
@@ -69,9 +68,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-black relative">
-      {/* Animated Particle Background */}
-      <ParticleBackground />
-
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-900">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
