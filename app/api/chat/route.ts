@@ -108,6 +108,37 @@ const RBT_TOPIC_CATEGORIES = {
   ],
 }
 
+// Practitioner and client names for varied scenarios
+const PRACTITIONER_NAMES = [
+  "Dr. Johnson", "Dr. Williams", "Dr. Brown", "Dr. Davis", "Dr. Miller",
+  "Dr. Wilson", "Dr. Moore", "Dr. Taylor", "Dr. Anderson", "Dr. Thomas",
+  "Dr. Jackson", "Dr. White", "Dr. Harris", "Dr. Clark", "Dr. Thompson",
+  "Dr. Garcia", "Dr. Rodriguez", "Dr. Lee", "Dr. Walker", "Dr. Hall",
+  "Ms. Chen", "Mr. Patel", "Ms. Kim", "Mr. O'Brien", "Ms. Santos",
+  "Dr. Rivera", "Dr. Cooper", "Dr. Reed", "Dr. Bell", "Dr. Murphy"
+]
+
+const CLIENT_NAMES = [
+  "Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley", "Jamie",
+  "Marcus", "Sophia", "Ethan", "Olivia", "Liam", "Emma", "Noah", "Ava",
+  "Maya", "Lucas", "Isabella", "Aiden", "Mia", "Jackson", "Charlotte", "Leo",
+  "Benjamin", "Amelia", "Daniel", "Harper", "Michael", "Evelyn"
+]
+
+const SETTINGS = [
+  "a public elementary school", "a private clinic", "a home-based program",
+  "an autism center", "a hospital outpatient unit", "a group home",
+  "a middle school resource room", "an early intervention program",
+  "a vocational training center", "a residential facility",
+  "a preschool classroom", "an inclusive daycare", "a behavioral health clinic"
+]
+
+const CLIENT_AGES = [
+  "4-year-old", "5-year-old", "6-year-old", "7-year-old", "8-year-old",
+  "9-year-old", "10-year-old", "12-year-old", "14-year-old", "16-year-old",
+  "young adult", "teenager", "preschool-aged", "school-aged"
+]
+
 // Helper function to get a random topic from categories
 function getRandomTopic(examLevel: string): { category: string; topic: string } {
   const categories = examLevel === "rbt" ? RBT_TOPIC_CATEGORIES : BCBA_TOPIC_CATEGORIES
@@ -385,6 +416,12 @@ STRUCTURE TRAPS - Question phrasing tricks:
 - Include ONE intuitive analogy in the correct answer's rationale
 - Keep trapAnalysis brief: 1-2 lines only if genuinely tricky`
 
+        // Generate random scenario details for variety
+        const randomPractitioner = PRACTITIONER_NAMES[Math.floor(Math.random() * PRACTITIONER_NAMES.length)]
+        const randomClient = CLIENT_NAMES[Math.floor(Math.random() * CLIENT_NAMES.length)]
+        const randomSetting = SETTINGS[Math.floor(Math.random() * SETTINGS.length)]
+        const randomAge = CLIENT_AGES[Math.floor(Math.random() * CLIENT_AGES.length)]
+
         userPrompt = `DIFFICULTY LEVEL: ${requestedDifficulty}
 
 Easy = Basic definitions and simple scenarios. Test recall of key terms.
@@ -396,6 +433,20 @@ Hard = Complex multi-step scenarios, tricky wording, requires deep analysis. Exa
 Category: ${topicCategory}
 Specific Task: ${randomTopic}
 ═══════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════
+👤 SCENARIO REQUIREMENTS - MANDATORY
+Practitioner name: ${randomPractitioner}
+Client name: ${randomClient}
+Client age: ${randomAge}
+Setting: ${randomSetting}
+═══════════════════════════════════════════════════════
+
+BANNED - NEVER USE:
+- "Dr. Martinez" (permanently banned)
+- "8-year-old Alex" (overused combination)
+
+You MUST use the exact names/details provided above. Create a realistic, unique scenario.
 
 Create ONE unique ${examLevel.toUpperCase()} practice question at ${requestedDifficulty} difficulty specifically about: ${randomTopic}
 This is from the ${topicCategory} section of the ${examLevel.toUpperCase()} Task List.
