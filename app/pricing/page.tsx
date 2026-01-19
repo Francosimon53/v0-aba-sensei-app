@@ -107,6 +107,7 @@ export default function PricingPage() {
 
     // User is logged in - start checkout
     setLoading(plan.id)
+    console.log("[v0] Starting checkout for plan:", plan.id, "priceId:", plan.priceId, "userId:", user.id)
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -114,16 +115,19 @@ export default function PricingPage() {
         body: JSON.stringify({ priceId: plan.priceId, userId: user.id }),
       })
 
+      console.log("[v0] Checkout response status:", response.status)
       const data = await response.json()
+      console.log("[v0] Checkout response data:", data)
 
       if (data.url) {
+        console.log("[v0] Redirecting to:", data.url)
         window.location.href = data.url
       } else {
-        console.error("No checkout URL returned:", data.error)
+        console.error("[v0] No checkout URL returned:", data.error)
+        setLoading(null)
       }
     } catch (error) {
-      console.error("Checkout error:", error)
-    } finally {
+      console.error("[v0] Checkout error:", error)
       setLoading(null)
     }
   }
