@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -103,9 +105,17 @@ export default function Page() {
             <span className="text-amber-500">BCBA & RBT</span> exam
           </h1>
 
+          <div className="flex items-center justify-center gap-3 mb-10 flex-wrap">
+            <span className="inline-flex items-center px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-medium text-zinc-400">
+              BCBA <span className="text-amber-500 font-bold ml-1">6th Ed.</span>
+            </span>
+            <span className="inline-flex items-center px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-medium text-zinc-400">
+              RBT <span className="text-amber-500 font-bold ml-1">3rd Ed.</span>
+            </span>
+          </div>
+
           <p className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
-            The smartest way to prepare. AI-generated questions, instant feedback, and personalized tutoring to help you
-            pass on your first try.
+            The smartest way to prepare. AI-generated questions aligned with the latest BCBA 6th Edition & RBT 3rd Edition exam content, instant feedback, and personalized tutoring to help you pass on your first try.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

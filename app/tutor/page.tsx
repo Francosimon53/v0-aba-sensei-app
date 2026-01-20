@@ -152,6 +152,11 @@ interface TrapInfo {
 
 // Removed HighlightedQuestion function as it is no longer used.
 
+function generateDetailedTrapExplanation(word: string, type: string, explanation: string, question: string): string {
+  // Placeholder implementation for demonstration purposes
+  return `The word "${word}" in the question "${question}" is a trap of type "${type}". ${explanation}`;
+}
+
 export default function AITutorPage() {
   const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -263,6 +268,47 @@ export default function AITutorPage() {
     return correctOption.rationale?.split(".")[0] || "Review this concept in your study materials"
   }
 
+  function generateDetailedTrapExplanation(
+    trapWord: string,
+    trapType: string,
+    shortExplanation: string,
+    questionContext: string,
+  ): string {
+    // Generate detailed paragraph explanations for trap words
+    const trapWordLower = trapWord.toLowerCase()
+
+    // EXAM TRAP explanations - why these words trick students
+    const trapExplanations: Record<string, string> = {
+      stimulus_control: `"${trapWord}" is a COMMON EXAM TRAP. Stimulus control means the behavior ONLY happens when the correct stimulus is present. This tricks students because it SOUNDS like the behavior is controlled, but the key is that without the stimulus, the behavior doesn't occur. Test makers use this because students often confuse it with other control procedures. Remember: stimulus control requires DISCRIMINATIVE control - the presence/absence of a specific stimulus determines the behavior.`,
+
+      generalization: `"${trapWord}" is a COMMON EXAM TRAP. Stimulus generalization occurs when a response learned to ONE stimulus occurs to SIMILAR stimuli without direct training. Test makers trap you here because students often think generalization means the behavior spreads to all contexts (it doesn't). In reality, generalization is LIMITED to similar stimuli. This is why stimulus discrimination training is needed for precise behavioral control.`,
+
+      discrimination: `"${trapWord}" is a COMMON EXAM TRAP. Stimulus discrimination means the organism learns to respond DIFFERENTLY to similar but distinct stimuli. This tricks students because it requires EXPLICIT differential reinforcement - you must reinforce in the presence of one stimulus and not reinforce in the presence of another. Without this differential training, stimulus generalization occurs instead.`,
+
+      extinction: `"${trapWord}" is a COMMON EXAM TRAP. Extinction ONLY involves WITHHOLDING the reinforcer that was maintaining the behavior - it is NOT adding a punisher. This is a critical distinction exam makers test. Students get trapped thinking any removal of reinforcement is extinction, but extinction specifically means stopping the delivery of the REINFORCER that was maintaining behavior. If you add a punisher, that's punishment, not extinction.`,
+
+      reinforcement: `"${trapWord}" is a COMMON EXAM TRAP. Reinforcement means the behavior INCREASES in frequency after the consequence. The trick here is that BOTH positive (adding something desired) and negative (removing something unpleasant) reinforcement INCREASE behavior. Students get confused and think negative reinforcement is punishment. The KEY distinguishing feature is the direction of behavior change: if behavior increases, it's reinforcement; if it decreases, it's punishment.`,
+
+      punishment: `"${trapWord}" is a COMMON EXAM TRAP. Punishment means the behavior DECREASES in frequency after the consequence. The trap is that BOTH positive punishment (adding something unpleasant) and negative punishment (removing something desired) DECREASE behavior. Students often confuse punishment with reinforcement. Remember the KEY: if behavior decreases, it's punishment (regardless of whether you add or remove something).`,
+
+      shaping: `"${trapWord}" is a COMMON EXAM TRAP. Shaping involves reinforcing successive approximations to the target behavior. The exam trick is that students often confuse shaping with chaining (sequencing behaviors) or prompting. Shaping REQUIRES: (1) starting with current repertoire, (2) reinforcing closer and closer approximations, and (3) gradually withdrawing reinforcement for less accurate responses.`,
+
+      chaining: `"${trapWord}" is a COMMON EXAM TRAP. Chaining is connecting a sequence of discriminative stimuli and responses into a functional sequence. The trick is distinguishing between forward chaining (teaching links in order) and backward chaining (teaching the last link first). Students get trapped because they think it's just teaching multiple behaviors, but the KEY is the SEQUENTIAL dependency - each response produces the discriminative stimulus for the next response.`,
+
+      prompt: `"${trapWord}" is a COMMON EXAM TRAP. A prompt is an additional stimulus that increases the probability of the correct response BEFORE the SD (discriminative stimulus). The exam trick is understanding that prompts MUST be faded - you gradually reduce the prompt until the behavior occurs in response to just the SD. Without fading, the student becomes prompt-dependent.`,
+    }
+
+    // Check for known trap words
+    for (const [key, explanation] of Object.entries(trapExplanations)) {
+      if (trapWordLower.includes(key.replace(/_/g, " "))) {
+        return explanation
+      }
+    }
+
+    // If not in predefined list, generate a detailed explanation
+    return `"${trapWord}" appears in this question and may be serving as an exam trap. The exam is testing whether you understand exactly what this term means in ABA. In this context: ${shortExplanation}. Be careful not to confuse this concept with similar-sounding terms when taking the actual exam.`
+  }
+
   function diagnoseError(
     selectedOption: QuizOption | undefined,
     correctOption: QuizOption | undefined,
@@ -283,31 +329,40 @@ export default function AITutorPage() {
     const selectedText = selectedOption.text.toLowerCase()
     const correctText = correctOption.text.toLowerCase()
 
-    // Detailed fallback explanations based on common ABA confusions
+    // Detailed educational explanations for common ABA concept confusions
     if (
       (selectedText.includes("positive") && correctText.includes("negative")) ||
       (selectedText.includes("negative") && correctText.includes("positive"))
     ) {
-      return "You confused the valence of reinforcement. Positive reinforcement adds a desired consequence to increase behavior, while negative reinforcement removes an unpleasant consequence to increase behavior. Both increase behavior, but through different mechanisms."
+      return "You confused the valence of reinforcement or punishment. Positive means you ADD something desired/undesired, while negative means you REMOVE something unpleasant/desired. The CRITICAL distinction is that both positive AND negative reinforcement increase behavior, while both positive AND negative punishment decrease behavior. The key is the direction of behavior change, not whether you add or remove."
     }
     if (
       (selectedText.includes("reinforcement") && correctText.includes("punishment")) ||
       (selectedText.includes("punishment") && correctText.includes("reinforcement"))
     ) {
-      return "You confused reinforcement with punishment. Reinforcement (positive or negative) increases the likelihood of behavior occurring again. Punishment (positive or negative) decreases the likelihood of behavior occurring again."
+      return "This is a fundamental confusion between reinforcement and punishment. Reinforcement (positive or negative) INCREASES the likelihood of behavior recurring. Punishment (positive or negative) DECREASES the likelihood of behavior recurring. This distinction is so critical to ABA that you must distinguish it on the exam - it's one of the most common test questions."
     }
-    if (selectedText.includes("extinction") || correctText.includes("extinction")) {
-      return "Extinction involves withholding the reinforcer that was maintaining a behavior, not adding a punisher. When you stop providing reinforcement, the behavior will gradually decrease over time through the extinction process."
+    if (selectedText.includes("extinction") && !correctText.includes("extinction")) {
+      return "Extinction is NOT the same as removing a behavior through punishment or restraint. Extinction specifically means WITHHOLDING the reinforcer that was maintaining the behavior. The behavior will gradually decrease through extinction because the reinforcing consequence no longer follows it. This is different from punishment, which adds an unpleasant consequence."
     }
-    if (selectedText.includes("generalization") || correctText.includes("generalization")) {
-      return "Stimulus generalization occurs when a response learned to one stimulus occurs to similar stimuli without direct training. This demonstrates that the behavior transferred to new contexts, showing broader learning."
+    if (selectedText.includes("generalization") && !correctText.includes("generalization")) {
+      return "Stimulus generalization occurs when a learned response transfers to similar stimuli WITHOUT direct training on those stimuli. This is NOT about learning broadly - it's about untrained transfer to similar contexts. The key exam trap here is confusing generalization (which DOES occur without training) with discrimination (which requires EXPLICIT differential reinforcement training)."
     }
-    if (selectedText.includes("discrimination") || correctText.includes("discrimination")) {
-      return "Stimulus discrimination is when an organism learns to respond differently to similar but distinct stimuli. This is more controlled than generalization and shows precise behavioral control."
+    if (selectedText.includes("discrimination") && !correctText.includes("discrimination")) {
+      return "Stimulus discrimination is NOT the same as stimulus generalization. Discrimination means the organism responds DIFFERENTLY to distinct stimuli, requiring EXPLICIT differential reinforcement - reinforcing in the presence of one stimulus (S+) and not reinforcing in the presence of another (S-). Without this differential training, generalization will occur instead of discrimination."
+    }
+    if (selectedText.includes("shaping") && !correctText.includes("shaping")) {
+      return "Shaping involves reinforcing successive approximations toward a target behavior, starting with the client's current behavioral repertoire. This is different from prompting (adding an extra stimulus) or chaining (connecting a sequence of behaviors). The key to shaping is that you gradually change the criterion for reinforcement as the behavior gets closer to the target."
+    }
+    if (selectedText.includes("prompt") && !correctText.includes("prompt")) {
+      return "A prompt is an additional stimulus that increases the likelihood of the desired response when presented with the discriminative stimulus. However, prompts MUST be faded - gradually reduced - as the behavior comes under control of the S+. If you don't fade prompts, the client becomes prompt-dependent and won't respond without the prompt."
+    }
+    if (selectedText.includes("chaining") && !correctText.includes("chaining")) {
+      return "Chaining connects a sequence of discriminative stimuli and responses into a functional unit where each response produces the S+ for the next response. This is different from teaching multiple independent behaviors. In forward chaining, you teach the first link first; in backward chaining, you teach the last link first and work backward."
     }
 
-    // Final fallback explanation
-    return `The correct answer is: "${correctOption.text}". Your selection demonstrates a misunderstanding of this concept. Review the fundamental ABA principles involved to avoid this error in the future.`
+    // Final educational fallback explanation
+    return `The correct answer is: "${correctOption.text}". Your selection of "${selectedOption.text}" suggests a misunderstanding of this ABA concept. Study the distinction between these concepts to avoid this error on the actual exam - test makers specifically target this confusion.`
   }
 
   const loadQuestion = async () => {
@@ -385,12 +440,26 @@ export default function AITutorPage() {
     const isCorrect = selectedOption?.isCorrect
 
     if (currentQuestion) {
-      const trapAnalysis = currentQuestion.trapAnalysis // Assuming trapAnalysis is available on currentQuestion
-      setDetectedTraps(
-        trapAnalysis?.hasTrap
-          ? [{ word: trapAnalysis.trapWord!, type: trapAnalysis.trapType!, explanation: trapAnalysis.trapExplanation! }]
-          : [],
-      ) // This might need adjustment based on how trapAnalysis is structured
+      const trapAnalysis = currentQuestion.trapAnalysis
+      
+      // Build detailed trap explanations
+      const trapExplanations: TrapInfo[] = []
+      
+      if (trapAnalysis?.trapWord) {
+        const explanation = generateDetailedTrapExplanation(
+          trapAnalysis.trapWord,
+          trapAnalysis.trapType,
+          trapAnalysis.trapExplanation,
+          currentQuestion.content,
+        )
+        trapExplanations.push({
+          word: trapAnalysis.trapWord,
+          type: trapAnalysis.trapType || "unknown",
+          explanation: explanation,
+        })
+      }
+      
+      setDetectedTraps(trapExplanations)
       setQuickTip(generateQuickTip(trapAnalysis, correctOption))
       if (!isCorrect) {
         setErrorDiagnosis(diagnoseError(selectedOption, correctOption, trapAnalysis))
