@@ -807,7 +807,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 )}
 
                 {/* Why wrong */}
-                {!currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect && errorDiagnosis && (
+                {currentQuestion && !currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect && errorDiagnosis && (
                   <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
                     <p className="text-red-400/80 font-medium text-xs mb-2 uppercase tracking-wide">Why it's wrong</p>
                     <p className="text-zinc-400 text-sm leading-relaxed italic">{errorDiagnosis}</p>
