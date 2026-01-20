@@ -161,23 +161,23 @@ const CONTRAST_PIVOTS = {
   translations: {
     English: {
       label: "Contrast Pivot",
-      meaning: "Forget the first half! The important information comes AFTER this word.",
-      strategy: "Focus on what comes AFTER the contrast word - that's what matters.",
+      meaning: "Two things are being compared. One is being emphasized over the other.",
+      strategy: "Focus on what comes AFTER the contrast word - that's the KEY information, not what came before.",
     },
     Español: {
       label: "Pivote de Contraste",
-      meaning: "¡Olvida la primera mitad! La información importante viene DESPUÉS de esta palabra.",
-      strategy: "Enfócate en lo que viene DESPUÉS de la palabra de contraste - eso es lo que importa.",
+      meaning: "Se están comparando dos cosas. Una se enfatiza sobre la otra.",
+      strategy: "Enfócate en lo que viene DESPUÉS de la palabra de contraste - esa es la información CLAVE, no lo anterior.",
     },
     Português: {
       label: "Pivô de Contraste",
-      meaning: "Esqueça a primeira metade! A informação importante vem DEPOIS desta palavra.",
-      strategy: "Foque no que vem DEPOIS da palavra de contraste - isso é o que importa.",
+      meaning: "Duas coisas estão sendo comparadas. Uma é enfatizada sobre a outra.",
+      strategy: "Foque no que vem DEPOIS da palavra de contraste - essa é a informação CHAVE, não o que veio antes.",
     },
     Français: {
       label: "Pivot de Contraste",
-      meaning: "Oubliez la première moitié! L'information importante vient APRÈS ce mot.",
-      strategy: "Concentrez-vous sur ce qui vient APRÈS le mot de contraste - c'est ce qui compte.",
+      meaning: "Deux choses sont comparées. L'une est mise en avant par rapport à l'autre.",
+      strategy: "Concentrez-vous sur ce qui vient APRÈS le mot de contraste - c'est l'information CLÉE, pas ce qui précède.",
     },
   },
 }
@@ -198,23 +198,23 @@ const TIME_PIVOTS = {
   translations: {
     English: {
       label: "Time Pivot",
-      meaning: "This word indicates WHEN something happens. Crucial for Antecedent vs Consequence.",
-      strategy: "'Prior to/Before' = Antecedent context. 'After/Subsequently' = Consequence or result.",
+      meaning: "Identify WHEN the action occurs - at the start, middle, or end of the process.",
+      strategy: "Break down events: BEFORE/INITIALLY = setup, DURING = ongoing, AFTER/FOLLOWING = consequences.",
     },
     Español: {
       label: "Pivote Temporal",
-      meaning: "Esta palabra indica CUÁNDO sucede algo. Crucial para Antecedent vs Consequence.",
-      strategy: "'Prior to/Before' = contexto de Antecedent. 'After/Subsequently' = Consequence o resultado.",
+      meaning: "Identifica CUÁNDO ocurre la acción - al inicio, en medio o al final del proceso.",
+      strategy: "Divide los eventos: ANTES/INICIALMENTE = configuración, DURANTE = en curso, DESPUÉS/SIGUIENTE = consecuencias.",
     },
     Português: {
       label: "Pivô Temporal",
-      meaning: "Esta palavra indica QUANDO algo acontece. Crucial para Antecedent vs Consequence.",
-      strategy: "'Prior to/Before' = contexto de Antecedent. 'After/Subsequently' = Consequence ou resultado.",
+      meaning: "Identifique QUANDO a ação ocorre - no início, meio ou fim do processo.",
+      strategy: "Divida os eventos: ANTES/INICIALMENTE = configuração, DURANTE = em andamento, DEPOIS/SEGUINTE = consequências.",
     },
     Français: {
       label: "Pivot Temporel",
-      meaning: "Ce mot indique QUAND quelque chose se passe. Crucial pour Antecedent vs Consequence.",
-      strategy: "'Prior to/Before' = contexte d'Antecedent. 'After/Subsequently' = Consequence ou résultat.",
+      meaning: "Identifiez QUAND l'action se produit - au début, au milieu ou à la fin du processus.",
+      strategy: "Divisez les événements: AVANT/INITIALEMENT = configuration, PENDANT = en cours, APRÈS/SUIVANT = conséquences.",
     },
   },
 }
@@ -312,7 +312,7 @@ const PIVOT_WORDS = {
     },
   },
   comparison: {
-    words: ["MOST", "BEST", "PRIMARY", "PRIMARILY", "APPROPRIATE", "LIKELY"],
+    words: ["BEST", "PRIMARY", "PRIMARILY"],
     category: "Comparison",
     meaning: {
       English: "Multiple options may be CORRECT, but one is BETTER than others.",
@@ -326,6 +326,38 @@ const PIVOT_WORDS = {
       Português: "Compare TODAS as opções. Não pare na primeira resposta 'boa' - encontre a SUPERIOR.",
       Français:
         "Comparez TOUTES les options. Ne vous arrêtez pas à la première 'bonne' réponse - trouvez la SUPÉRIEURE.",
+    },
+  },
+  most: {
+    words: ["MOST", "LIKELY"],
+    category: "Probability/Frequency",
+    meaning: {
+      English: "Look for the BEST answer, not just a correct one. Often implies statistical likelihood or frequency.",
+      Español: "Busca la respuesta MEJOR, no solo una correcta. A menudo implica probabilidad o frecuencia estadística.",
+      Português: "Procure a resposta MELHOR, não apenas uma correta. Muitas vezes implica probabilidade ou frequência.",
+      Français: "Cherchez la meilleure réponse, pas seulement une correcte. Implique souvent une probabilité ou une fréquence.",
+    },
+    strategy: {
+      English: "Think about what happens MOST of the time in real practice. Eliminate less common outcomes.",
+      Español: "Piensa en lo que sucede LA MAYORÍA del tiempo en la práctica real. Elimina resultados menos comunes.",
+      Português: "Pense no que acontece NA MAIORIA das vezes na prática real. Elimine resultados menos comuns.",
+      Français: "Pensez à ce qui se passe LA PLUPART du temps dans la pratique réelle. Éliminez les résultats moins courants.",
+    },
+  },
+  appropriate: {
+    words: ["APPROPRIATE"],
+    category: "Context/Suitability",
+    meaning: {
+      English: "Context matters. Consider the specific situation described - what fits THIS scenario best?",
+      Español: "El contexto importa. Considera la situación específica descrita - ¿qué se ajusta mejor a ESTE escenario?",
+      Português: "O contexto importa. Considere a situação específica descrita - o que se encaixa melhor NESTE cenário?",
+      Français: "Le contexte compte. Considérez la situation spécifique décrite - ce qui convient le mieux À CE scénario?",
+    },
+    strategy: {
+      English: "Re-read the specific details. What makes sense for THIS client, setting, or situation? Not what's always right.",
+      Español: "Vuelve a leer los detalles específicos. ¿Qué tiene sentido para ESTE cliente, entorno o situación? No lo que siempre es correcto.",
+      Português: "Releia os detalhes específicos. O que faz sentido para ESTE cliente, ambiente ou situação? Não o que é sempre correto.",
+      Français: "Relisez les détails spécifiques. Qu'est-ce qui a du sens pour CE client, CE cadre ou CETTE situation? Pas ce qui est toujours juste.",
     },
   },
   absolute: {
@@ -350,7 +382,7 @@ const PIVOT_WORDS = {
     meaning: {
       English: "REVERSE your thinking! You're looking for the WRONG answer or the EXCEPTION.",
       Español: "¡INVIERTE tu pensamiento! Buscas la respuesta INCORRECTA o la EXCEPCIÓN.",
-      Português: "INVERTA seu pensamento! Você está procurando a resposta ERRADA ou a EXCEÇÃO.",
+      Português: "INVERTA seu pensamiento! Você está procurando a resposta ERRADA ou a EXCEÇÃO.",
       Français: "INVERSEZ votre réflexion! Vous cherchez la MAUVAISE réponse ou l'EXCEPTION.",
     },
     strategy: {
@@ -730,26 +762,34 @@ export default function QuestionScreen({
     })
 
     const detectedContrastPivots: Array<{ word: string; meaning: string; strategy: string }> = []
+    const contrastWordsFound: Set<string> = new Set()
     CONTRAST_PIVOTS.words.forEach((word) => {
-      if (upperFullText.includes(word)) {
+      if (upperFullText.includes(word) && !contrastWordsFound.has(word)) {
         detectedContrastPivots.push({
           word,
           meaning: CONTRAST_PIVOTS.translations[language].meaning,
           strategy: CONTRAST_PIVOTS.translations[language].strategy,
         })
+        contrastWordsFound.add(word)
       }
     })
+    // Limit to max 2 contrast words to avoid repetition
+    const limitedContrastPivots = detectedContrastPivots.slice(0, 2)
 
     const detectedTimePivots: Array<{ word: string; meaning: string; strategy: string }> = []
+    const timeWordsFound: Set<string> = new Set()
     TIME_PIVOTS.words.forEach((word) => {
-      if (upperFullText.includes(word)) {
+      if (upperFullText.includes(word) && !timeWordsFound.has(word)) {
         detectedTimePivots.push({
           word,
           meaning: TIME_PIVOTS.translations[language].meaning,
           strategy: TIME_PIVOTS.translations[language].strategy,
         })
+        timeWordsFound.add(word)
       }
     })
+    // Limit to max 2 time words to avoid repetition
+    const limitedTimePivots = detectedTimePivots.slice(0, 2)
 
     // Detect ABA trap words (in full text)
     const detectedAbaTraps: Array<{ word: string; common: string; aba: string; confusion: string }> = []
@@ -801,11 +841,11 @@ export default function QuestionScreen({
     }
 
     return {
-      detectedPivotWords,
-      detectedAbaTraps,
-      detectedContrastPivots,
-      detectedTimePivots,
-      detectedNonTechnicalTraps,
+      detectedPivotWords: detectedPivotWords.slice(0, 3), // Max 3 pivot words
+      detectedAbaTraps: detectedAbaTraps.slice(0, 3), // Max 3 ABA traps
+      detectedContrastPivots: limitedContrastPivots,
+      detectedTimePivots: limitedTimePivots,
+      detectedNonTechnicalTraps: detectedNonTechnicalTraps.slice(0, 2), // Max 2 non-technical
       questionSkeleton,
     }
   }, [questionData, language])
