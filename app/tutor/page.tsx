@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Zap,
@@ -15,6 +15,27 @@ import {
   MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { UpgradeModal } from "@/components/upgrade-modal"
+
+const FREE_DAILY_LIMIT = 5
+
+// Helper functions for localStorage question tracking
+function getTodayKey(): string {
+  return `aba_questions_${new Date().toISOString().split('T')[0]}`
+}
+
+function getQuestionsUsedToday(): number {
+  if (typeof window === 'undefined') return 0
+  const count = localStorage.getItem(getTodayKey())
+  return count ? parseInt(count, 10) : 0
+}
+
+function incrementQuestionsUsed(): void {
+  if (typeof window === 'undefined') return
+  const current = getQuestionsUsedToday()
+  localStorage.setItem(getTodayKey(), String(current + 1))
+}
 
 interface TrapWord {
   word: string
@@ -167,12 +188,62 @@ export default function AITutorPage() {
   const inputRef = useRef<HTMLInputElement>(null) // Ref for sensei input
   const [chatHistory, setChatHistory] = useState<ChatHistoryMessage[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
+  
+  // Free plan restriction states
+  const [subscriptionTier, setSubscriptionTier] = useState<string>("free")
+  const [questionsUsedToday, setQuestionsUsedToday] = useState(0)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
   const [messages, setMessages] = useState<ChatMessage[]>([]) // This state is no longer used
   const [inputText, setInputText] = useState("") // This state is no longer used
   const [isTyping, setIsTyping] = useState(false) // This state is no longer used
   const [waitingForTopic, setWaitingForTopic] = useState(false) // This state is no longer used
   const [currentTopic, setCurrentTopic] = useState<string>("") // This state is no longer used
   const progressPercent = 80 // Declare progressPercent variable
+
+  // Check subscription tier and questions used on mount
+  useEffect(() => {
+    const checkSubscription = async () => {
+      setIsCheckingSubscription(true)
+      setQuestionsUsedToday(getQuestionsUsedToday())
+      
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("subscription_tier")
+          .eq("id", user.id)
+          .single()
+        
+        if (profile?.subscription_tier) {
+          setSubscriptionTier(profile.subscription_tier)
+        }
+      }
+      
+      setIsCheckingSubscription(false)
+    }
+    
+    checkSubscription()
+  }, [])
+
+  // Check if user can load more questions (free plan restriction)
+  const canLoadQuestion = (): boolean => {
+    // Pro, annual, and team users have unlimited access
+    if (subscriptionTier === "pro" || subscriptionTier === "annual" || subscriptionTier === "team") {
+      return true
+    }
+    // Free users are limited to FREE_DAILY_LIMIT questions per day
+    return questionsUsedToday < FREE_DAILY_LIMIT
+  }
+
+  const getRemainingQuestions = (): number => {
+    if (subscriptionTier === "pro" || subscriptionTier === "annual" || subscriptionTier === "team") {
+      return -1 // Unlimited
+    }
+    return Math.max(0, FREE_DAILY_LIMIT - questionsUsedToday)
+  }
 
   // Removed callChatAPI function as it is no longer used.
 
@@ -233,6 +304,12 @@ export default function AITutorPage() {
   }
 
   const loadQuestion = async () => {
+    // Check free plan limits before loading
+    if (!canLoadQuestion()) {
+      setShowUpgradeModal(true)
+      return
+    }
+    
     setIsLoading(true)
     setSelectedAnswer(null)
     setIsAnswered(false)
@@ -287,13 +364,16 @@ export default function AITutorPage() {
   // Deleted lines 266-288
 
   const handleAnswer = (optionId: string) => {
-    if (isAnswered) return
-
-    setSelectedAnswer(optionId)
-    setIsAnswered(true)
-    // Removed setShowTrapAlert, setShowQuickTip, setShowWhyWrong, setShowLearnMore
-
-    const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
+  if (isAnswered) return
+  
+  setSelectedAnswer(optionId)
+  setIsAnswered(true)
+  
+  // Increment questions used for free plan tracking
+  incrementQuestionsUsed()
+  setQuestionsUsedToday(prev => prev + 1)
+  
+  const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
     const correctOption = currentQuestion?.options.find((o) => o.isCorrect)
     const isCorrect = selectedOption?.isCorrect
 
@@ -668,6 +748,13 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           <span className="text-zinc-500 text-sm">{examLevel.toUpperCase()} Practice</span>
         </div>
         <div className="flex items-center gap-4">
+          {/* Remaining questions for free users */}
+          {subscriptionTier === "free" && (
+            <div className="flex items-center gap-1.5 text-zinc-400 text-sm">
+              <span>{getRemainingQuestions()}/{FREE_DAILY_LIMIT}</span>
+              <span className="text-zinc-600">today</span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-amber-500/90">
             <Flame className="w-4 h-4" />
             <span className="font-medium text-sm">{gameStats.streak}</span>
@@ -1023,6 +1110,14 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           </div>
         </div>
       </div>
+      
+      {/* Upgrade Modal for Free Plan Limit */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        questionsUsed={questionsUsedToday}
+        maxQuestions={FREE_DAILY_LIMIT}
+      />
     </div>
   )
 }

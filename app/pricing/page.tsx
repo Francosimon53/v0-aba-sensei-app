@@ -88,53 +88,39 @@ export default function PricingPage() {
   }, [])
 
   const handlePlanClick = async (plan: typeof PLANS[0]) => {
-    console.log("[v0] handlePlanClick called with plan:", plan.id, "priceId:", plan.priceId)
-    
     // Free plan - no Stripe needed
     if (!plan.priceId) {
-      console.log("[v0] Free plan - no priceId, redirecting to signup")
       if (!user) {
         router.push("/auth/sign-up")
       }
-      // If logged in and on free plan, button is disabled anyway
       return
     }
 
     // Paid plans
     if (!user) {
-      // Not logged in - redirect to signup with plan info
       const planParam = plan.id === "pro_monthly" ? "pro" : "annual"
-      console.log("[v0] User not logged in, redirecting to signup with plan:", planParam)
       router.push(`/auth/sign-up?plan=${planParam}`)
       return
     }
 
     // User is logged in - start checkout
-    console.log("[v0] User logged in, starting checkout for userId:", user.id)
     setLoading(plan.id)
     try {
-      const requestBody = { priceId: plan.priceId, userId: user.id }
-      console.log("[v0] Sending checkout request:", requestBody)
-      
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ priceId: plan.priceId, userId: user.id }),
       })
 
-      console.log("[v0] Checkout response status:", response.status)
       const data = await response.json()
-      console.log("[v0] Checkout response data:", data)
 
       if (data.url) {
-        console.log("[v0] Redirecting to Stripe:", data.url)
         window.location.href = data.url
       } else {
-        console.error("[v0] No URL in response, error:", data.error)
         setLoading(null)
       }
     } catch (error) {
-      console.error("[v0] Checkout error:", error)
+      console.error("Checkout error:", error)
       setLoading(null)
     }
   }
