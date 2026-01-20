@@ -20,6 +20,7 @@ import {
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { UpgradeModal } from "@/components/upgrade-modal"
+import { ShareSection } from "@/components/share-section"
 
 const FREE_DAILY_LIMIT = 5
 
@@ -914,6 +915,17 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                     ))}
                     <div ref={chatEndRef} />
                   </div>
+                )}
+
+                {/* Share Section */}
+                {isAnswered && currentQuestion && (
+                  <ShareSection
+                    trapWord={detectedTraps[0]?.word}
+                    trapExplanation={detectedTraps[0]?.explanation}
+                    questionText={currentQuestion.question}
+                    options={currentQuestion.options}
+                    detectedTraps={detectedTraps}
+                  />
                 )}
               </>
             ) : !isAnswered && currentQuestion ? (
