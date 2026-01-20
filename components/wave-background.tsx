@@ -31,12 +31,12 @@ export function WaveBackground() {
     let time = 0
 
     const colors = [
-      "rgba(59, 130, 246, OPACITY)", // Blue
-      "rgba(96, 165, 250, OPACITY)", // Light blue
-      "rgba(147, 197, 253, OPACITY)", // Lighter blue
-      "rgba(156, 163, 175, OPACITY)", // Gray
-      "rgba(209, 213, 219, OPACITY)", // Light gray
-      "rgba(255, 255, 255, OPACITY)", // White
+      "rgba(245, 158, 11, OPACITY)", // Amber/gold
+      "rgba(251, 191, 36, OPACITY)", // Bright amber
+      "rgba(168, 85, 247, OPACITY)", // Purple
+      "rgba(192, 132, 252, OPACITY)", // Light purple
+      "rgba(139, 92, 246, OPACITY)", // Violet
+      "rgba(255, 255, 255, OPACITY)", // White accent
     ]
 
     const resizeCanvas = () => {
@@ -50,19 +50,19 @@ export function WaveBackground() {
 
       for (let i = 0; i < particleCount; i++) {
         const layer = Math.floor(Math.random() * 3) // 0, 1, or 2 for depth layers
-        const baseOpacity = layer === 0 ? 0.15 : layer === 1 ? 0.25 : 0.4
+        const baseOpacity = layer === 0 ? 0.4 : layer === 1 ? 0.6 : 0.85
         const colorIndex = Math.floor(Math.random() * colors.length)
         
         particles.push({
           x: Math.random() * canvas.width,
           baseY: Math.random() * canvas.height,
           y: 0,
-          size: Math.random() * 2.5 + 0.8 + layer * 0.5,
-          speed: 0.3 + Math.random() * 0.4 + layer * 0.15,
-          amplitude: 30 + Math.random() * 50 + layer * 20,
+          size: Math.random() * 3 + 2 + layer * 1.5,
+          speed: 0.4 + Math.random() * 0.5 + layer * 0.2,
+          amplitude: 40 + Math.random() * 60 + layer * 25,
           frequency: 0.002 + Math.random() * 0.002,
           phase: Math.random() * Math.PI * 2,
-          opacity: baseOpacity + Math.random() * 0.2,
+          opacity: baseOpacity + Math.random() * 0.15,
           color: colors[colorIndex],
           layer,
         })
@@ -75,27 +75,27 @@ export function WaveBackground() {
     const drawParticle = (particle: WaveParticle) => {
       const colorWithOpacity = particle.color.replace("OPACITY", particle.opacity.toString())
       
-      // Draw glow for front layer particles
-      if (particle.layer === 2 && particle.opacity > 0.4) {
-        const gradient = ctx.createRadialGradient(
-          particle.x,
-          particle.y,
-          0,
-          particle.x,
-          particle.y,
-          particle.size * 6
-        )
-        gradient.addColorStop(0, colorWithOpacity)
-        gradient.addColorStop(0.4, particle.color.replace("OPACITY", (particle.opacity * 0.3).toString()))
-        gradient.addColorStop(1, "transparent")
-        ctx.fillStyle = gradient
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, particle.size * 6, 0, Math.PI * 2)
-        ctx.fill()
-      }
+      // Draw glow for all particles (stronger for front layer)
+      const glowSize = particle.layer === 2 ? particle.size * 10 : particle.size * 6
+      const gradient = ctx.createRadialGradient(
+        particle.x,
+        particle.y,
+        0,
+        particle.x,
+        particle.y,
+        glowSize
+      )
+      gradient.addColorStop(0, colorWithOpacity)
+      gradient.addColorStop(0.3, particle.color.replace("OPACITY", (particle.opacity * 0.5).toString()))
+      gradient.addColorStop(0.6, particle.color.replace("OPACITY", (particle.opacity * 0.2).toString()))
+      gradient.addColorStop(1, "transparent")
+      ctx.fillStyle = gradient
+      ctx.beginPath()
+      ctx.arc(particle.x, particle.y, glowSize, 0, Math.PI * 2)
+      ctx.fill()
 
-      // Draw particle core
-      ctx.fillStyle = colorWithOpacity
+      // Draw particle core (brighter)
+      ctx.fillStyle = particle.color.replace("OPACITY", Math.min(particle.opacity * 1.5, 1).toString())
       ctx.beginPath()
       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
       ctx.fill()
@@ -123,7 +123,7 @@ export function WaveBackground() {
       time++
       
       // Clear with slight fade for trail effect
-      ctx.fillStyle = "rgba(10, 15, 25, 0.15)"
+      ctx.fillStyle = "rgba(15, 5, 32, 0.12)"
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       for (const particle of particles) {
@@ -138,7 +138,7 @@ export function WaveBackground() {
     createParticles()
     
     // Initial clear
-    ctx.fillStyle = "#0a0015"
+    ctx.fillStyle = "#0f0520"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     
     animationId = requestAnimationFrame(animate)
@@ -146,7 +146,7 @@ export function WaveBackground() {
     const handleResize = () => {
       resizeCanvas()
       createParticles()
-      ctx.fillStyle = "#0a0015"
+      ctx.fillStyle = "#0f0520"
       ctx.fillRect(0, 0, canvas.width, canvas.height)
     }
 
@@ -163,7 +163,7 @@ export function WaveBackground() {
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(180deg, #0a0f1a 0%, #0d1525 40%, #0a1020 70%, #060a12 100%)",
+          background: "linear-gradient(180deg, #0f0520 0%, #0a1628 50%, #0f0520 100%)",
         }}
       />
       <canvas 

@@ -57,7 +57,7 @@ export default function Page() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4 animate-pulse">🥋</div>
           <p className="text-zinc-500">Loading...</p>
@@ -67,7 +67,7 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative">
+    <div className="min-h-screen relative">
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-900">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">

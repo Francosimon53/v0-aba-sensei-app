@@ -192,7 +192,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen">
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-900">
         <div className="flex items-center gap-3">

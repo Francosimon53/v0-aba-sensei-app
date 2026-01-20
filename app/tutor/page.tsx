@@ -450,7 +450,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
   // Welcome screen
   if (!sessionStarted) {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <div className="min-h-screen flex flex-col">
         {/* Header */}
         <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between">
           <Link href="/" className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150">
@@ -655,7 +655,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
   }
 
   return (
-    <div className="h-screen bg-black flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
       <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
@@ -687,7 +687,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       {/* Two-panel layout */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* LEFT PANEL - Sensei Explanation */}
-        <div className="w-full md:w-[320px] bg-black border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0">
+        <div className="w-full md:w-[320px] bg-black/50 backdrop-blur-sm border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0">
           {/* Panel header */}
           <div className="p-4 border-b border-zinc-800/30">
             <button
