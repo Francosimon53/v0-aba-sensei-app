@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { isForeverFreeUser } from "@/lib/constants"
 import { UpgradeModal } from "@/components/upgrade-modal"
 import { ShareSection } from "@/components/share-section"
 
@@ -183,6 +184,7 @@ export default function AITutorPage() {
   const [showXPAnimation, setShowXPAnimation] = useState(false)
   const [currentTopic, setCurrentTopic] = useState<string>("") // This state is no longer used
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free")
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const [questionsUsedToday, setQuestionsUsedToday] = useState(0)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
@@ -212,14 +214,21 @@ export default function AITutorPage() {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("subscription_tier")
-          .eq("id", user.id)
-          .single()
+        setUserEmail(user.email || null)
         
-        if (profile?.subscription_tier) {
-          setSubscriptionTier(profile.subscription_tier)
+        // Check if user is forever free
+        if (isForeverFreeUser(user.email)) {
+          setSubscriptionTier("pro") // Treat forever free users as pro
+        } else {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("subscription_tier")
+            .eq("id", user.id)
+            .single()
+          
+          if (profile?.subscription_tier) {
+            setSubscriptionTier(profile.subscription_tier)
+          }
         }
       }
       

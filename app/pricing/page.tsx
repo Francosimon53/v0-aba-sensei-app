@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { isForeverFreeUser } from "@/lib/constants"
 import { Check, Settings } from "lucide-react"
 import Link from "next/link"
 
@@ -176,6 +177,14 @@ export default function PricingPage() {
   const getButtonText = (plan: typeof PLANS[0]) => {
     if (loading === plan.id) return "Loading..."
     
+    // Check if user is forever free
+    if (user?.email && isForeverFreeUser(user.email)) {
+      // Forever free users have all benefits
+      if (plan.id === "pro_monthly" || plan.id === "pro_annual" || plan.id === "team") {
+        return "Lifetime Access"
+      }
+    }
+    
     // Check if this is the user's current plan
     const isCurrentPlan = 
       (plan.id === "free" && userTier === "free") ||
@@ -204,6 +213,13 @@ export default function PricingPage() {
   const isButtonDisabled = (plan: typeof PLANS[0]) => {
     // Disabled while loading
     if (loading === plan.id) return true
+    
+    // Forever free users - disable paid plans (they have free access)
+    if (user?.email && isForeverFreeUser(user.email)) {
+      if (plan.id === "pro_monthly" || plan.id === "pro_annual" || plan.id === "team") {
+        return true // Disabled because they have lifetime access
+      }
+    }
     
     // Current plan is disabled
     const isCurrentPlan = 
