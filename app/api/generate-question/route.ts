@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { generateText } from "ai"
 
 export const runtime = "nodejs"
 
@@ -70,17 +71,7 @@ export async function POST(request: NextRequest) {
   try {
     const { examLevel, category, language, taskId, taskText, keywords }: GenerateQuestionRequest = await request.json()
 
-    const apiKey = process.env.ANTHROPIC_API_KEY
-
-    if (!apiKey || apiKey === "your_anthropic_api_key_here" || apiKey.length < 20) {
-      return NextResponse.json(
-        {
-          error:
-            "ANTHROPIC_API_KEY is not configured. Please add your actual Anthropic API key in the Vars section (left sidebar). Get your API key from console.anthropic.com",
-        },
-        { status: 500 },
-      )
-    }
+    // No API key needed - Vercel AI Gateway handles authentication automatically
 
     let taskInstruction = ""
     if (taskId && taskText) {
@@ -279,42 +270,14 @@ CRITICAL: Respond with ONLY raw JSON. No markdown, no code blocks, no extra text
 
 Respond with ONLY the JSON object.`
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2500,
-        temperature: 0.9,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      }),
+    // Use Vercel AI Gateway with Google Gemini 2.0 Flash (fast, optimized)
+    const { text: content } = await generateText({
+      model: "google/gemini-2.0-flash-001",
+      prompt: prompt,
+      maxTokens: 1500,
+      temperature: 0.8,
+      timeout: 15000, // 15 second timeout
     })
-
-    if (!response.ok) {
-      const errorData = await response.text()
-      console.error("[v0] Claude API error:", errorData)
-      return NextResponse.json(
-        { error: `Claude API error: ${response.status} - ${errorData}` },
-        { status: response.status },
-      )
-    }
-
-    const data = await response.json()
-    const content = data.content?.[0]?.text
-
-    if (!content) {
-      console.error("[v0] Claude returned empty content:", data)
-      return NextResponse.json({ error: "Claude returned empty response" }, { status: 500 })
-    }
 
     let questionData
     try {
