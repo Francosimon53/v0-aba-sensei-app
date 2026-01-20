@@ -55,6 +55,22 @@ const PLANS = [
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL || "price_1SrN7b8qlKShXAKkckjmKs4e",
     popular: false,
   },
+  {
+    id: "team",
+    name: "Team",
+    price: "$99",
+    period: "/month",
+    description: "Perfect for ABA clinics and training programs",
+    features: [
+      "Everything in Pro Monthly",
+      "Up to 10 team members",
+      "Admin dashboard",
+      "Team analytics",
+      "Priority support",
+    ],
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_TEAM,
+    popular: false,
+  },
 ]
 
 export default function PricingPage() {
@@ -128,7 +144,9 @@ export default function PricingPage() {
 
     // Paid plans
     if (!user) {
-      const planParam = plan.id === "pro_monthly" ? "pro" : "annual"
+      let planParam = "pro"
+      if (plan.id === "pro_annual") planParam = "annual"
+      if (plan.id === "team") planParam = "team"
       router.push(`/auth/sign-up?plan=${planParam}`)
       return
     }
@@ -162,7 +180,8 @@ export default function PricingPage() {
     const isCurrentPlan = 
       (plan.id === "free" && userTier === "free") ||
       (plan.id === "pro_monthly" && userTier === "pro") ||
-      (plan.id === "pro_annual" && userTier === "annual")
+      (plan.id === "pro_annual" && userTier === "annual") ||
+      (plan.id === "team" && userTier === "team")
     
     if (isCurrentPlan) return "Current Plan"
     
@@ -173,7 +192,13 @@ export default function PricingPage() {
     if (plan.id === "pro_monthly") {
       return "Start Pro Trial"
     }
-    return "Get Annual"
+    if (plan.id === "pro_annual") {
+      return "Get Annual"
+    }
+    if (plan.id === "team") {
+      return "Get Team"
+    }
+    return "Get Plan"
   }
 
   const isButtonDisabled = (plan: typeof PLANS[0]) => {
@@ -184,7 +209,8 @@ export default function PricingPage() {
     const isCurrentPlan = 
       (plan.id === "free" && userTier === "free") ||
       (plan.id === "pro_monthly" && userTier === "pro") ||
-      (plan.id === "pro_annual" && userTier === "annual")
+      (plan.id === "pro_annual" && userTier === "annual") ||
+      (plan.id === "team" && userTier === "team")
     
     if (isCurrentPlan) return true
     
@@ -231,7 +257,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {PLANS.map((plan) => (
             <div
               key={plan.name}

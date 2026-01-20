@@ -191,7 +191,7 @@ export default function Page() {
             <p className="text-zinc-400">Start free. Upgrade when you're ready.</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* FREE */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
               <h3 className="text-lg font-semibold text-white mb-2">Free</h3>
@@ -279,13 +279,43 @@ export default function Page() {
                 Get Annual
               </Link>
             </div>
+
+            {/* TEAM */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+              <h3 className="text-lg font-semibold text-white mb-2">Team</h3>
+              <div className="mb-2">
+                <span className="text-4xl font-bold text-white">$99</span>
+                <span className="text-zinc-500">/month</span>
+              </div>
+              <p className="text-blue-400 text-sm mb-6">For clinics & training</p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-zinc-400">
+                  <span className="text-blue-500">✓</span> Everything in Pro
+                </li>
+                <li className="flex items-center gap-2 text-zinc-400">
+                  <span className="text-blue-500">✓</span> Up to 10 members
+                </li>
+                <li className="flex items-center gap-2 text-zinc-400">
+                  <span className="text-blue-500">✓</span> Admin dashboard
+                </li>
+                <li className="flex items-center gap-2 text-zinc-400">
+                  <span className="text-blue-500">✓</span> Team analytics
+                </li>
+              </ul>
+              <Link
+                href="/auth/sign-up?plan=team"
+                className="block w-full text-center py-3 border border-zinc-700 rounded-xl text-white hover:bg-zinc-800 transition"
+              >
+                Get Team
+              </Link>
+            </div>
           </div>
 
-          {/* Team Plan Callout */}
+          {/* Agency Plans */}
           <div className="mt-8 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <h4 className="text-white font-semibold">Team & Agency Plans</h4>
-              <p className="text-zinc-400 text-sm">Training multiple RBTs or BCBAs? Get volume pricing.</p>
+              <h4 className="text-white font-semibold">Custom Agency Plans</h4>
+              <p className="text-zinc-400 text-sm">Need more than 10 team members? We offer custom enterprise solutions.</p>
             </div>
             <Link href="/contact" className="text-amber-500 hover:text-amber-400 font-medium whitespace-nowrap">
               Contact Sales
