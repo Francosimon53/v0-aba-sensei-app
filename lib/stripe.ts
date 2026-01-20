@@ -17,7 +17,7 @@ export const PLANS = {
   },
   pro_monthly: {
     name: "Pro Monthly",
-    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "price_1SrN6K8qlKShXAKkjXYjMSl3",
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "price_1Srghw7pJTldB1Tba7DMLcU3",
     price: 19,
     features: [
       "Unlimited practice questions",
@@ -29,7 +29,7 @@ export const PLANS = {
   },
   pro_annual: {
     name: "Pro Annual",
-    priceId: process.env.STRIPE_PRICE_PRO_ANNUAL || "price_1SrN7b8qlKShXAKkckjmKs4e",
+    priceId: process.env.STRIPE_PRICE_PRO_ANNUAL || "price_1Srgjd7pJTldB1TbHjJGNjdP",
     price: 149,
     features: [
       "Everything in Pro Monthly",
@@ -40,7 +40,7 @@ export const PLANS = {
   },
   team: {
     name: "Team",
-    priceId: process.env.STRIPE_PRICE_TEAM!,
+    priceId: process.env.STRIPE_PRICE_TEAM || "price_1Srgkr7pJTldB1TbAtbG9JeZ",
     price: 99,
     features: [
       "Everything in Pro",
