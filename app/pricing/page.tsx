@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Check } from "lucide-react"
+import { Check, Settings } from "lucide-react"
 import Link from "next/link"
 
 const PLANS = [
@@ -62,6 +62,8 @@ export default function PricingPage() {
   const [user, setUser] = useState<{ id: string } | null>(null)
   const [userTier, setUserTier] = useState<string>("free")
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -86,6 +88,34 @@ export default function PricingPage() {
     }
     checkAuth()
   }, [])
+
+  const handleManageSubscription = async () => {
+    if (!user) return
+    
+    setPortalLoading(true)
+    setPortalError(null)
+    
+    try {
+      const response = await fetch("/api/customer-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      })
+
+      const data = await response.json()
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setPortalError(data.error || "Failed to open subscription portal")
+        setPortalLoading(false)
+      }
+    } catch (error) {
+      console.error("Portal error:", error)
+      setPortalError("Failed to open subscription portal")
+      setPortalLoading(false)
+    }
+  }
 
   const handlePlanClick = async (plan: typeof PLANS[0]) => {
     // Free plan - no Stripe needed
@@ -181,6 +211,23 @@ export default function PricingPage() {
           <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
             Choose the plan that fits your study needs. Upgrade anytime to unlock unlimited practice.
           </p>
+          
+          {/* Manage Subscription Button for Pro/Annual users */}
+          {user && (userTier === "pro" || userTier === "annual") && (
+            <div className="mt-6">
+              <button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                <Settings className="w-4 h-4" />
+                {portalLoading ? "Loading..." : "Manage Subscription"}
+              </button>
+              {portalError && (
+                <p className="text-red-400 text-sm mt-2">{portalError}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Pricing Cards */}

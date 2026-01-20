@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
+import { Settings } from "lucide-react"
 
 interface UserStats {
   totalQuestions: number
@@ -22,6 +23,7 @@ interface UserProfile {
   fullName: string
   examLevel: string
   memberSince: string
+  subscriptionTier?: string
 }
 
 export default function DashboardPage() {
@@ -30,6 +32,9 @@ export default function DashboardPage() {
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -62,11 +67,12 @@ export default function DashboardPage() {
         }
 
         console.log("[v0] Dashboard: User authenticated:", user.id)
+        setUserId(user.id)
 
         console.log("[v0] Dashboard: Loading profile...")
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("full_name, exam_level, preferred_language")
+          .select("full_name, exam_level, preferred_language, subscription_tier")
           .eq("id", user.id)
           .single()
 
@@ -85,12 +91,14 @@ export default function DashboardPage() {
             fullName: profile.full_name || "Student",
             examLevel: profile.exam_level?.toUpperCase() || "BCBA",
             memberSince,
+            subscriptionTier: profile.subscription_tier || "free",
           })
         } else {
           setUserProfile({
             fullName: "Student",
             examLevel: "BCBA",
             memberSince,
+            subscriptionTier: "free",
           })
         }
 
@@ -183,6 +191,34 @@ export default function DashboardPage() {
     router.push("/")
   }
 
+  const handleManageSubscription = async () => {
+    if (!userId) return
+    
+    setPortalLoading(true)
+    setPortalError(null)
+    
+    try {
+      const response = await fetch("/api/customer-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      })
+
+      const data = await response.json()
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setPortalError(data.error || "Failed to open subscription portal")
+        setPortalLoading(false)
+      }
+    } catch (error) {
+      console.error("Portal error:", error)
+      setPortalError("Failed to open subscription portal")
+      setPortalLoading(false)
+    }
+  }
+
   const maxQuestions = Math.max(...weeklyData.map((d) => d.questions), 1)
   const formatStudyTime = (minutes: number) => {
     if (minutes < 60) return `${minutes}m`
@@ -200,14 +236,35 @@ export default function DashboardPage() {
           <span className="font-semibold text-white">ABA Sensei</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/pricing" className="text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors">
-            Upgrade
-          </Link>
+          {userProfile?.subscriptionTier === "pro" || userProfile?.subscriptionTier === "annual" ? (
+            <button 
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <Settings className="w-4 h-4" />
+              {portalLoading ? "Loading..." : "Manage Subscription"}
+            </button>
+          ) : (
+            <Link href="/pricing" className="text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors">
+              Upgrade
+            </Link>
+          )}
           <button onClick={handleLogout} className="text-zinc-500 hover:text-white text-sm transition-colors">
             Logout
           </button>
         </div>
       </header>
+      
+      {/* Portal Error Toast */}
+      {portalError && (
+        <div className="fixed top-4 right-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm z-50">
+          {portalError}
+          <button onClick={() => setPortalError(null)} className="ml-3 text-red-300 hover:text-white">
+            Close
+          </button>
+        </div>
+      )}
 
       <main className="max-w-4xl mx-auto px-6 py-12">
         {/* Welcome Section */}
