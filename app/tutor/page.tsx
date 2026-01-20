@@ -1,6 +1,7 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation" // Import router
 import {
   Zap,
   ArrowLeft,
@@ -174,37 +175,26 @@ export default function AITutorPage() {
   const [isAnswered, setIsAnswered] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showXPAnimation, setShowXPAnimation] = useState(false)
-  const [showLearnMore, setShowLearnMore] = useState(false) // This state is no longer used
-  const [showTrapAlert, setShowTrapAlert] = useState(false) // This state is no longer used
-  const [showQuickTip, setShowQuickTip] = useState(false) // This state is no longer used
-  const [showWhyWrong, setShowWhyWrong] = useState(false) // This state is no longer used
-  const [detectedTraps, setDetectedTraps] = useState<TrapInfo[]>([])
-  const [quickTip, setQuickTip] = useState<string>("")
-  const [errorDiagnosis, setErrorDiagnosis] = useState<string>("")
-  const [sessionStarted, setSessionStarted] = useState(false)
-  const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([]) // Added question history
-  const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1) // Added current question number
-  const [showReasoning, setShowReasoning] = useState(true) // State to toggle reasoning panel
-  const [senseiQuestion, setSenseiQuestion] = useState("") // Input for asking the sensei
-  const [senseiResponse, setSenseiResponse] = useState<string | null>(null) // Response from the sensei
-  const [isAskingSensei, setIsAskingSensei] = useState(false) // Loading state for sensei response
-  const [showCategoryMenu, setShowCategoryMenu] = useState(false) // Mobile menu toggle
-  const messagesEndRef = useRef<HTMLDivElement>(null) // This ref is no longer used
-  const inputRef = useRef<HTMLInputElement>(null) // Ref for sensei input
-  const [chatHistory, setChatHistory] = useState<ChatHistoryMessage[]>([])
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  
-  // Free plan restriction states
+  const [currentTopic, setCurrentTopic] = useState<string>("") // This state is no longer used
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free")
   const [questionsUsedToday, setQuestionsUsedToday] = useState(0)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
-  const [messages, setMessages] = useState<ChatMessage[]>([]) // This state is no longer used
-  const [inputText, setInputText] = useState("") // This state is no longer used
-  const [isTyping, setIsTyping] = useState(false) // This state is no longer used
-  const [waitingForTopic, setWaitingForTopic] = useState(false) // This state is no longer used
-  const [currentTopic, setCurrentTopic] = useState<string>("") // This state is no longer used
+  const [chatHistory, setChatHistory] = useState<ChatHistoryMessage[]>([])
+  const [sessionStarted, setSessionStarted] = useState(false)
+  const [senseiQuestion, setSenseiQuestion] = useState("")
+  const [isAskingSensei, setIsAskingSensei] = useState(false)
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false)
+  const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([])
+  const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1)
+  const [detectedTraps, setDetectedTraps] = useState<TrapInfo[]>([])
+  const [errorDiagnosis, setErrorDiagnosis] = useState<string>("")
+  const [quickTip, setQuickTip] = useState<string>("") // Declare setQuickTip variable
+  const [senseiResponse, setSenseiResponse] = useState<string | null>(null) // Declare setSenseiResponse variable
+  const inputRef = useRef<HTMLInputElement>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
   const progressPercent = 80 // Declare progressPercent variable
+  const router = useRouter() // Declare router variable
 
   // Check subscription tier and questions used on mount
   useEffect(() => {
@@ -369,16 +359,16 @@ export default function AITutorPage() {
   // Deleted lines 266-288
 
   const handleAnswer = (optionId: string) => {
-  if (isAnswered) return
-  
-  setSelectedAnswer(optionId)
-  setIsAnswered(true)
-  
-  // Increment questions used for free plan tracking
-  incrementQuestionsUsed()
-  setQuestionsUsedToday(prev => prev + 1)
-  
-  const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
+    if (isAnswered) return
+    
+    setSelectedAnswer(optionId)
+    setIsAnswered(true)
+    
+    // Increment questions used for free plan tracking
+    incrementQuestionsUsed()
+    setQuestionsUsedToday(prev => prev + 1)
+    
+    const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
     const correctOption = currentQuestion?.options.find((o) => o.isCorrect)
     const isCorrect = selectedOption?.isCorrect
 
@@ -781,107 +771,106 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       </header>
 
       {/* Two-panel layout */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          <div className="w-full md:w-[280px] bg-black/50 backdrop-blur-sm border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0 overflow-y-auto">
-            <button
-              onClick={() => setShowCategoryMenu(!showCategoryMenu)}
-              className="flex items-center gap-2 text-zinc-200 hover:text-white transition-all duration-150 px-3 sm:px-4 py-2 sm:py-3 md:hidden"
-            >
-              <Menu className="w-4 h-4" />
-              <span>Categories</span>
-            </button>
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="w-full md:w-[280px] bg-black/50 backdrop-blur-sm border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0 overflow-y-auto">
+          <button
+            onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+            className="flex items-center gap-2 text-zinc-200 hover:text-white transition-all duration-150 px-3 sm:px-4 py-2 sm:py-3 md:hidden"
+          >
+            <Menu className="w-4 h-4" />
+            <span>Categories</span>
+          </button>
 
-            <div className="hidden md:flex flex-col px-3 sm:px-4 py-3 border-b border-zinc-800/20">
-              <p className="text-amber-400/90 font-medium text-xs mb-2 flex items-center gap-2 uppercase tracking-wide">
-                <BookOpen className="w-3 h-3" />
-                Topic
-              </p>
-            </div>
+          <div className="hidden md:flex flex-col px-3 sm:px-4 py-3 border-b border-zinc-800/20">
+            <p className="text-amber-400/90 font-medium text-xs mb-2 flex items-center gap-2 uppercase tracking-wide">
+              <BookOpen className="w-3 h-3" />
+              Topic
+            </p>
+          </div>
 
-            <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 space-y-2">
-              {isAnswered ? (
-                <>
-                  {/* Trap Alert */}
-                  {detectedTraps.length > 0 && (
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                      <p className="text-amber-400/90 font-medium text-xs mb-2 flex items-center gap-2 uppercase tracking-wide">
-                        <span>⚠</span> Trap Detected
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 space-y-2">
+            {isAnswered ? (
+              <>
+                {/* Trap Alert */}
+                {detectedTraps.length > 0 && (
+                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                    <p className="text-amber-400/90 font-medium text-xs mb-2 flex items-center gap-2 uppercase tracking-wide">
+                      <span>⚠</span> Trap Detected
+                    </p>
+                    {detectedTraps.map((trap, i) => (
+                      <p key={i} className="text-zinc-400 text-sm leading-relaxed">
+                        <span className="text-amber-300/80 font-medium">&quot;{trap.word}&quot;</span> -{" "}
+                        {trap.explanation}
                       </p>
-                      {detectedTraps.map((trap, i) => (
-                        <p key={i} className="text-zinc-400 text-sm leading-relaxed">
-                          <span className="text-amber-300/80 font-medium">&quot;{trap.word}&quot;</span> -{" "}
-                          {trap.explanation}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Why wrong */}
-                  {!currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect && errorDiagnosis && (
-                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
-                      <p className="text-red-400/80 font-medium text-xs mb-2 uppercase tracking-wide">Why it's wrong</p>
-                      <p className="text-zinc-400 text-sm leading-relaxed italic">{errorDiagnosis}</p>
-                    </div>
-                  )}
-
-                  {chatHistory.length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-zinc-800/30">
-                      {chatHistory.slice(-4).map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`p-3 rounded-xl text-sm ${
-                            msg.role === "user"
-                              ? "bg-zinc-800/50 text-zinc-300 ml-4"
-                              : "bg-zinc-900/50 text-zinc-400 border border-zinc-800/30"
-                          }`}
-                        >
-                          {msg.role === "assistant" && (
-                            <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
-                          )}
-                          <p className="leading-relaxed">{msg.content}</p>
-                        </div>
-                      ))}
-                      <div ref={chatEndRef} />
-                    </div>
-                  )}
-                </>
-              ) : !isAnswered && currentQuestion ? (
-                <div className="space-y-3">
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <MessageSquare className="w-8 h-8 text-zinc-800 mb-2" />
-                    <p className="text-zinc-600 text-sm">Answer to see full reasoning</p>
-                    <p className="text-zinc-700 text-xs mt-1">Or ask a question below</p>
+                    ))}
                   </div>
+                )}
 
-                  {/* Chat history display (before answering) */}
-                  {chatHistory.length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-zinc-800/30">
-                      {chatHistory.slice(-4).map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`p-3 rounded-xl text-sm ${
-                            msg.role === "user"
-                              ? "bg-zinc-800/50 text-zinc-300 ml-4"
-                              : "bg-zinc-900/50 text-zinc-400 border border-zinc-800/30"
-                          }`}
-                        >
-                          {msg.role === "assistant" && (
-                            <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
-                          )}
-                          <p className="leading-relaxed">{msg.content}</p>
-                        </div>
-                      ))}
-                      <div ref={chatEndRef} />
-                    </div>
-                  )}
+                {/* Why wrong */}
+                {!currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect && errorDiagnosis && (
+                  <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
+                    <p className="text-red-400/80 font-medium text-xs mb-2 uppercase tracking-wide">Why it's wrong</p>
+                    <p className="text-zinc-400 text-sm leading-relaxed italic">{errorDiagnosis}</p>
+                  </div>
+                )}
+
+                {chatHistory.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-zinc-800/30">
+                    {chatHistory.slice(-4).map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-3 rounded-xl text-sm ${
+                          msg.role === "user"
+                            ? "bg-zinc-800/50 text-zinc-300 ml-4"
+                            : "bg-zinc-900/50 text-zinc-400 border border-zinc-800/30"
+                        }`}
+                      >
+                        {msg.role === "assistant" && (
+                          <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                        )}
+                        <p className="leading-relaxed">{msg.content}</p>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                )}
+              </>
+            ) : !isAnswered && currentQuestion ? (
+              <div className="space-y-3">
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <MessageSquare className="w-8 h-8 text-zinc-800 mb-2" />
+                  <p className="text-zinc-600 text-sm">Answer to see full reasoning</p>
+                  <p className="text-zinc-700 text-xs mt-1">Or ask a question below</p>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <MessageSquare className="w-10 h-10 text-zinc-800 mb-3" />
-                  <p className="text-zinc-600 text-sm">Answer the question to see reasoning</p>
-                </div>
-              )}
-            </div>
+
+                {/* Chat history display (before answering) */}
+                {chatHistory.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-zinc-800/30">
+                    {chatHistory.slice(-4).map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-3 rounded-xl text-sm ${
+                          msg.role === "user"
+                            ? "bg-zinc-800/50 text-zinc-300 ml-4"
+                            : "bg-zinc-900/50 text-zinc-400 border border-zinc-800/30"
+                        }`}
+                      >
+                        {msg.role === "assistant" && (
+                          <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                        )}
+                        <p className="leading-relaxed">{msg.content}</p>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <MessageSquare className="w-10 h-10 text-zinc-800 mb-3" />
+                <p className="text-zinc-600 text-sm">Answer the question to see reasoning</p>
+              </div>
+            )}
           </div>
 
           {/* Ask Sensei input - Now always enabled when there's a question */}
