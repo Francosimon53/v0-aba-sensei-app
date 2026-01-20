@@ -340,9 +340,12 @@ export async function POST(request: NextRequest) {
 
     // Vercel AI Gateway handles API keys automatically for supported providers
 
-    // Get RAG context based on the query
-    const ragQuery = topic || message || (examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts")
-    const ragContext = await searchKnowledge(ragQuery, examLevel)
+    // Get RAG context only for non-practice questions (practice questions don't need external knowledge)
+    let ragContext = ""
+    if (action !== "practice") {
+      const ragQuery = topic || message || (examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts")
+      ragContext = await searchKnowledge(ragQuery, examLevel)
+    }
 
     const examLevelContext =
       examLevel === "rbt"
@@ -673,11 +676,12 @@ Remember: You're a supportive mentor, not a textbook. Keep it real and conversat
 
     // Call Google Gemini via Vercel AI Gateway
     const { text: content } = await generateText({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.0-flash-001",
       system: systemPrompt,
       prompt: userPrompt,
-      maxTokens: 1500,
+      maxTokens: action === "practice" ? 1000 : 1500,
       temperature: action === "practice" ? 0.8 : 0.7,
+      timeout: 15000, // 15 second timeout
     })
 
     if (!content) {
