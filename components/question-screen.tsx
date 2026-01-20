@@ -198,44 +198,86 @@ const TIME_PIVOTS = {
   words_with_strategies: {
     INITIALLY: {
       meaning: {
-        English: "At the START or BEGINNING. What happens first in the process?",
-        Español: "Al INICIO o COMIENZO. ¿Qué sucede primero en el proceso?",
-        Português: "No INÍCIO ou COMEÇO. O que acontece primeiro no processo?",
-        Français: "Au DÉBUT ou COMMENCEMENT. Qu'est-ce qui se passe d'abord dans le processus?",
+        English: "Beginning phase. Think baseline data, first assessment, or starting point.",
+        Español: "Fase inicial. Piensa en datos de línea base, primera evaluación o punto de partida.",
+        Português: "Fase inicial. Pense em dados de linha de base, primeira avaliação ou ponto de partida.",
+        Français: "Phase initiale. Pensez aux données de base, à la première évaluation ou au point de départ.",
       },
       strategy: {
-        English: "Think about the very first step. What must be established before intervention?",
-        Español: "Piensa en el primer paso. ¿Qué debe establecerse antes de la intervención?",
-        Português: "Pense no primeiro passo. O que deve ser estabelecido antes da intervenção?",
-        Français: "Pensez à la première étape. Qu'est-ce qui doit être établi avant l'intervention?",
-      },
-    },
-    FOLLOWING: {
-      meaning: {
-        English: "What happens AFTER the event or behavior. Focus on consequences and next steps.",
-        Español: "Qué sucede DESPUÉS del evento o comportamiento. Enfócate en consecuencias y próximos pasos.",
-        Português: "O que acontece DEPOIS do evento ou comportamento. Foque em consequências e próximas etapas.",
-        Français: "Ce qui se passe APRÈS l'événement ou le comportement. Concentrez-vous sur les conséquences et les étapes suivantes.",
-      },
-      strategy: {
-        English: "The answer relates to post-intervention results or subsequent actions. What comes logically next?",
-        Español: "La respuesta se relaciona con resultados posteriores a la intervención o acciones posteriores. ¿Qué sigue lógicamente?",
-        Português: "A resposta se relaciona com resultados pós-intervenção ou ações subsequentes. O que vem logicamente depois?",
-        Français: "La réponse concerne les résultats post-intervention ou les actions ultérieures. Qu'est-ce qui suit logiquement?",
+        English: "What happens at the START before intervention begins?",
+        Español: "¿Qué sucede al INICIO antes de que comience la intervención?",
+        Português: "O que acontece no INÍCIO antes da intervenção começar?",
+        Français: "Que se passe-t-il au DÉBUT avant le début de l'intervention?",
       },
     },
     DURING: {
       meaning: {
-        English: "While the event is HAPPENING or IN PROGRESS. Focus on concurrent actions.",
-        Español: "Mientras el evento está SUCEDIENDO o EN CURSO. Enfócate en acciones concurrentes.",
-        Português: "Enquanto o evento está ACONTECENDO ou EM ANDAMENTO. Foque em ações concorrentes.",
-        Français: "Pendant que l'événement se produit ou EST EN COURS. Concentrez-vous sur les actions concurrentes.",
+        English: "Ongoing implementation. Focus on what's happening IN THE MOMENT.",
+        Español: "Implementación en curso. Enfócate en lo que está sucediendo EN ESTE MOMENTO.",
+        Português: "Implementação em andamento. Concentre-se no que está acontecendo NESTE MOMENTO.",
+        Français: "Mise en œuvre en cours. Concentrez-vous sur ce qui se passe EN CE MOMENT.",
       },
       strategy: {
-        English: "Identify what occurs at the same time. What interventions happen alongside the behavior?",
-        Español: "Identifica qué ocurre al mismo tiempo. ¿Qué intervenciones ocurren junto con el comportamiento?",
-        Português: "Identifique o que ocorre ao mesmo tempo. Quais intervenções acontecem junto com o comportamento?",
-        Français: "Identifiez ce qui se passe en même temps. Quelles interventions se produisent parallèlement au comportement?",
+        English: "What occurs WHILE the intervention is being applied?",
+        Español: "¿Qué ocurre MIENTRAS se aplica la intervención?",
+        Português: "O que ocorre ENQUANTO a intervenção está sendo aplicada?",
+        Français: "Que se passe-t-il PENDANT que l'intervention est appliquée?",
+      },
+    },
+    FOLLOWING: {
+      meaning: {
+        English: "After the event. Focus on consequences, outcomes, or results.",
+        Español: "Después del evento. Enfócate en consecuencias, resultados o efectos.",
+        Português: "Após o evento. Concentre-se em consequências, resultados ou efeitos.",
+        Français: "Après l'événement. Concentrez-vous sur les conséquences, les résultats ou les effets.",
+      },
+      strategy: {
+        English: "What happens AFTER? Think post-behavior consequences.",
+        Español: "¿Qué sucede DESPUÉS? Piensa en consecuencias post-conducta.",
+        Português: "O que acontece DEPOIS? Pense em consequências pós-comportamento.",
+        Français: "Que se passe-t-il APRÈS? Pensez aux conséquences post-comportement.",
+      },
+    },
+    SUBSEQUENTLY: {
+      meaning: {
+        English: "As a direct result. The next step in the causal chain.",
+        Español: "Como resultado directo. El siguiente paso en la cadena causal.",
+        Português: "Como resultado direto. O próximo passo na cadeia causal.",
+        Français: "En tant que résultat direct. L'étape suivante de la chaîne causale.",
+      },
+      strategy: {
+        English: "What's the OUTCOME or EFFECT of what just happened?",
+        Español: "¿Cuál es el RESULTADO o EFECTO de lo que acaba de suceder?",
+        Português: "Qual é o RESULTADO ou EFEITO do que acabou de acontecer?",
+        Français: "Quel est le RÉSULTAT ou l'EFFET de ce qui vient de se passer?",
+      },
+    },
+    BEFORE: {
+      meaning: {
+        English: "Antecedent conditions. What sets the stage for behavior.",
+        Español: "Condiciones antecedentes. Qué establece el escenario para el comportamiento.",
+        Português: "Condições antecedentes. O que estabelece o palco para o comportamento.",
+        Français: "Conditions antécédentes. Ce qui établit le contexte du comportement.",
+      },
+      strategy: {
+        English: "What environmental factors PRECEDE the behavior?",
+        Español: "¿Qué factores ambientales PRECEDEN el comportamiento?",
+        Português: "Quais fatores ambientais PRECEDEM o comportamento?",
+        Français: "Quels facteurs environnementaux PRÉCÈDENT le comportement?",
+      },
+    },
+    AFTER: {
+      meaning: {
+        English: "Consequence phase. What follows the behavior.",
+        Español: "Fase de consecuencia. Qué sigue al comportamiento.",
+        Português: "Fase de consequência. O que segue o comportamento.",
+        Français: "Phase de conséquence. Ce qui suit le comportement.",
+      },
+      strategy: {
+        English: "Focus on what happens as a RESULT of the behavior.",
+        Español: "Enfócate en lo que sucede como RESULTADO del comportamiento.",
+        Português: "Concentre-se no que acontece como RESULTADO do comportamento.",
+        Français: "Concentrez-vous sur ce qui se passe en tant que RÉSULTAT du comportement.",
       },
     },
   },
