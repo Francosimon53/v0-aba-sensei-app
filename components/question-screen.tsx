@@ -195,26 +195,70 @@ const TIME_PIVOTS = {
     "PREVIOUSLY",
     "LATER",
   ],
+  words_with_strategies: {
+    INITIALLY: {
+      meaning: {
+        English: "At the START or BEGINNING. What happens first in the process?",
+        Español: "Al INICIO o COMIENZO. ¿Qué sucede primero en el proceso?",
+        Português: "No INÍCIO ou COMEÇO. O que acontece primeiro no processo?",
+        Français: "Au DÉBUT ou COMMENCEMENT. Qu'est-ce qui se passe d'abord dans le processus?",
+      },
+      strategy: {
+        English: "Think about the very first step. What must be established before intervention?",
+        Español: "Piensa en el primer paso. ¿Qué debe establecerse antes de la intervención?",
+        Português: "Pense no primeiro passo. O que deve ser estabelecido antes da intervenção?",
+        Français: "Pensez à la première étape. Qu'est-ce qui doit être établi avant l'intervention?",
+      },
+    },
+    FOLLOWING: {
+      meaning: {
+        English: "What happens AFTER the event or behavior. Focus on consequences and next steps.",
+        Español: "Qué sucede DESPUÉS del evento o comportamiento. Enfócate en consecuencias y próximos pasos.",
+        Português: "O que acontece DEPOIS do evento ou comportamento. Foque em consequências e próximas etapas.",
+        Français: "Ce qui se passe APRÈS l'événement ou le comportement. Concentrez-vous sur les conséquences et les étapes suivantes.",
+      },
+      strategy: {
+        English: "The answer relates to post-intervention results or subsequent actions. What comes logically next?",
+        Español: "La respuesta se relaciona con resultados posteriores a la intervención o acciones posteriores. ¿Qué sigue lógicamente?",
+        Português: "A resposta se relaciona com resultados pós-intervenção ou ações subsequentes. O que vem logicamente depois?",
+        Français: "La réponse concerne les résultats post-intervention ou les actions ultérieures. Qu'est-ce qui suit logiquement?",
+      },
+    },
+    DURING: {
+      meaning: {
+        English: "While the event is HAPPENING or IN PROGRESS. Focus on concurrent actions.",
+        Español: "Mientras el evento está SUCEDIENDO o EN CURSO. Enfócate en acciones concurrentes.",
+        Português: "Enquanto o evento está ACONTECENDO ou EM ANDAMENTO. Foque em ações concorrentes.",
+        Français: "Pendant que l'événement se produit ou EST EN COURS. Concentrez-vous sur les actions concurrentes.",
+      },
+      strategy: {
+        English: "Identify what occurs at the same time. What interventions happen alongside the behavior?",
+        Español: "Identifica qué ocurre al mismo tiempo. ¿Qué intervenciones ocurren junto con el comportamiento?",
+        Português: "Identifique o que ocorre ao mesmo tempo. Quais intervenções acontecem junto com o comportamento?",
+        Français: "Identifiez ce qui se passe en même temps. Quelles interventions se produisent parallèlement au comportement?",
+      },
+    },
+  },
   translations: {
     English: {
       label: "Time Pivot",
-      meaning: "Identify WHEN the action occurs - at the start, middle, or end of the process.",
-      strategy: "Break down events: BEFORE/INITIALLY = setup, DURING = ongoing, AFTER/FOLLOWING = consequences.",
+      meaning: "Identify WHEN the action occurs in the sequence.",
+      strategy: "Determine if this is setup (before), concurrent (during), or consequence (after).",
     },
     Español: {
       label: "Pivote Temporal",
-      meaning: "Identifica CUÁNDO ocurre la acción - al inicio, en medio o al final del proceso.",
-      strategy: "Divide los eventos: ANTES/INICIALMENTE = configuración, DURANTE = en curso, DESPUÉS/SIGUIENTE = consecuencias.",
+      meaning: "Identifica CUÁNDO ocurre la acción en la secuencia.",
+      strategy: "Determina si es configuración (antes), concurrente (durante), o consecuencia (después).",
     },
     Português: {
       label: "Pivô Temporal",
-      meaning: "Identifique QUANDO a ação ocorre - no início, meio ou fim do processo.",
-      strategy: "Divida os eventos: ANTES/INICIALMENTE = configuração, DURANTE = em andamento, DEPOIS/SEGUINTE = consequências.",
+      meaning: "Identifique QUANDO a ação ocorre na sequência.",
+      strategy: "Determine se é configuração (antes), concorrente (durante), ou consequência (depois).",
     },
     Français: {
       label: "Pivot Temporel",
-      meaning: "Identifiez QUAND l'action se produit - au début, au milieu ou à la fin du processus.",
-      strategy: "Divisez les événements: AVANT/INITIALEMENT = configuration, PENDANT = en cours, APRÈS/SUIVANT = conséquences.",
+      meaning: "Identifiez QUAND l'action se produit dans la séquence.",
+      strategy: "Déterminez s'il s'agit d'une configuration (avant), concurrente (pendant), ou d'une conséquence (après).",
     },
   },
 }
@@ -296,7 +340,7 @@ const NON_TECHNICAL_TRAP_WORDS: Record<string, { [key in Language]: { meaning: s
 
 const PIVOT_WORDS = {
   sequence: {
-    words: ["FIRST", "NEXT", "BEFORE", "AFTER", "INITIALLY", "THEN"],
+    words: ["FIRST", "NEXT", "BEFORE", "AFTER", "THEN"],
     category: "Sequence/Priority",
     meaning: {
       English: "This question asks about ORDER or PRIORITY. What to do IMMEDIATELY, not eventually.",
@@ -780,10 +824,11 @@ export default function QuestionScreen({
     const timeWordsFound: Set<string> = new Set()
     TIME_PIVOTS.words.forEach((word) => {
       if (upperFullText.includes(word) && !timeWordsFound.has(word)) {
+        const specificStrategy = TIME_PIVOTS.words_with_strategies[word as keyof typeof TIME_PIVOTS.words_with_strategies]
         detectedTimePivots.push({
           word,
-          meaning: TIME_PIVOTS.translations[language].meaning,
-          strategy: TIME_PIVOTS.translations[language].strategy,
+          meaning: specificStrategy ? specificStrategy.meaning[language] : TIME_PIVOTS.translations[language].meaning,
+          strategy: specificStrategy ? specificStrategy.strategy[language] : TIME_PIVOTS.translations[language].strategy,
         })
         timeWordsFound.add(word)
       }
@@ -839,6 +884,14 @@ export default function QuestionScreen({
         object: skeletonLabels[language].object,
       }
     }
+
+    // Combine all trap words and limit to 4 maximum
+    const allDetectedTraps = [
+      ...detectedPivotWords.slice(0, 1),
+      ...limitedTimePivots.slice(0, 1),
+      ...limitedContrastPivots.slice(0, 1),
+      ...detectedAbaTraps.slice(0, 1),
+    ]
 
     return {
       detectedPivotWords: detectedPivotWords.slice(0, 3), // Max 3 pivot words
