@@ -268,7 +268,12 @@ export default function AITutorPage() {
     correctOption: QuizOption | undefined,
     trapAnalysis?: TrapAnalysis,
   ): string {
-    // Prefer AI-generated confusion analysis
+    // Prefer the complete rationale from the correct answer
+    if (correctOption?.rationale) {
+      return correctOption.rationale
+    }
+
+    // Use AI-generated confusion analysis if available
     if (trapAnalysis?.commonConfusion) {
       return trapAnalysis.commonConfusion
     }
@@ -278,24 +283,31 @@ export default function AITutorPage() {
     const selectedText = selectedOption.text.toLowerCase()
     const correctText = correctOption.text.toLowerCase()
 
-    // Fallback heuristics
+    // Detailed fallback explanations based on common ABA confusions
     if (
       (selectedText.includes("positive") && correctText.includes("negative")) ||
       (selectedText.includes("negative") && correctText.includes("positive"))
     ) {
-      return "VOCABULARY: You confused positive (add) with negative (remove)"
+      return "You confused the valence of reinforcement. Positive reinforcement adds a desired consequence to increase behavior, while negative reinforcement removes an unpleasant consequence to increase behavior. Both increase behavior, but through different mechanisms."
     }
     if (
       (selectedText.includes("reinforcement") && correctText.includes("punishment")) ||
       (selectedText.includes("punishment") && correctText.includes("reinforcement"))
     ) {
-      return "CONCEPT: Reinforcement increases behavior, punishment decreases it"
+      return "You confused reinforcement with punishment. Reinforcement (positive or negative) increases the likelihood of behavior occurring again. Punishment (positive or negative) decreases the likelihood of behavior occurring again."
     }
     if (selectedText.includes("extinction") || correctText.includes("extinction")) {
-      return "CONCEPT: Extinction = withholding reinforcement, not adding punishment"
+      return "Extinction involves withholding the reinforcer that was maintaining a behavior, not adding a punisher. When you stop providing reinforcement, the behavior will gradually decrease over time through the extinction process."
+    }
+    if (selectedText.includes("generalization") || correctText.includes("generalization")) {
+      return "Stimulus generalization occurs when a response learned to one stimulus occurs to similar stimuli without direct training. This demonstrates that the behavior transferred to new contexts, showing broader learning."
+    }
+    if (selectedText.includes("discrimination") || correctText.includes("discrimination")) {
+      return "Stimulus discrimination is when an organism learns to respond differently to similar but distinct stimuli. This is more controlled than generalization and shows precise behavioral control."
     }
 
-    return "APPLICATION: The concept was correct, but applied to the wrong scenario"
+    // Final fallback explanation
+    return `The correct answer is: "${correctOption.text}". Your selection demonstrates a misunderstanding of this concept. Review the fundamental ABA principles involved to avoid this error in the future.`
   }
 
   const loadQuestion = async () => {
