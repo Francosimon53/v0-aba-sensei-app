@@ -13,6 +13,8 @@ import {
   X,
   Send,
   MessageSquare,
+  Menu,
+  BookOpen,
 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -97,7 +99,7 @@ interface ChatMessage {
   isAnswered?: boolean
   difficulty?: "Easy" | "Medium" | "Hard"
   followUpActions?: FollowUpActions
-  flippedCards?: Set<number>
+  flippedCards?: number[]
   trapWords?: TrapWord[]
   highlightWords?: string[]
   trapAnalysis?: TrapAnalysis
@@ -186,6 +188,7 @@ export default function AITutorPage() {
   const [senseiQuestion, setSenseiQuestion] = useState("") // Input for asking the sensei
   const [senseiResponse, setSenseiResponse] = useState<string | null>(null) // Response from the sensei
   const [isAskingSensei, setIsAskingSensei] = useState(false) // Loading state for sensei response
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false) // Mobile menu toggle
   const messagesEndRef = useRef<HTMLDivElement>(null) // This ref is no longer used
   const inputRef = useRef<HTMLInputElement>(null) // Ref for sensei input
   const [chatHistory, setChatHistory] = useState<ChatHistoryMessage[]>([])
@@ -534,19 +537,23 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     return (
       <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between">
-          <Link href="/" className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150">
-            <ArrowLeft className="w-5 h-5 text-zinc-500" />
-          </Link>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-amber-500/90">
-              <Flame className="w-4 h-4" />
-              <span className="font-medium text-sm">{gameStats.streak}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-amber-400/80">
-              <Zap className="w-4 h-4" />
-              <span className="font-medium text-sm">{gameStats.xp}</span>
-            </div>
+        <header className="px-3 sm:px-4 py-2 sm:py-3 border-b border-zinc-800/50 flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="text-white/60 hover:text-white/80 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+            >
+              ← <span className="hidden sm:inline">Dashboard</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5 text-amber-500/90 text-xs sm:text-sm">
+            <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>{questionsUsedToday}</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-1.5 text-amber-400/80 text-xs sm:text-sm">
+            <Target className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">{gameStats.correct}/{currentQuestionNumber}</span>
+            <span className="sm:hidden">{gameStats.correct}/{currentQuestionNumber}</span>
           </div>
         </header>
 
@@ -618,7 +625,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           <div className="mt-6 w-full max-w-md mb-8">
             <p className="text-zinc-400 text-sm mb-3 text-center">Difficulty Level</p>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               {/* Easy */}
               <button
                 onClick={() => setDifficulty("Easy")}
@@ -774,67 +781,26 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       </header>
 
       {/* Two-panel layout */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* LEFT PANEL - Sensei Explanation */}
-        <div className="w-full md:w-[320px] bg-black/50 backdrop-blur-sm border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0">
-          {/* Panel header */}
-          <div className="p-4 border-b border-zinc-800/30">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          <div className="w-full md:w-[280px] bg-black/50 backdrop-blur-sm border-b md:border-b-0 md:border-r border-zinc-800/30 flex flex-col shrink-0 overflow-y-auto">
             <button
-              onClick={() => setShowReasoning(!showReasoning)}
-              className="flex items-center gap-2 text-zinc-200 hover:text-white transition-all duration-150"
+              onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+              className="flex items-center gap-2 text-zinc-200 hover:text-white transition-all duration-150 px-3 sm:px-4 py-2 sm:py-3 md:hidden"
             >
-              <span className="text-lg">🥋</span>
-              <span className="font-medium text-[#d4a853]">ABA Sensei</span>
-              <ChevronDown
-                className={`w-4 h-4 text-zinc-600 transition-transform duration-150 ${showReasoning ? "rotate-180" : ""}`}
-              />
+              <Menu className="w-4 h-4" />
+              <span>Categories</span>
             </button>
-            <p className="text-zinc-600 text-xs mt-1">{showReasoning ? "Reasoning" : "Hidden"}</p>
-          </div>
 
-          {/* Explanation content */}
-          {showReasoning && (
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-amber-500/60 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : isAnswered && currentQuestion ? (
+            <div className="hidden md:flex flex-col px-3 sm:px-4 py-3 border-b border-zinc-800/20">
+              <p className="text-amber-400/90 font-medium text-xs mb-2 flex items-center gap-2 uppercase tracking-wide">
+                <BookOpen className="w-3 h-3" />
+                Topic
+              </p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 space-y-2">
+              {isAnswered ? (
                 <>
-                  {/* Correct/Incorrect feedback */}
-                  <div
-                    className={`p-4 rounded-xl ${
-                      currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                        ? "bg-green-500/10 border border-green-500/20"
-                        : "bg-red-500/10 border border-red-500/20"
-                    }`}
-                  >
-                    <p
-                      className={`font-medium text-sm ${
-                        currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                          ? "text-green-400"
-                          : "text-red-400"
-                      }`}
-                    >
-                      {currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                        ? "Correct!"
-                        : "Not quite"}
-                    </p>
-                    <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
-                      {currentQuestion.options.find((o) => o.id === selectedAnswer)?.isCorrect
-                        ? currentQuestion.options.find((o) => o.isCorrect)?.rationale
-                        : `The correct answer is ${currentQuestion.options.find((o) => o.isCorrect)?.id}. ${currentQuestion.options.find((o) => o.isCorrect)?.rationale}`}
-                    </p>
-                  </div>
-
-                  {/* Definition section */}
-                  {quickTip && (
-                    <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800/30">
-                      <p className="text-[#d4a853] font-medium text-xs mb-2 uppercase tracking-wide">Definition</p>
-                      <p className="text-zinc-400 text-sm leading-relaxed">{quickTip}</p>
-                    </div>
-                  )}
-
                   {/* Trap Alert */}
                   {detectedTraps.length > 0 && (
                     <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
@@ -916,7 +882,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 </div>
               )}
             </div>
-          )}
+          </div>
 
           {/* Ask Sensei input - Now always enabled when there's a question */}
           <div className="p-3 border-t border-zinc-800/30 mt-auto">

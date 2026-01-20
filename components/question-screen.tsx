@@ -1194,33 +1194,33 @@ export default function QuestionScreen({
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Question Card */}
-        <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800/50">
+        <div className="bg-zinc-900/50 rounded-2xl p-3 sm:p-4 lg:p-5 border border-zinc-800/50">
           {/* Category/Task Badge */}
           {currentTask && (
-            <div className="mb-3">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-700 text-zinc-300">
-                Task {currentTask.task_id} &bull; {getDomainName(currentTask.task_id)}
+            <div className="mb-2 sm:mb-3">
+              <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium bg-zinc-700 text-zinc-300">
+                Task {currentTask.task_id} &bull; <span className="hidden sm:inline">{getDomainName(currentTask.task_id)}</span><span className="sm:hidden">{currentTask.task_id.charAt(0)}</span>
               </span>
             </div>
           )}
-          <p className="text-[16px] leading-relaxed text-zinc-200">{questionData.question}</p>
+          <p className="text-sm sm:text-base lg:text-[16px] leading-relaxed text-zinc-200">{questionData.question}</p>
 
           {/* Hint Button */}
           {!showFeedback && (
             <button
               onClick={() => setShowHint(!showHint)}
-              className="mt-4 flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors text-sm"
+              className="mt-3 sm:mt-4 flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors text-xs sm:text-sm"
             >
-              <Lightbulb className="w-4 h-4" />
+              <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {showHint ? questionData.hint : `${hintLabel[language]}?`}
             </button>
           )}
         </div>
 
         {/* Answer Options */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {questionData.options.map((option, index) => {
             const isSelected = selectedAnswer === index
             const isCorrectOption = index === questionData.correctIndex
@@ -1242,13 +1242,13 @@ export default function QuestionScreen({
                 key={index}
                 onClick={() => !showFeedback && setSelectedAnswer(index)}
                 disabled={showFeedback}
-                className={`w-full text-left p-4 rounded-xl border transition-all duration-300 ${optionStyle}`}
+                className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all duration-300 ${optionStyle}`}
               >
-                <div className="flex items-start gap-3">
-                  <span className="text-[14px] text-zinc-300">{option}</span>
-                  {showResult && isCorrectOption && <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />}
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <span className="text-xs sm:text-sm lg:text-[14px] text-zinc-300">{option}</span>
+                  {showResult && isCorrectOption && <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0 mt-0.5 sm:mt-0" />}
                   {showResult && isSelected && !isCorrectOption && (
-                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 flex-shrink-0 mt-0.5 sm:mt-0" />
                   )}
                 </div>
               </button>
@@ -1261,14 +1261,14 @@ export default function QuestionScreen({
           <Button
             onClick={handleSubmit}
             disabled={selectedAnswer === null}
-            className="w-full py-6 bg-amber-500 hover:bg-amber-600 text-black font-semibold text-lg disabled:opacity-50"
+            className="w-full py-3 sm:py-4 lg:py-6 bg-amber-500 hover:bg-amber-600 text-black font-semibold text-base sm:text-lg disabled:opacity-50"
           >
             {t.submit}
           </Button>
         ) : (
           <Button
             onClick={handleNext}
-            className="w-full py-6 bg-amber-500 hover:bg-amber-600 text-black font-semibold text-lg"
+            className="w-full py-3 sm:py-4 lg:py-6 bg-amber-500 hover:bg-amber-600 text-black font-semibold text-base sm:text-lg"
           >
             {t.next}
           </Button>
@@ -1276,19 +1276,19 @@ export default function QuestionScreen({
 
         {/* Feedback Panel */}
         {showFeedback && (
-          <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-3 sm:space-y-4 animate-in slide-in-from-bottom-4 duration-500">
             {/* Result Banner */}
             <div
-              className={`p-4 rounded-xl flex items-center gap-3 ${
+              className={`p-3 sm:p-4 rounded-xl flex items-center gap-2 sm:gap-3 ${
                 isCorrect ? "bg-green-500/10 border border-green-500/30" : "bg-red-500/10 border border-red-500/30"
               }`}
             >
               {isCorrect ? (
-                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 flex-shrink-0" />
               ) : (
-                <XCircle className="w-6 h-6 text-red-500" />
+                <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 flex-shrink-0" />
               )}
-              <span className={`font-medium ${isCorrect ? "text-green-400" : "text-red-400"}`}>
+              <span className={`font-medium text-xs sm:text-sm ${isCorrect ? "text-green-400" : "text-red-400"}`}>
                 {isCorrect ? celebrationText[language] : incorrectText[language]}
               </span>
             </div>
@@ -1297,30 +1297,30 @@ export default function QuestionScreen({
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl overflow-hidden">
                 <button
                   onClick={() => toggleSection("trapDetector")}
-                  className="w-full p-4 flex items-center justify-between text-left"
+                  className="w-full p-2.5 sm:p-4 flex items-center justify-between text-left"
                 >
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-500" />
-                    <span className="font-semibold text-amber-400">{labels.trapDetector}</span>
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 flex-shrink-0" />
+                    <span className="font-semibold text-xs sm:text-sm text-amber-400">{labels.trapDetector}</span>
                   </div>
-                  <span className="text-amber-500">{expandedSections.trapDetector ? "−" : "+"}</span>
+                  <span className="text-amber-500 text-sm sm:text-base">{expandedSections.trapDetector ? "−" : "+"}</span>
                 </button>
 
                 {expandedSections.trapDetector && (
-                  <div className="px-4 pb-4 space-y-4">
+                  <div className="px-2.5 sm:px-4 pb-2.5 sm:pb-4 space-y-2.5 sm:space-y-4">
                     {/* Pivot Words in Question */}
                     {trapAnalysis.detectedPivotWords.length > 0 && (
-                      <div className="bg-amber-500/5 rounded-lg p-3">
-                        <div className="text-xs font-semibold text-amber-400 uppercase mb-2">{labels.pivotWords}</div>
+                      <div className="bg-amber-500/5 rounded-lg p-2.5 sm:p-3">
+                        <div className="text-xs font-semibold text-amber-400 uppercase mb-1.5 sm:mb-2">{labels.pivotWords}</div>
                         {trapAnalysis.detectedPivotWords.map((pivot, i) => (
-                          <div key={i} className="mb-3 last:mb-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="bg-amber-500 text-black px-2 py-0.5 rounded text-sm font-bold">
+                          <div key={i} className="mb-2 sm:mb-3 last:mb-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="bg-amber-500 text-black px-2 py-0.5 rounded text-xs sm:text-sm font-bold flex-shrink-0">
                                 {pivot.word}
                               </span>
                               <span className="text-xs text-zinc-500">({pivot.category})</span>
                             </div>
-                            <p className="text-sm text-zinc-300 mb-1">{pivot.meaning}</p>
+                            <p className="text-xs sm:text-sm text-zinc-300 mb-1">{pivot.meaning}</p>
                             <p className="text-xs text-amber-400">
                               <strong>{labels.strategy}:</strong> {pivot.strategy}
                             </p>
@@ -1331,7 +1331,7 @@ export default function QuestionScreen({
 
                     {/* Contrast Pivots */}
                     {trapAnalysis.detectedContrastPivots.length > 0 && (
-                      <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-500/20">
+                      <div className="bg-blue-500/5 rounded-lg p-2.5 sm:p-3 border border-blue-500/20">
                         <div className="text-xs font-semibold text-blue-400 uppercase mb-2">
                           {labels.contrastPivots}
                         </div>
