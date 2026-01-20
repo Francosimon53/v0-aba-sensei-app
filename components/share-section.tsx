@@ -50,50 +50,50 @@ export function ShareSection({
     window.open(url, "_blank", "width=750,height=600")
   }
 
-  // Format share content for Trap Tip
+  // Format share content for Trap Tip - Twitter optimized (under 280 chars)
   const trapTipContent = () => {
     if (!trapWord || !trapExplanation) return ""
-    return `⚠️ BCBA EXAM TRAP
+    
+    // Extract first sentence max 100 chars and create concise explanation
+    const explanation = trapExplanation.split(".")[0].substring(0, 100)
+    
+    return `⚠️ EXAM TRAP: ${trapWord}
 
-"${trapWord}": ${trapExplanation}
+${explanation}
 
-Strategy: Watch out for this common exam trap on the BCBA and RBT exams!
+💡 Watch for this on your exam!
 
-#BCBA #RBT #ABA #ExamTips
-🎯 Master your exam at abasensei.app`
-  }
-
-  // Format share content for ABA Concept (using first trap)
-  const abaConceptContent = () => {
-    if (!detectedTraps || detectedTraps.length === 0) return ""
-    const trap = detectedTraps[0]
-    return `📚 ABA TERMINOLOGY
-
-"${trap.word}"
-❌ Common misconception: Students often confuse this term
-✅ ABA meaning: ${trap.explanation}
-
-#BehaviorAnalysis #BCBA #RBT
+#BCBA #RBT #ABA
 🎯 abasensei.app`
   }
 
-  // Format share content for Challenge a Friend
+  // Format share content for ABA Concept - Twitter optimized (under 280 chars)
+  const abaConceptContent = () => {
+    if (!detectedTraps || detectedTraps.length === 0) return ""
+    const trap = detectedTraps[0]
+    const shortExplanation = trap.explanation.split(".")[0].substring(0, 80)
+    
+    return `📚 ${trap.word}
+❌ Common: Often confused
+✅ ABA: ${shortExplanation}
+
+#BCBA #RBT
+🎯 abasensei.app`
+  }
+
+  // Format share content for Challenge a Friend - Twitter optimized (under 280 chars)
   const challengeFriendContent = () => {
     if (!questionText || !options) return ""
-    const truncatedQuestion = questionText.substring(0, 200) + (questionText.length > 200 ? "..." : "")
-    const optionsText = options
-      .slice(0, 4)
-      .map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt.text.substring(0, 50)}...`)
-      .join("\n")
+    const truncatedQuestion = questionText.substring(0, 120)
+    
+    return `🧠 BCBA Question:
 
-    return `🧠 Can you answer this BCBA question?
+${truncatedQuestion}...
 
-${truncatedQuestion}
+Can you answer? 👇
+abasensei.app
 
-${optionsText}
-
-Test yourself at abasensei.app
-#BCBA #RBT #ExamPrep`
+#BCBA #RBT`
   }
 
   return (
