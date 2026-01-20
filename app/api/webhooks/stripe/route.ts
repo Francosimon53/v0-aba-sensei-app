@@ -58,7 +58,7 @@ export async function POST(request: Request) {
             .update({
               subscription_tier: tier,
               stripe_subscription_id: subscriptionId,
-              subscription_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_expires_at: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
             })
             .eq("id", userId)
         }
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
             .from("profiles")
             .update({
               subscription_tier: subscription.status === "active" ? tier : "free",
-              subscription_expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_expires_at: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
             })
             .eq("id", userId)
         }
