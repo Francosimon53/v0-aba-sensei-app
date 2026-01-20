@@ -1,5 +1,9 @@
 import Stripe from "stripe"
 
+if (!process.env.STRIPE_PRICE_PRO_MONTHLY || !process.env.STRIPE_PRICE_PRO_ANNUAL || !process.env.STRIPE_PRICE_TEAM) {
+  console.error("Missing Stripe Price IDs in environment variables")
+}
+
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-05-28.basil",
 })
@@ -17,7 +21,7 @@ export const PLANS = {
   },
   pro_monthly: {
     name: "Pro Monthly",
-    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || "price_1Srghw7pJTldB1Tba7DMLcU3",
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY!,
     price: 19,
     features: [
       "Unlimited practice questions",
@@ -29,7 +33,7 @@ export const PLANS = {
   },
   pro_annual: {
     name: "Pro Annual",
-    priceId: process.env.STRIPE_PRICE_PRO_ANNUAL || "price_1Srgjd7pJTldB1TbHjJGNjdP",
+    priceId: process.env.STRIPE_PRICE_PRO_ANNUAL!,
     price: 149,
     features: [
       "Everything in Pro Monthly",
@@ -40,7 +44,7 @@ export const PLANS = {
   },
   team: {
     name: "Team",
-    priceId: process.env.STRIPE_PRICE_TEAM || "price_1Srgkr7pJTldB1TbAtbG9JeZ",
+    priceId: process.env.STRIPE_PRICE_TEAM!,
     price: 99,
     features: [
       "Everything in Pro",
