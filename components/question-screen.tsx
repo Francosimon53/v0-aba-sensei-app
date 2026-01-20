@@ -21,16 +21,32 @@ import { createClient } from "@/lib/supabase/client"
 //   keywords: string | null
 // }
 
-const DOMAIN_NAMES: Record<string, string> = {
-  A: "Philosophical Underpinnings",
+// BCBA 6th Edition Task List (2025) domain names
+const BCBA_DOMAIN_NAMES: Record<string, string> = {
+  A: "Behaviorism and Philosophical Foundations",
   B: "Concepts and Principles",
-  C: "Measurement, Data Display & Interpretation",
+  C: "Measurement, Data Display, and Interpretation",
   D: "Experimental Design",
-  E: "Ethics and Professional Conduct",
+  E: "Ethical and Professional Issues",
   F: "Behavior Assessment",
   G: "Behavior-Change Procedures",
   H: "Selecting and Implementing Interventions",
   I: "Personnel Supervision and Management",
+}
+
+// RBT 3rd Edition Task List (2026) domain names
+const RBT_DOMAIN_NAMES: Record<string, string> = {
+  A: "Data Collection and Graphing",
+  B: "Behavior Assessment",
+  C: "Behavior Acquisition",
+  D: "Behavior Reduction",
+  E: "Documentation and Reporting",
+  F: "Ethics",
+}
+
+// Combined mapping (defaults to BCBA for backward compatibility)
+const DOMAIN_NAMES: Record<string, string> = {
+  ...BCBA_DOMAIN_NAMES,
 }
 
 // Helper function to get domain letter from task_id (e.g., "C.10" -> "C")

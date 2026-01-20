@@ -48,15 +48,17 @@ const translations = {
   },
 }
 
+// RBT 3rd Edition Task List (2026)
 const rbtCategories = [
-  { name: "Measurement", icon: LineChart },
-  { name: "Assessment", icon: Brain },
-  { name: "Skill Acquisition", icon: Target },
-  { name: "Behavior Reduction", icon: ClipboardList },
-  { name: "Documentation", icon: FileText },
-  { name: "Professional Scope", icon: Shield },
+  { name: "A. Data Collection and Graphing", icon: LineChart },
+  { name: "B. Behavior Assessment", icon: Brain },
+  { name: "C. Behavior Acquisition", icon: Target },
+  { name: "D. Behavior Reduction", icon: ClipboardList },
+  { name: "E. Documentation and Reporting", icon: FileText },
+  { name: "F. Ethics", icon: Shield },
 ]
 
+// BCBA 6th Edition Task List (2025)
 const bcbaCategories = [
   { name: "A. Behaviorism and Philosophical Foundations", icon: Brain },
   { name: "B. Concepts and Principles", icon: Brain },

@@ -1001,10 +1001,14 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 </div>
 
                 {/* Category/Domain Badge */}
-                {currentQuestion.category && (
+                {(currentQuestion.topic || currentQuestion.category) && (
                   <div className="mb-3">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-700 text-zinc-300">
-                      {currentQuestion.category}
+                      {currentQuestion.topic ? (
+                        <>Task {currentQuestion.topic.split(" - ")[0]} &bull; {currentQuestion.category}</>
+                      ) : (
+                        currentQuestion.category
+                      )}
                     </span>
                   </div>
                 )}
