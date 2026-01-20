@@ -18,7 +18,7 @@ import {
 } from "@/lib/supabase/progress"
 
 export const categoryToDomain: Record<string, string> = {
-  // BCBA categories - match exact names from CategoryMenu
+  // BCBA 6th Edition (2025) categories
   "A. Behaviorism and Philosophical Foundations": "A",
   "B. Concepts and Principles": "B",
   "C. Measurement, Data Display, and Interpretation": "C",
@@ -28,13 +28,13 @@ export const categoryToDomain: Record<string, string> = {
   "G. Behavior-Change Procedures": "G",
   "H. Selecting and Implementing Interventions": "H",
   "I. Personnel Supervision and Management": "I",
-  // RBT categories
-  Measurement: "A",
-  Assessment: "B",
-  "Skill Acquisition": "C",
-  "Behavior Reduction": "D",
-  Documentation: "E",
-  "Professional Scope": "F",
+  // RBT 3rd Edition (2026) categories
+  "A. Data Collection and Graphing": "A",
+  "B. Behavior Assessment": "B",
+  "C. Behavior Acquisition": "C",
+  "D. Behavior Reduction": "D",
+  "E. Documentation and Reporting": "E",
+  "F. Ethics": "F",
 }
 
 export default function StudyPage() {

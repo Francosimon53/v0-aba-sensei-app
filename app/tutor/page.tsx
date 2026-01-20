@@ -116,25 +116,27 @@ interface QuestionHistory {
   isCorrect: boolean | null // null = unanswered
 }
 
+// RBT 3rd Edition Task List (2026)
 const RBT_CATEGORIES = [
-  "Measurement",
-  "Assessment",
-  "Skill Acquisition",
-  "Behavior Reduction",
-  "Documentation",
-  "Professional Conduct",
+  "A. Data Collection and Graphing",
+  "B. Behavior Assessment",
+  "C. Behavior Acquisition",
+  "D. Behavior Reduction",
+  "E. Documentation and Reporting",
+  "F. Ethics",
 ]
 
+// BCBA 6th Edition Task List (2025)
 const BCBA_CATEGORIES = [
-  "A - Philosophical Underpinnings",
-  "B - Concepts and Principles",
-  "C - Measurement, Data Display & Interpretation",
-  "D - Experimental Design",
-  "E - Ethics and Professional Conduct",
-  "F - Behavior Assessment",
-  "G - Behavior-Change Procedures",
-  "H - Selecting and Implementing Interventions",
-  "I - Personnel Supervision and Management",
+  "A. Behaviorism and Philosophical Foundations",
+  "B. Concepts and Principles",
+  "C. Measurement, Data Display, and Interpretation",
+  "D. Experimental Design",
+  "E. Ethical and Professional Issues",
+  "F. Behavior Assessment",
+  "G. Behavior-Change Procedures",
+  "H. Selecting and Implementing Interventions",
+  "I. Personnel Supervision and Management",
 ]
 
 interface TrapInfo {
