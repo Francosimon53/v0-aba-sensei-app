@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { ExamTypeSelection } from "@/components/exam-type-selection"
 import { CategoryMenu } from "@/components/category-menu"
 import QuestionScreen from "@/components/question-screen"
+import { FloatingShareBar } from "@/components/floating-share-bar"
 import type { Language, ExamType, Mode, Task, StudySession } from "@/types"
 import {
   createStudySession,
@@ -38,7 +39,7 @@ export const categoryToDomain: Record<string, string> = {
 }
 
 export default function StudyPage() {
-  const [step, setStep] = useState(0) // 0 = loading, 1 = exam type, 2 = category, 3 = questions
+  const [step, setStep] = useState(0) // 0 = loading, 1 = exam type, 2 = category, 2.5 = difficulty, 3 = questions
   const [language] = useState<Language>("English") // Fixed to English only
   const [examType, setExamType] = useState<ExamType>("BCBA")
   const [mode, setMode] = useState<Mode>("tutor")
@@ -47,6 +48,8 @@ export default function StudyPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0)
   const [loadingTasks, setLoadingTasks] = useState(false)
+  const [currentTask, setCurrentTask] = useState<Task | null>(null)
+  const [taskAnswered, setTaskAnswered] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [currentSession, setCurrentSession] = useState<StudySession | null>(null)
   const [sessionStats, setSessionStats] = useState({ total: 0, correct: 0, startTime: Date.now() })
@@ -153,6 +156,10 @@ export default function StudyPage() {
 
   const handleQuestionAnswered = async (selectedOption: string, isCorrect: boolean, timeSpentSeconds: number) => {
     console.log("[v0] handleQuestionAnswered called:", { selectedOption, isCorrect, timeSpentSeconds, category })
+    setTaskAnswered(true)
+    if (currentTaskIndex < tasks.length) {
+      setCurrentTask(tasks[currentTaskIndex])
+    }
 
     // Update local stats
     setSessionStats((prev) => ({
@@ -213,9 +220,39 @@ export default function StudyPage() {
   const advanceTask = () => {
     if (currentTaskIndex < tasks.length - 1) {
       setCurrentTaskIndex(currentTaskIndex + 1)
+      setTaskAnswered(false)
+      setCurrentTask(null)
     } else {
       setCurrentTaskIndex(0)
     }
+  }
+
+  const shareOnX = (text: string) => {
+    // Remove any existing URLs from the text
+    const cleanText = text.replace(/https?:\/\/[^\s]+/g, "").trim()
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(cleanText)}&url=${encodeURIComponent("https://abasensei.app")}`
+    window.open(twitterUrl, "_blank", "width=550,height=420")
+  }
+
+  const handleShareTrapTip = () => {
+    if (!currentTask) return
+    // Extract trap info from task if available
+    const text = `⚠️ EXAM TRAP: Check your answer on ABA Sensei\n\n💡 Watch for these common traps on your exam!\n\n#BCBA #RBT #ABA`
+    shareOnX(text)
+  }
+
+  const handleShareAbaTerm = () => {
+    if (!currentTask) return
+    const text = `📚 ABA Terminology\n❌ Common: Often confused\n✅ ABA: Precise definitions matter!\n\n#BCBA #RBT`
+    shareOnX(text)
+  }
+
+  const handleShareChallenge = () => {
+    if (!currentTask) return
+    const questionText = currentTask.question || "RBT/BCBA Question"
+    const truncatedQuestion = questionText.substring(0, 120)
+    const text = `🧠 ${examType} Question:\n\n${truncatedQuestion}...\n\nCan you answer? 👇\n\n#BCBA #RBT`
+    shareOnX(text)
   }
 
   const handleLogout = async () => {
@@ -347,6 +384,14 @@ export default function StudyPage() {
           onQuestionAnswered={handleQuestionAnswered}
         />
       )}
+
+      {/* Floating Share Bar */}
+      <FloatingShareBar
+        isVisible={step === 3 && taskAnswered}
+        onShareTrapTip={handleShareTrapTip}
+        onShareAbaTerm={handleShareAbaTerm}
+        onShareChallenge={handleShareChallenge}
+      />
     </div>
   )
 }

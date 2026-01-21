@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client"
 import { isForeverFreeUser } from "@/lib/constants"
 import { UpgradeModal } from "@/components/upgrade-modal"
 import { ShareSection } from "@/components/share-section"
+import { FloatingShareBar } from "@/components/floating-share-bar"
 
 const FREE_DAILY_LIMIT = 5
 
@@ -501,6 +502,35 @@ export default function AITutorPage() {
   const handlePreviousQuestion = () => {
     // For now, just go back to welcome screen
     setSessionStarted(false)
+  }
+
+  const shareOnX = (text: string) => {
+    // Remove any existing URLs from the text
+    const cleanText = text.replace(/https?:\/\/[^\s]+/g, "").trim()
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(cleanText)}&url=${encodeURIComponent("https://abasensei.app")}`
+    window.open(twitterUrl, "_blank", "width=550,height=420")
+  }
+
+  const handleShareTrapTip = () => {
+    if (!detectedTraps[0]) return
+    const explanation = detectedTraps[0].explanation.split(".")[0].substring(0, 100)
+    const text = `⚠️ EXAM TRAP: ${detectedTraps[0].word}\n\n${explanation}\n\n💡 Watch for this on your exam!\n\n#BCBA #RBT #ABA`
+    shareOnX(text)
+  }
+
+  const handleShareAbaTerm = () => {
+    if (!detectedTraps[0]) return
+    const trap = detectedTraps[0]
+    const shortExplanation = trap.explanation.split(".")[0].substring(0, 80)
+    const text = `📚 ${trap.word}\n❌ Common: Often confused\n✅ ABA: ${shortExplanation}\n\n#BCBA #RBT`
+    shareOnX(text)
+  }
+
+  const handleShareChallenge = () => {
+    if (!currentQuestion) return
+    const truncatedQuestion = currentQuestion.question.substring(0, 120)
+    const text = `🧠 BCBA Question:\n\n${truncatedQuestion}...\n\nCan you answer? 👇\n\n#BCBA #RBT`
+    shareOnX(text)
   }
 
   const handleAskSensei = async () => {
@@ -1180,6 +1210,14 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         onClose={() => setShowUpgradeModal(false)}
         questionsUsed={questionsUsedToday}
         maxQuestions={FREE_DAILY_LIMIT}
+      />
+
+      {/* Floating Share Bar */}
+      <FloatingShareBar
+        isVisible={isAnswered && !!currentQuestion}
+        onShareTrapTip={handleShareTrapTip}
+        onShareAbaTerm={handleShareAbaTerm}
+        onShareChallenge={handleShareChallenge}
       />
     </div>
   )
