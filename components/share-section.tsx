@@ -41,8 +41,10 @@ export function ShareSection({
   }
 
   const shareOnX = (text: string) => {
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=https://abasensei.app`
-    window.open(url, "_blank", "width=550,height=420")
+    // Remove any existing URLs from the text
+    const cleanText = text.replace(/https?:\/\/[^\s]+/g, "").trim()
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(cleanText)}&url=${encodeURIComponent("https://abasensei.app")}`
+    window.open(twitterUrl, "_blank", "width=550,height=420")
   }
 
   const shareOnLinkedIn = (text: string) => {
@@ -54,7 +56,7 @@ export function ShareSection({
   const trapTipContent = () => {
     if (!trapWord || !trapExplanation) return ""
     
-    // Extract first sentence max 100 chars and create concise explanation
+    // Extract first sentence max 100 chars
     const explanation = trapExplanation.split(".")[0].substring(0, 100)
     
     return `⚠️ EXAM TRAP: ${trapWord}
@@ -63,8 +65,7 @@ ${explanation}
 
 💡 Watch for this on your exam!
 
-#BCBA #RBT #ABA
-🎯 abasensei.app`
+#BCBA #RBT #ABA`
   }
 
   // Format share content for ABA Concept - Twitter optimized (under 280 chars)
@@ -77,8 +78,7 @@ ${explanation}
 ❌ Common: Often confused
 ✅ ABA: ${shortExplanation}
 
-#BCBA #RBT
-🎯 abasensei.app`
+#BCBA #RBT`
   }
 
   // Format share content for Challenge a Friend - Twitter optimized (under 280 chars)
@@ -91,7 +91,6 @@ ${explanation}
 ${truncatedQuestion}...
 
 Can you answer? 👇
-abasensei.app
 
 #BCBA #RBT`
   }
