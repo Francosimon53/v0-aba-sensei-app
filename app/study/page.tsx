@@ -236,22 +236,34 @@ export default function StudyPage() {
   }
 
   const shareToTwitter = () => {
-    const questionText = currentTask?.question?.substring(0, 100) || `${examType} exam question`
-    const text = `🧠 ${questionText}...\n\nCan you answer? Test yourself on ABA Sensei\n\n#BCBA #RBT #ABA`
+    if (!currentTask) return
+    const questionText = currentTask?.question?.substring(0, 180) || "Check out this BCBA/RBT exam question"
+    const text = `🧠 Can you answer this BCBA exam question?\n\n"${questionText}..."\n\nTest yourself at ABA Sensei! #BCBA #RBT #ABA`
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://abasensei.app")}`
     window.open(twitterUrl, "_blank", "width=550,height=420")
     setShowShareModal(false)
   }
 
   const shareToLinkedIn = () => {
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://abasensei.app")}`
+    if (!currentTask) return
+    const questionText = currentTask?.question?.substring(0, 200) || "Check out this BCBA/RBT exam question"
+    const shareText = `🧠 BCBA Exam Practice Question:\n\n"${questionText}..."\n\nPreparing for your BCBA or RBT exam? Try ABA Sensei for AI-powered practice!`
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://abasensei.app")}&summary=${encodeURIComponent(shareText)}`
     window.open(linkedInUrl, "_blank", "width=550,height=420")
     setShowShareModal(false)
   }
 
   const copyShareLink = () => {
-    navigator.clipboard.writeText("https://abasensei.app").then(() => {
-      alert("Link copied to clipboard!")
+    if (!currentTask) return
+    const questionText = currentTask?.question?.substring(0, 200) || "Check out this BCBA/RBT exam question"
+    const shareText = `🧠 BCBA Exam Question:\n\n"${questionText}..."\n\nPractice at: https://abasensei.app`
+    navigator.clipboard.writeText(shareText).then(() => {
+      // Show a brief toast notification
+      const toast = document.createElement('div')
+      toast.textContent = 'Copied to clipboard!'
+      toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg text-sm'
+      document.body.appendChild(toast)
+      setTimeout(() => toast.remove(), 2000)
       setShowShareModal(false)
     })
   }
