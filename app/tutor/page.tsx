@@ -16,13 +16,13 @@ import {
   MessageSquare,
   Menu,
   BookOpen,
+  Share2,
+  Linkedin,
 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { isForeverFreeUser } from "@/lib/constants"
 import { UpgradeModal } from "@/components/upgrade-modal"
-import { ShareSection } from "@/components/share-section"
-import { FloatingShareBar } from "@/components/floating-share-bar"
 
 const FREE_DAILY_LIMIT = 5
 
@@ -194,6 +194,7 @@ export default function AITutorPage() {
   const [senseiQuestion, setSenseiQuestion] = useState("")
   const [isAskingSensei, setIsAskingSensei] = useState(false)
   const [showCategoryMenu, setShowCategoryMenu] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [questionHistory, setQuestionHistory] = useState<QuestionHistory[]>([])
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState(1)
   const [detectedTraps, setDetectedTraps] = useState<TrapInfo[]>([])
@@ -204,6 +205,21 @@ export default function AITutorPage() {
   const chatEndRef = useRef<HTMLDivElement>(null)
   const progressPercent = 80 // Declare progressPercent variable
   const router = useRouter() // Declare router variable
+
+  const handleShareTrapTip = () => {
+    // Placeholder implementation for demonstration purposes
+    console.log("Share Trap Tip");
+  }
+
+  const handleShareAbaTerm = () => {
+    // Placeholder implementation for demonstration purposes
+    console.log("Share ABA Term");
+  }
+
+  const handleShareChallenge = () => {
+    // Placeholder implementation for demonstration purposes
+    console.log("Share Challenge");
+  }
 
   // Check subscription tier and questions used on mount
   useEffect(() => {
@@ -255,10 +271,6 @@ export default function AITutorPage() {
     }
     return Math.max(0, FREE_DAILY_LIMIT - questionsUsedToday)
   }
-
-  // Removed callChatAPI function as it is no longer used.
-
-  // Removed loadQuestion function as it is replaced by a new one.
 
   function generateQuickTip(trapAnalysis?: TrapAnalysis, correctOption?: QuizOption): string {
     // Prefer AI-generated tip if available
@@ -434,8 +446,6 @@ export default function AITutorPage() {
     }
   }
 
-  // Deleted lines 266-288
-
   const handleAnswer = (optionId: string) => {
     if (isAnswered) return
     
@@ -504,33 +514,25 @@ export default function AITutorPage() {
     setSessionStarted(false)
   }
 
-  const shareOnX = (text: string) => {
-    // Remove any existing URLs from the text
-    const cleanText = text.replace(/https?:\/\/[^\s]+/g, "").trim()
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(cleanText)}&url=${encodeURIComponent("https://abasensei.app")}`
+  const shareToTwitter = () => {
+    const questionText = currentQuestion?.content.substring(0, 100) || "Check out this BCBA/RBT exam question"
+    const text = `🧠 ${questionText}...\n\nCan you answer? Test yourself on ABA Sensei\n\n#BCBA #RBT #ABA`
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://abasensei.app")}`
     window.open(twitterUrl, "_blank", "width=550,height=420")
+    setShowShareModal(false)
   }
 
-  const handleShareTrapTip = () => {
-    if (!detectedTraps[0]) return
-    const explanation = detectedTraps[0].explanation.split(".")[0].substring(0, 100)
-    const text = `⚠️ EXAM TRAP: ${detectedTraps[0].word}\n\n${explanation}\n\n💡 Watch for this on your exam!\n\n#BCBA #RBT #ABA`
-    shareOnX(text)
+  const shareToLinkedIn = () => {
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://abasensei.app")}`
+    window.open(linkedInUrl, "_blank", "width=550,height=420")
+    setShowShareModal(false)
   }
 
-  const handleShareAbaTerm = () => {
-    if (!detectedTraps[0]) return
-    const trap = detectedTraps[0]
-    const shortExplanation = trap.explanation.split(".")[0].substring(0, 80)
-    const text = `📚 ${trap.word}\n❌ Common: Often confused\n✅ ABA: ${shortExplanation}\n\n#BCBA #RBT`
-    shareOnX(text)
-  }
-
-  const handleShareChallenge = () => {
-    if (!currentQuestion) return
-    const truncatedQuestion = currentQuestion.question.substring(0, 120)
-    const text = `🧠 BCBA Question:\n\n${truncatedQuestion}...\n\nCan you answer? 👇\n\n#BCBA #RBT`
-    shareOnX(text)
+  const copyShareLink = () => {
+    navigator.clipboard.writeText("https://abasensei.app").then(() => {
+      alert("Link copied to clipboard!")
+      setShowShareModal(false)
+    })
   }
 
   const handleAskSensei = async () => {
@@ -657,7 +659,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               ← <span className="hidden sm:inline">Dashboard</span>
             </button>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-amber-500/90 text-xs sm:text-sm">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-zinc-400 text-sm">
             <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>{questionsUsedToday}</span>
           </div>
@@ -955,17 +957,6 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                     <div ref={chatEndRef} />
                   </div>
                 )}
-
-                {/* Share Section */}
-                {isAnswered && currentQuestion && (
-                  <ShareSection
-                    trapWord={detectedTraps[0]?.word}
-                    trapExplanation={detectedTraps[0]?.explanation}
-                    questionText={currentQuestion.question}
-                    options={currentQuestion.options}
-                    detectedTraps={detectedTraps}
-                  />
-                )}
               </>
             ) : !isAnswered && currentQuestion ? (
               <div className="space-y-3">
@@ -1075,7 +1066,19 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 <p className="text-zinc-600 text-sm">Loading question...</p>
               </div>
             ) : currentQuestion ? (
-              <div className="max-w-[800px] mx-auto">
+              <div className="max-w-[800px] mx-auto relative">
+                {/* Share Button */}
+                {isAnswered && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-0 right-0 text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10"
+                    onClick={() => setShowShareModal(true)}
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </Button>
+                )}
+
                 {/* Difficulty badge */}
                 <div className="flex items-center gap-3 mb-3">
                   <span
@@ -1212,13 +1215,59 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         maxQuestions={FREE_DAILY_LIMIT}
       />
 
-      {/* Floating Share Bar */}
-      <FloatingShareBar
-        isVisible={isAnswered && !!currentQuestion}
-        onShareTrapTip={handleShareTrapTip}
-        onShareAbaTerm={handleShareAbaTerm}
-        onShareChallenge={handleShareChallenge}
-      />
+      {/* Share Modal */}
+      {showShareModal && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" 
+          onClick={() => setShowShareModal(false)}
+        >
+          <div 
+            className="bg-zinc-900 rounded-2xl p-6 w-80 border border-white/10" 
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-center mb-4 text-white">Share to</h3>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <button 
+                onClick={shareToTwitter}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10 transition"
+              >
+                <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                  <X className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-zinc-400">X</span>
+              </button>
+              
+              <button 
+                onClick={shareToLinkedIn}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10 transition"
+              >
+                <div className="w-12 h-12 bg-[#0077B5] rounded-full flex items-center justify-center">
+                  <Linkedin className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-zinc-400">LinkedIn</span>
+              </button>
+              
+              <button 
+                onClick={copyShareLink}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10 transition"
+              >
+                <div className="w-12 h-12 bg-zinc-700 rounded-full flex items-center justify-center">
+                  <Share2 className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-zinc-400">Copy Link</span>
+              </button>
+            </div>
+            
+            <button 
+              onClick={() => setShowShareModal(false)}
+              className="w-full mt-4 py-2 text-zinc-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

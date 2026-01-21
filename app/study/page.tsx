@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { ExamTypeSelection } from "@/components/exam-type-selection"
 import { CategoryMenu } from "@/components/category-menu"
 import QuestionScreen from "@/components/question-screen"
-import { FloatingShareBar } from "@/components/floating-share-bar"
+import { Share2, Linkedin, X } from "lucide-react"
 import type { Language, ExamType, Mode, Task, StudySession } from "@/types"
 import {
   createStudySession,
@@ -50,6 +50,7 @@ export default function StudyPage() {
   const [loadingTasks, setLoadingTasks] = useState(false)
   const [currentTask, setCurrentTask] = useState<Task | null>(null)
   const [taskAnswered, setTaskAnswered] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [currentSession, setCurrentSession] = useState<StudySession | null>(null)
   const [sessionStats, setSessionStats] = useState({ total: 0, correct: 0, startTime: Date.now() })
@@ -234,6 +235,27 @@ export default function StudyPage() {
     window.open(twitterUrl, "_blank", "width=550,height=420")
   }
 
+  const shareToTwitter = () => {
+    const questionText = currentTask?.question?.substring(0, 100) || `${examType} exam question`
+    const text = `🧠 ${questionText}...\n\nCan you answer? Test yourself on ABA Sensei\n\n#BCBA #RBT #ABA`
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://abasensei.app")}`
+    window.open(twitterUrl, "_blank", "width=550,height=420")
+    setShowShareModal(false)
+  }
+
+  const shareToLinkedIn = () => {
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://abasensei.app")}`
+    window.open(linkedInUrl, "_blank", "width=550,height=420")
+    setShowShareModal(false)
+  }
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText("https://abasensei.app").then(() => {
+      alert("Link copied to clipboard!")
+      setShowShareModal(false)
+    })
+  }
+
   const handleShareTrapTip = () => {
     if (!currentTask) return
     // Extract trap info from task if available
@@ -385,13 +407,59 @@ export default function StudyPage() {
         />
       )}
 
-      {/* Floating Share Bar */}
-      <FloatingShareBar
-        isVisible={step === 3 && taskAnswered}
-        onShareTrapTip={handleShareTrapTip}
-        onShareAbaTerm={handleShareAbaTerm}
-        onShareChallenge={handleShareChallenge}
-      />
+      {/* Share Modal */}
+      {showShareModal && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" 
+          onClick={() => setShowShareModal(false)}
+        >
+          <div 
+            className="bg-zinc-900 rounded-2xl p-6 w-80 border border-white/10" 
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-center mb-4 text-white">Share to</h3>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <button 
+                onClick={shareToTwitter}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10 transition"
+              >
+                <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
+                  <X className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-zinc-400">X</span>
+              </button>
+              
+              <button 
+                onClick={shareToLinkedIn}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10 transition"
+              >
+                <div className="w-12 h-12 bg-[#0077B5] rounded-full flex items-center justify-center">
+                  <Linkedin className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-zinc-400">LinkedIn</span>
+              </button>
+              
+              <button 
+                onClick={copyShareLink}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/10 transition"
+              >
+                <div className="w-12 h-12 bg-zinc-700 rounded-full flex items-center justify-center">
+                  <Share2 className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs text-zinc-400">Copy Link</span>
+              </button>
+            </div>
+            
+            <button 
+              onClick={() => setShowShareModal(false)}
+              className="w-full mt-4 py-2 text-zinc-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
