@@ -367,45 +367,73 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Main Action Cards */}
-        <div className="grid md:grid-cols-2 gap-4 mb-12">
-          <Link href="/tutor" className="block group">
-            <div className="relative h-full bg-gradient-to-br from-amber-500 via-amber-500 to-amber-600 rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(245,158,11,0.3)]">
-              {/* Shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Brain className="w-5 h-5 text-black/70" />
-                    <span className="text-xs font-semibold text-black/60 uppercase tracking-wide">AI Powered</span>
+        {/* Main Action Cards - Centered & Prominent */}
+        <div className="flex justify-center mb-16 mt-4">
+          <div className="w-full max-w-[800px] grid md:grid-cols-2 gap-6">
+            {/* AI Sensei Card */}
+            <Link href="/tutor" className="block group">
+              <div className="relative min-h-[180px] bg-gradient-to-br from-amber-500 via-amber-500 to-orange-600 rounded-3xl p-6 overflow-hidden transition-all duration-300 hover:scale-[1.03] shadow-[0_0_30px_rgba(245,158,11,0.2)] hover:shadow-[0_0_50px_rgba(245,158,11,0.4)]">
+                {/* Animated gradient border glow */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 opacity-0 group-hover:opacity-100 animate-pulse -z-10 blur-xl" />
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                
+                <div className="relative flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Brain className="w-5 h-5 text-black/70" />
+                        <span className="text-xs font-bold text-black/60 uppercase tracking-wider">AI Powered</span>
+                      </div>
+                      <h3 className="text-3xl font-bold text-black mb-2">AI Sensei</h3>
+                      <p className="text-black/70 text-sm">Personalized practice with your AI tutor</p>
+                    </div>
+                    <div className="text-5xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">🥋</div>
                   </div>
-                  <h3 className="text-2xl font-bold text-black mb-1">AI Sensei</h3>
-                  <p className="text-black/70">Personalized practice with AI tutor</p>
+                  
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-xs text-black/50">{userStats?.totalQuestions || 0} questions completed</span>
+                    <div className="flex items-center gap-2 bg-black/20 hover:bg-black/30 px-4 py-2 rounded-full transition-colors">
+                      <span className="text-sm font-semibold text-black">Start Practice</span>
+                      <ChevronRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 </div>
-                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">🥋</div>
               </div>
-              <ChevronRight className="absolute bottom-6 right-6 w-5 h-5 text-black/40 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Link>
+            </Link>
 
-          <Link href="/study" className="block group">
-            <div className="relative h-full bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-amber-500/30 hover:shadow-[0_0_40px_rgba(245,158,11,0.1)]">
-              {/* Shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <BookOpen className="w-5 h-5 text-zinc-500" />
-                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Self-Paced</span>
+            {/* Study Mode Card */}
+            <Link href="/study" className="block group">
+              <div className="relative min-h-[180px] bg-gradient-to-br from-zinc-800/80 via-zinc-900 to-black rounded-3xl p-6 overflow-hidden transition-all duration-300 hover:scale-[1.03] border border-white/10 hover:border-amber-500/40 shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_40px_rgba(245,158,11,0.15)]">
+                {/* Animated gradient border on hover */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500/20 via-orange-500/10 to-amber-500/20 opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                
+                <div className="relative flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen className="w-5 h-5 text-amber-500/70" />
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Self-Paced</span>
+                      </div>
+                      <h3 className="text-3xl font-bold text-white mb-2">Study Mode</h3>
+                      <p className="text-zinc-400 text-sm">Practice by category & difficulty</p>
+                    </div>
+                    <div className="text-5xl group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">📚</div>
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-1">Study Mode</h3>
-                  <p className="text-zinc-400">Practice by category & difficulty</p>
+                  
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-xs text-zinc-600">Choose your topic</span>
+                    <div className="flex items-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-4 py-2 rounded-full transition-colors">
+                      <span className="text-sm font-semibold text-amber-500">Start Now</span>
+                      <ChevronRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 </div>
-                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">📚</div>
               </div>
-              <ChevronRight className="absolute bottom-6 right-6 w-5 h-5 text-zinc-600 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
 
         {/* Weekly Progress Chart */}
