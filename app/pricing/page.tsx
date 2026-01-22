@@ -240,9 +240,12 @@ export default function PricingPage() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-900">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <span className="text-2xl">🥋</span>
-          <span className="font-semibold text-white">ABA Sensei</span>
+        <Link href="/dashboard" className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🥋</span>
+            <span className="font-semibold text-white">ABA Sensei</span>
+          </div>
+          <span className="text-[10px] text-zinc-500 tracking-wide ml-9">by Simon Franco</span>
         </Link>
       </header>
 

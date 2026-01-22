@@ -166,8 +166,9 @@ export default function SignUpPage() {
     <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🥋</div>
-          <h1 className="text-2xl font-bold text-white">{t.title}</h1>
+          <div className="text-5xl mb-2">🥋</div>
+          <span className="text-[11px] text-zinc-500 tracking-wide">by Simon Franco</span>
+          <h1 className="text-2xl font-bold text-white mt-3">{t.title}</h1>
           <p className="text-white/60 mt-2">{t.subtitle}</p>
           {savedLanguage && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 rounded-full">

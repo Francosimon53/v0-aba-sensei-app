@@ -286,9 +286,12 @@ export default function DashboardPage() {
 
       {/* Header */}
       <header className="relative z-10 px-6 py-4 flex items-center justify-between border-b border-white/5 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🥋</span>
-          <span className="font-semibold text-white">ABA Sensei</span>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🥋</span>
+            <span className="font-semibold text-white">ABA Sensei</span>
+          </div>
+          <span className="text-[10px] text-zinc-500 tracking-wide ml-9">by Simon Franco</span>
         </div>
         <div className="flex items-center gap-4">
           {userProfile?.subscriptionTier === "pro" || userProfile?.subscriptionTier === "annual" ? (

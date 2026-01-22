@@ -74,9 +74,12 @@ export default function Page() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-zinc-900">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🥋</span>
-            <span className="font-bold text-white text-xl">ABA Sensei</span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🥋</span>
+              <span className="font-bold text-white text-xl">ABA Sensei</span>
+            </div>
+            <span className="text-[10px] text-zinc-500 tracking-wide ml-8">by Simon Franco</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/auth/login" className="text-zinc-400 hover:text-white transition">
@@ -356,9 +359,12 @@ export default function Page() {
       {/* Footer */}
       <footer className="relative z-10 py-12 px-6 border-t border-zinc-900">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🥋</span>
-            <span className="font-semibold text-white">ABA Sensei</span>
+          <div className="flex flex-col items-center md:items-start">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🥋</span>
+              <span className="font-semibold text-white">ABA Sensei</span>
+            </div>
+            <span className="text-[10px] text-zinc-500 tracking-wide ml-7">by Simon Franco</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
             <Link href="/privacy" className="hover:text-white transition">
