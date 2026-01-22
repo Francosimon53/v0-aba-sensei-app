@@ -250,6 +250,16 @@ export default function SignUpPage() {
               >
                 {isLoading ? "..." : t.signUp}
               </Button>
+              <p className="text-xs text-zinc-500 text-center">
+                By signing up, you agree to our{" "}
+                <Link href="/terms" className="text-amber-400/80 hover:text-amber-400 underline underline-offset-2">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-amber-400/80 hover:text-amber-400 underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+              </p>
             </div>
             <div className="mt-4 text-center text-sm text-white/60">
               {t.hasAccount}{" "}
