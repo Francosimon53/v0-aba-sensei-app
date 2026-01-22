@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
-import { Settings } from "lucide-react"
+import { Settings, Target, Zap, Flame, Clock, TrendingUp, Award, BookOpen, Brain, ChevronRight } from "lucide-react"
 
 interface UserStats {
   totalQuestions: number
@@ -17,6 +17,7 @@ interface UserStats {
 interface WeeklyData {
   label: string
   questions: number
+  date: string
 }
 
 interface UserProfile {
@@ -26,10 +27,25 @@ interface UserProfile {
   subscriptionTier?: string
 }
 
+interface WeakArea {
+  category: string
+  accuracy: number
+  attempted: number
+}
+
+interface Achievement {
+  id: string
+  name: string
+  icon: string
+  unlocked: boolean
+}
+
 export default function DashboardPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [userStats, setUserStats] = useState<UserStats | null>(null)
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([])
+  const [weakAreas, setWeakAreas] = useState<WeakArea[]>([])
+  const [achievements, setAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -40,86 +56,39 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        console.log("[v0] Dashboard: Starting to load data...")
         const supabase = createClient()
-        console.log("[v0] Dashboard: Supabase client created")
-
-        console.log("[v0] Dashboard: Checking auth status...")
         const {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser()
 
-        console.log("[v0] Dashboard: Auth response:", { user: user?.id, error: authError })
-
-        if (authError) {
-          console.error("[v0] Dashboard: Auth error:", authError)
-          setError("Authentication error. Please log in again.")
-          setLoading(false)
-          setTimeout(() => router.push("/auth/login"), 2000)
-          return
-        }
-
-        if (!user) {
-          console.log("[v0] Dashboard: No user found, redirecting to login")
+        if (authError || !user) {
           router.push("/auth/login")
           return
         }
 
-        console.log("[v0] Dashboard: User authenticated:", user.id)
         setUserId(user.id)
 
-        console.log("[v0] Dashboard: Loading profile...")
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from("profiles")
           .select("full_name, exam_level, preferred_language, subscription_tier")
           .eq("id", user.id)
           .single()
 
-        console.log("[v0] Dashboard: Profile response:", { profile, error: profileError })
-
-        if (profileError) {
-          console.error("[v0] Dashboard: Profile error:", profileError)
-          // Continue even if profile fails - show default values
-        }
-
         const createdAt = user.created_at ? new Date(user.created_at) : new Date()
         const memberSince = createdAt.toLocaleDateString("en-US", { month: "short", year: "numeric" })
 
-        if (profile) {
-          setUserProfile({
-            fullName: profile.full_name || "Student",
-            examLevel: profile.exam_level?.toUpperCase() || "BCBA",
-            memberSince,
-            subscriptionTier: profile.subscription_tier || "free",
-          })
-        } else {
-          setUserProfile({
-            fullName: "Student",
-            examLevel: "BCBA",
-            memberSince,
-            subscriptionTier: "free",
-          })
-        }
+        setUserProfile({
+          fullName: profile?.full_name || "Student",
+          examLevel: profile?.exam_level?.toUpperCase() || "BCBA",
+          memberSince,
+          subscriptionTier: profile?.subscription_tier || "free",
+        })
 
-        console.log("[v0] Dashboard: Loading progress...")
-        const { data: progressData, error: progressError } = await supabase
+        const { data: progressData } = await supabase
           .from("user_progress")
           .select("*")
           .eq("user_id", user.id)
-
-        console.log("[v0] Dashboard: Progress response:", {
-          count: progressData?.length,
-          data: progressData, // Log the actual data to see what's in the table
-          error: progressError,
-        })
-
-        if (progressError) {
-          console.error("[v0] Dashboard: Progress error:", progressError)
-          setError(`Error loading progress: ${progressError.message}`)
-          setLoading(false)
-          return
-        }
 
         if (progressData && progressData.length > 0) {
           const totalQuestions = progressData.reduce((sum, p) => sum + p.questions_attempted, 0)
@@ -132,8 +101,20 @@ export default function DashboardPage() {
             accuracyRate: totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0,
             currentStreak: maxStreak,
             bestStreak: maxBestStreak,
-            studyMinutes: Math.round(totalQuestions * 1.5), // Estimate ~1.5 min per question
+            studyMinutes: Math.round(totalQuestions * 1.5),
           })
+
+          // Calculate weak areas from progress data
+          const categoryStats = progressData.map(p => ({
+            category: p.category || "General",
+            accuracy: p.questions_attempted > 0 ? Math.round((p.questions_correct / p.questions_attempted) * 100) : 0,
+            attempted: p.questions_attempted
+          }))
+          .filter(c => c.attempted > 0)
+          .sort((a, b) => a.accuracy - b.accuracy)
+          .slice(0, 3)
+          
+          setWeakAreas(categoryStats)
         } else {
           setUserStats({
             totalQuestions: 0,
@@ -142,9 +123,10 @@ export default function DashboardPage() {
             bestStreak: 0,
             studyMinutes: 0,
           })
+          setWeakAreas([])
         }
 
-        // Generate weekly data from sessions
+        // Generate weekly data
         const { data: sessionsData } = await supabase
           .from("study_sessions")
           .select("started_at, total_questions")
@@ -168,15 +150,30 @@ export default function DashboardPage() {
           weekly.push({
             label: dayLabels[dayOfWeek],
             questions: questionsForDay,
+            date: dayStr,
           })
         }
 
         setWeeklyData(weekly)
 
-        console.log("[v0] Dashboard: Data loading complete")
+        // Set achievements based on stats
+        const stats = progressData && progressData.length > 0 ? {
+          totalQuestions: progressData.reduce((sum, p) => sum + p.questions_attempted, 0),
+          bestStreak: Math.max(...progressData.map((p) => p.best_streak), 0),
+        } : { totalQuestions: 0, bestStreak: 0 }
+
+        setAchievements([
+          { id: "first", name: "First Steps", icon: "🎯", unlocked: stats.totalQuestions >= 1 },
+          { id: "10q", name: "10 Questions", icon: "📝", unlocked: stats.totalQuestions >= 10 },
+          { id: "50q", name: "50 Questions", icon: "🏅", unlocked: stats.totalQuestions >= 50 },
+          { id: "100q", name: "Century", icon: "💯", unlocked: stats.totalQuestions >= 100 },
+          { id: "streak3", name: "3-Day Streak", icon: "🔥", unlocked: stats.bestStreak >= 3 },
+          { id: "streak7", name: "Week Warrior", icon: "⚡", unlocked: stats.bestStreak >= 7 },
+        ])
+
         setLoading(false)
       } catch (err) {
-        console.error("[v0] Dashboard: Unexpected error:", err)
+        console.error("Dashboard error:", err)
         setError(err instanceof Error ? err.message : "An unexpected error occurred")
         setLoading(false)
       }
@@ -220,6 +217,7 @@ export default function DashboardPage() {
   }
 
   const maxQuestions = Math.max(...weeklyData.map((d) => d.questions), 1)
+  
   const formatStudyTime = (minutes: number) => {
     if (minutes < 60) return `${minutes}m`
     const hours = Math.floor(minutes / 60)
@@ -227,10 +225,33 @@ export default function DashboardPage() {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
   }
 
+  const getAccuracyColor = (accuracy: number) => {
+    if (accuracy >= 70) return "text-emerald-400"
+    if (accuracy >= 50) return "text-amber-400"
+    return "text-red-400"
+  }
+
+  const getAccuracyBg = (accuracy: number) => {
+    if (accuracy >= 70) return "from-emerald-500/20 to-emerald-500/5"
+    if (accuracy >= 50) return "from-amber-500/20 to-amber-500/5"
+    return "from-red-500/20 to-red-500/5"
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-zinc-500">Loading dashboard...</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black">
+      {/* Subtle grid pattern overlay */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjUiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20 pointer-events-none" />
+
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-zinc-900">
+      <header className="relative z-10 px-6 py-4 flex items-center justify-between border-b border-white/5 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <span className="text-2xl">🥋</span>
           <span className="font-semibold text-white">ABA Sensei</span>
@@ -247,7 +268,7 @@ export default function DashboardPage() {
             </button>
           ) : (
             <Link href="/pricing" className="text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors">
-              Upgrade
+              Upgrade to Pro
             </Link>
           )}
           <button onClick={handleLogout} className="text-zinc-500 hover:text-white text-sm transition-colors">
@@ -258,7 +279,7 @@ export default function DashboardPage() {
       
       {/* Portal Error Toast */}
       {portalError && (
-        <div className="fixed top-4 right-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm z-50">
+        <div className="fixed top-4 right-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm z-50 backdrop-blur-sm">
           {portalError}
           <button onClick={() => setPortalError(null)} className="ml-3 text-red-300 hover:text-white">
             Close
@@ -266,98 +287,218 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        {/* Welcome Section */}
-        <div className="mb-12">
-          <p className="text-zinc-500 text-sm mb-1">Welcome back</p>
-          <h1 className="text-4xl font-bold text-white">{userProfile?.fullName || "Student"}</h1>
-          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
-            <span className="text-amber-500 text-sm font-medium">{userProfile?.examLevel || "BCBA"} Candidate</span>
+      <main className="relative z-10 max-w-5xl mx-auto px-6 py-12">
+        {/* Welcome Section with Gradient */}
+        <div className="relative mb-12 p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-transparent to-transparent border border-white/5 overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <p className="text-zinc-500 text-sm mb-2 tracking-wide uppercase">Welcome back</p>
+            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">{userProfile?.fullName || "Student"}</h1>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <span className="text-amber-500 font-semibold">{userProfile?.examLevel || "BCBA"} Candidate</span>
+            </div>
           </div>
         </div>
 
-        {/* Stats Grid - 2x2 */}
-        <div className="grid grid-cols-2 gap-4 mb-12">
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-            <p className="text-zinc-500 text-sm mb-2">Questions Practiced</p>
-            <p className="text-5xl font-bold text-white tracking-tight">{userStats?.totalQuestions || 0}</p>
-          </div>
-
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-            <p className="text-zinc-500 text-sm mb-2">Accuracy</p>
-            <p className="text-5xl font-bold text-green-400 tracking-tight">{userStats?.accuracyRate || 0}%</p>
-          </div>
-
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-            <p className="text-zinc-500 text-sm mb-2">Current Streak</p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-5xl font-bold text-white tracking-tight">{userStats?.currentStreak || 0}</p>
-              <span className="text-2xl">🔥</span>
+        {/* Stats Grid with Glassmorphism */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {/* Questions */}
+          <div className="group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Target className="w-4 h-4 text-blue-400" />
+                </div>
+                <p className="text-zinc-400 text-sm">Questions</p>
+              </div>
+              <p className="text-4xl font-bold text-white tracking-tight">{userStats?.totalQuestions || 0}</p>
             </div>
           </div>
 
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-            <p className="text-zinc-500 text-sm mb-2">Study Time</p>
-            <p className="text-5xl font-bold text-white tracking-tight">
-              {formatStudyTime(userStats?.studyMinutes || 0)}
-            </p>
+          {/* Accuracy */}
+          <div className={`group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]`}>
+            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${getAccuracyBg(userStats?.accuracyRate || 0)} opacity-0 group-hover:opacity-100 transition-opacity`} />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`p-2 rounded-lg ${userStats?.accuracyRate && userStats.accuracyRate >= 70 ? 'bg-emerald-500/10' : userStats?.accuracyRate && userStats.accuracyRate >= 50 ? 'bg-amber-500/10' : 'bg-red-500/10'}`}>
+                  <TrendingUp className={`w-4 h-4 ${getAccuracyColor(userStats?.accuracyRate || 0)}`} />
+                </div>
+                <p className="text-zinc-400 text-sm">Accuracy</p>
+              </div>
+              <p className={`text-4xl font-bold tracking-tight ${getAccuracyColor(userStats?.accuracyRate || 0)}`}>
+                {userStats?.accuracyRate || 0}%
+              </p>
+            </div>
+          </div>
+
+          {/* Current Streak */}
+          <div className="group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <Flame className="w-4 h-4 text-orange-400" />
+                </div>
+                <p className="text-zinc-400 text-sm">Streak</p>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-4xl font-bold text-white tracking-tight">{userStats?.currentStreak || 0}</p>
+                <span className="text-lg text-zinc-500">days</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Study Time */}
+          <div className="group relative bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 hover:scale-[1.02]">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <Clock className="w-4 h-4 text-purple-400" />
+                </div>
+                <p className="text-zinc-400 text-sm">Study Time</p>
+              </div>
+              <p className="text-4xl font-bold text-white tracking-tight">
+                {formatStudyTime(userStats?.studyMinutes || 0)}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Main Actions - Only 2 */}
-        <div className="space-y-4 mb-12">
-          <Link href="/tutor" className="block">
-            <div className="group bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-6 hover:scale-[1.01] transition-all cursor-pointer">
-              <div className="flex items-center justify-between">
+        {/* Main Action Cards */}
+        <div className="grid md:grid-cols-2 gap-4 mb-12">
+          <Link href="/tutor" className="block group">
+            <div className="relative h-full bg-gradient-to-br from-amber-500 via-amber-500 to-amber-600 rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <div className="relative flex items-center justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold text-black">AI Sensei</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="w-5 h-5 text-black/70" />
+                    <span className="text-xs font-semibold text-black/60 uppercase tracking-wide">AI Powered</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-black mb-1">AI Sensei</h3>
                   <p className="text-black/70">Personalized practice with AI tutor</p>
                 </div>
-                <div className="text-4xl group-hover:translate-x-1 transition-transform">🥋</div>
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">🥋</div>
               </div>
+              <ChevronRight className="absolute bottom-6 right-6 w-5 h-5 text-black/40 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
 
-          <Link href="/study" className="block">
-            <div className="group bg-zinc-900 border border-zinc-800 rounded-2xl p-6 hover:border-zinc-700 transition-all cursor-pointer">
-              <div className="flex items-center justify-between">
+          <Link href="/study" className="block group">
+            <div className="relative h-full bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-amber-500/30 hover:shadow-[0_0_40px_rgba(245,158,11,0.1)]">
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <div className="relative flex items-center justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold text-white">Study Mode</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <BookOpen className="w-5 h-5 text-zinc-500" />
+                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Self-Paced</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-1">Study Mode</h3>
                   <p className="text-zinc-400">Practice by category & difficulty</p>
                 </div>
-                <div className="text-4xl group-hover:translate-x-1 transition-transform">📚</div>
+                <div className="text-5xl group-hover:scale-110 transition-transform duration-300">📚</div>
               </div>
+              <ChevronRight className="absolute bottom-6 right-6 w-5 h-5 text-zinc-600 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
         </div>
 
         {/* Weekly Progress Chart */}
-        <div className="mb-12">
-          <h2 className="text-lg font-semibold text-white mb-4">This Week</h2>
-          <div className="flex items-end gap-2 h-32">
-            {weeklyData.map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div
-                  className="w-full bg-amber-500/80 rounded-t-lg transition-all hover:bg-amber-500"
-                  style={{
-                    height: `${(day.questions / maxQuestions) * 100}%`,
-                    minHeight: day.questions > 0 ? "8px" : "2px",
-                  }}
-                />
-                <span className="text-xs text-zinc-500">{day.label}</span>
+        <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-white">Weekly Progress</h2>
+            <span className="text-sm text-zinc-500">Last 7 days</span>
+          </div>
+          <div className="flex items-end gap-3 h-40">
+            {weeklyData.map((day, i) => {
+              const isToday = i === weeklyData.length - 1
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-3">
+                  <div className="relative w-full flex-1 flex items-end">
+                    <div
+                      className={`w-full rounded-lg transition-all duration-300 hover:opacity-100 ${isToday ? 'bg-gradient-to-t from-amber-500 to-amber-400' : 'bg-gradient-to-t from-amber-500/60 to-amber-400/40'}`}
+                      style={{
+                        height: `${Math.max((day.questions / maxQuestions) * 100, day.questions > 0 ? 10 : 3)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="text-center">
+                    <span className={`text-xs font-medium ${isToday ? 'text-amber-500' : 'text-zinc-500'}`}>{day.label}</span>
+                    {day.questions > 0 && (
+                      <p className="text-xs text-zinc-600 mt-0.5">{day.questions}</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Two Column Layout */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+          {/* Weak Areas */}
+          <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-white">Focus Areas</h2>
+            </div>
+            {weakAreas.length > 0 ? (
+              <div className="space-y-3">
+                {weakAreas.map((area, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                    <div>
+                      <p className="text-sm font-medium text-white">{area.category}</p>
+                      <p className="text-xs text-zinc-500">{area.attempted} questions</p>
+                    </div>
+                    <div className={`text-lg font-bold ${getAccuracyColor(area.accuracy)}`}>
+                      {area.accuracy}%
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <p className="text-zinc-500 text-sm">Complete some questions to see your focus areas</p>
+            )}
+          </div>
+
+          {/* Achievements */}
+          <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-semibold text-white">Achievements</h2>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {achievements.map((achievement) => (
+                <div 
+                  key={achievement.id}
+                  className={`flex flex-col items-center p-3 rounded-xl transition-all ${
+                    achievement.unlocked 
+                      ? 'bg-amber-500/10 border border-amber-500/20' 
+                      : 'bg-white/[0.02] border border-white/5 opacity-40'
+                  }`}
+                >
+                  <span className="text-2xl mb-1">{achievement.icon}</span>
+                  <span className="text-xs text-center text-zinc-400">{achievement.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Footer Stats */}
-        <div className="pt-8 border-t border-zinc-900 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm text-zinc-500">
-          <div>
-            Best Streak: <span className="text-white font-medium">{userStats?.bestStreak || 0} 🏆</span>
+        <div className="pt-8 border-t border-white/5 flex flex-wrap items-center justify-center gap-6 text-sm text-zinc-500">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🏆</span>
+            Best Streak: <span className="text-white font-semibold">{userStats?.bestStreak || 0} days</span>
           </div>
-          <div className="hidden sm:block">•</div>
+          <div className="hidden sm:block text-zinc-700">|</div>
           <div>
-            Member since <span className="text-white font-medium">{userProfile?.memberSince || "Today"}</span>
+            Member since <span className="text-white font-semibold">{userProfile?.memberSince || "Today"}</span>
           </div>
         </div>
       </main>
