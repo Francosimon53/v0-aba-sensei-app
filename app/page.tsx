@@ -379,6 +379,13 @@ export default function Page() {
           </div>
           <p className="text-zinc-600 text-sm">© 2024 ABA Sensei. All rights reserved.</p>
         </div>
+
+        {/* BACB Disclaimer */}
+        <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-zinc-900">
+          <p className="text-xs text-gray-500 text-center max-w-4xl mx-auto leading-relaxed">
+            ABA Sensei is not affiliated with, endorsed by, or associated with the Behavior Analyst Certification Board (BACB). BCBA® and RBT® are registered trademarks of the BACB. This is an independent study tool and does not guarantee exam success.
+          </p>
+        </div>
       </footer>
     </div>
   )

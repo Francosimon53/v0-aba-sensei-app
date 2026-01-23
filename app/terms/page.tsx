@@ -136,7 +136,20 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">10. Termination</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">10. BACB Disclaimer</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              ABA Sensei is an independent exam preparation platform and is not affiliated with, endorsed by, sponsored by, or associated with the Behavior Analyst Certification Board® (BACB®).
+            </p>
+            <p className="text-zinc-300 leading-relaxed mt-3">
+              BCBA® (Board Certified Behavior Analyst®) and RBT® (Registered Behavior Technician®) are registered trademarks owned by the Behavior Analyst Certification Board®. All references to BCBA, RBT, and BACB are for identification purposes only and do not imply any affiliation or endorsement.
+            </p>
+            <p className="text-zinc-300 leading-relaxed mt-3">
+              Our practice questions and study materials are independently developed and are not official BACB materials. For official exam information, task lists, and requirements, please visit the official BACB website at <a href="https://www.bacb.com" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:text-amber-300 underline">www.bacb.com</a>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-4">11. Termination</h2>
             <p className="text-zinc-300 leading-relaxed">
               We reserve the right to suspend or terminate your account and access to the Service at our 
               sole discretion, without notice, for conduct that we believe violates these Terms or is 
@@ -145,7 +158,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">11. Changes to Terms</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">12. Changes to Terms</h2>
             <p className="text-zinc-300 leading-relaxed">
               We may update these Terms from time to time. We will notify you of any changes by posting 
               the new Terms on this page and updating the "Last updated" date. Your continued use of the 
@@ -154,7 +167,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-white mb-4">12. Contact Information</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">13. Contact Information</h2>
             <p className="text-zinc-300 leading-relaxed">
               If you have any questions about these Terms, please contact us at:
             </p>

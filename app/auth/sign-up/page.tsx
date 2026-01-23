@@ -260,6 +260,9 @@ export default function SignUpPage() {
                   Privacy Policy
                 </Link>
               </p>
+              <p className="text-xs text-gray-500 text-center">
+                Not affiliated with BACB®
+              </p>
             </div>
             <div className="mt-4 text-center text-sm text-white/60">
               {t.hasAccount}{" "}
