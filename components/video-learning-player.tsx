@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Volume2, VolumeX } from "lucide-react"
+import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
 
 interface Scene {
   icon: string
@@ -19,43 +19,11 @@ interface VideoLearningPlayerProps {
   autoPlay?: boolean
 }
 
-// Lofi music URLs (royalty-free)
-const LOFI_MUSIC_URL = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
-
 export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearningPlayerProps) {
   const [currentScene, setCurrentScene] = useState(0)
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [sceneProgress, setSceneProgress] = useState(0)
-  const [isMusicPlaying, setIsMusicPlaying] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Initialize audio on mount
-  useEffect(() => {
-    audioRef.current = new Audio(LOFI_MUSIC_URL)
-    audioRef.current.loop = true
-    audioRef.current.volume = 0.3
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [])
-
-  // Toggle music
-  const toggleMusic = () => {
-    if (audioRef.current) {
-      if (isMusicPlaying) {
-        audioRef.current.pause()
-      } else {
-        audioRef.current.play()
-      }
-      setIsMusicPlaying(!isMusicPlaying)
-    }
-  }
-
-  // Slower durations for better readability (2x slower)
   const scenes: Scene[] = [
     {
       icon: "?",
@@ -63,7 +31,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
       subtitle: "Clinical scenario with 4 options",
       color: "from-amber-500/30 to-amber-900/10",
       glowColor: "rgba(245,158,11,0.4)",
-      duration: 16000,
+      duration: 12000,
       animation: "typewriter"
     },
     {
@@ -72,7 +40,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
       subtitle: "4 choices appear one by one",
       color: "from-zinc-700/50 to-zinc-800/30",
       glowColor: "rgba(245,158,11,0.3)",
-      duration: 12000,
+      duration: 10000,
       animation: "stagger"
     },
     {
@@ -81,7 +49,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
       subtitle: "Correct answer highlighted in green",
       color: "from-green-500/30 to-green-900/10",
       glowColor: "rgba(34,197,94,0.4)",
-      duration: 8000,
+      duration: 6000,
       animation: "reveal"
     },
     {
@@ -90,7 +58,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
       subtitle: "Why B is correct + key takeaway",
       color: "from-amber-500/20 to-amber-900/10",
       glowColor: "rgba(245,158,11,0.3)",
-      duration: 20000,
+      duration: 15000,
       animation: "explanation"
     },
     {
@@ -99,7 +67,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
       subtitle: "ABA keywords and common traps",
       color: "from-red-500/30 to-red-900/10",
       glowColor: "rgba(239,68,68,0.4)",
-      duration: 20000,
+      duration: 15000,
       animation: "trapDetector"
     },
     {
@@ -108,7 +76,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
       subtitle: "Track your improvement",
       color: "from-amber-500/30 to-amber-900/10",
       glowColor: "rgba(245,158,11,0.4)",
-      duration: 6000,
+      duration: 5000,
       animation: "scale"
     }
   ]
@@ -175,43 +143,34 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
 
   return (
     <div className="flex flex-col items-center justify-center w-full">
-      {/* Scene Carousel - Much larger and centered */}
-      <div className="relative w-full max-w-2xl h-[400px] mb-28 overflow-visible rounded-3xl bg-gradient-to-b from-zinc-900/50 to-zinc-950/80 border border-zinc-800/50 shadow-2xl p-8">
-        {/* Music toggle button */}
-        <button
-          onClick={toggleMusic}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-zinc-800/80 border border-zinc-700/50 hover:border-amber-500/50 flex items-center justify-center text-zinc-400 hover:text-amber-500 transition-all z-10"
-          title={isMusicPlaying ? "Mute music" : "Play lofi music"}
-        >
-          {isMusicPlaying ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-        </button>
-
+      {/* Scene Carousel */}
+      <div className="relative w-full max-w-2xl h-80 mb-24 overflow-visible">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentScene}
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 0.95 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="absolute inset-0 flex flex-col items-center justify-center p-8"
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute inset-0 flex flex-col items-center justify-center"
           >
-            {/* Icon with glow effect - larger */}
+            {/* Icon with glow effect */}
             <motion.div
               className={`w-32 h-32 rounded-3xl bg-gradient-to-br ${scenes[currentScene].color} flex items-center justify-center mb-6 shadow-2xl border border-amber-500/20`}
               initial={{ scale: 0.8, rotate: -10 }}
               animate={{
                 scale: 1,
                 rotate: 0,
-                boxShadow: `0 0 60px ${scenes[currentScene].glowColor}`
+                boxShadow: `0 0 50px ${scenes[currentScene].glowColor}`
               }}
-              transition={{ duration: 0.8, type: "spring", stiffness: 150 }}
-              whileHover={{ scale: 1.05, boxShadow: `0 0 80px ${scenes[currentScene].glowColor}` }}
+              transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
+              whileHover={{ scale: 1.05, boxShadow: `0 0 60px ${scenes[currentScene].glowColor}` }}
             >
               <motion.span
                 className="text-6xl"
                 animate={scenes[currentScene].animation === "trapDetector" ? {
                   rotate: [0, -5, 5, -5, 5, 0],
-                  transition: { duration: 0.8, repeat: Number.POSITIVE_INFINITY, repeatDelay: 3 }
+                  transition: { duration: 0.5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 2 }
                 } : {}}
               >
                 {scenes[currentScene].animation === "typewriter" && "?"}
@@ -223,17 +182,17 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
               </motion.span>
             </motion.div>
 
-            {/* Title - larger */}
+            {/* Title */}
             <motion.h2
               className="text-3xl font-bold text-white mb-3 tracking-tight"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
             >
               {scenes[currentScene].title}
             </motion.h2>
 
-            {/* Scene-specific content - larger text and slower animations */}
+            {/* Scene-specific content */}
             {scenes[currentScene].animation === "stagger" ? (
               <div className="flex gap-4 mt-4">
                 {["A", "B", "C", "D"].map((letter, optIdx) => (
@@ -241,7 +200,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
                     key={letter}
                     initial={{ opacity: 0, y: 20, scale: 0.8 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 0.8 + optIdx * 2.0, duration: 0.8, type: "spring" }}
+                    transition={{ delay: 0.8 + optIdx * 1.8, duration: 0.6, type: "spring" }}
                     className="w-14 h-14 rounded-xl bg-[#1a1a24] border border-zinc-700/50 flex items-center justify-center text-amber-500 font-bold text-lg shadow-lg"
                     whileHover={{ scale: 1.1, borderColor: "rgba(245,158,11,0.5)" }}
                   >
@@ -250,7 +209,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
                 ))}
               </div>
             ) : scenes[currentScene].animation === "reveal" ? (
-              <div className="flex gap-4 mt-4">
+              <div className="flex gap-3 mt-4">
                 {["A", "B", "C", "D"].map((letter) => {
                   const isCorrect = letter === "B"
                   return (
@@ -260,10 +219,10 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
                       animate={{
                         opacity: 1,
                         scale: isCorrect ? [1, 1.15, 1.1] : 1,
-                        boxShadow: isCorrect ? ["0 0 0px rgba(34,197,94,0)", "0 0 30px rgba(34,197,94,0.5)", "0 0 20px rgba(34,197,94,0.4)"] : "none"
+                        boxShadow: isCorrect ? ["0 0 0px rgba(34,197,94,0)", "0 0 25px rgba(34,197,94,0.5)", "0 0 20px rgba(34,197,94,0.4)"] : "none"
                       }}
-                      transition={{ delay: isCorrect ? 1.5 : 0, duration: 1.0 }}
-                      className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-lg ${
+                      transition={{ delay: isCorrect ? 1 : 0, duration: 0.8 }}
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold text-base ${
                         isCorrect
                           ? "bg-green-500 border-2 border-green-400 text-white"
                           : "bg-zinc-800/50 border border-zinc-700/50 text-zinc-500"
@@ -277,18 +236,18 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
             ) : scenes[currentScene].animation === "explanation" ? (
               <div className="flex flex-col items-center mt-4 max-w-md">
                 <motion.div
-                  className="text-lg text-zinc-300 text-center mb-4"
+                  className="text-base text-zinc-300 text-center mb-4"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
                 >
                   <span className="text-green-400 font-semibold">B is correct</span> because it directly addresses the function of the behavior.
                 </motion.div>
                 <motion.div
-                  className="px-5 py-3 bg-amber-500/10 border border-amber-500/30 rounded-xl"
+                  className="px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg"
                   initial={{ opacity: 0, y: 15, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 4, duration: 0.8, type: "spring" }}
+                  transition={{ delay: 3, duration: 0.7, type: "spring" }}
                 >
                   <p className="text-sm text-amber-300 text-center">
                     <span className="font-semibold">Key takeaway:</span> Always identify the function before selecting an intervention.
@@ -304,8 +263,8 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
                       key={keyword}
                       initial={{ opacity: 0, x: -20, scale: 0.8 }}
                       animate={{ opacity: 1, x: 0, scale: 1 }}
-                      transition={{ delay: 0.5 + idx * 1.2, duration: 0.6, type: "spring" }}
-                      className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-lg text-amber-400 text-sm font-bold"
+                      transition={{ delay: 0.5 + idx * 1, duration: 0.5, type: "spring" }}
+                      className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded text-amber-400 text-sm font-bold"
                     >
                       {keyword}
                     </motion.span>
@@ -314,20 +273,20 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
                 {/* Traps section */}
                 <div className="space-y-3 w-full">
                   <motion.div
-                    className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl"
+                    className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg"
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 5, duration: 0.8 }}
+                    transition={{ delay: 4.5, duration: 0.6 }}
                   >
                     <p className="text-sm text-red-300 text-center">
                       Effectiveness vs Generality
                     </p>
                   </motion.div>
                   <motion.div
-                    className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl"
+                    className="px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg"
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 9, duration: 0.8 }}
+                    transition={{ delay: 7, duration: 0.6 }}
                   >
                     <p className="text-sm text-red-300 text-center">
                       Reinforcement vs Punishment
@@ -340,7 +299,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
                 className="text-zinc-400 text-base max-w-md text-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
+                transition={{ delay: 0.5 }}
               >
                 {scenes[currentScene].subtitle}
               </motion.p>
@@ -348,10 +307,10 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
           </motion.div>
         </AnimatePresence>
 
-        {/* Scene controls - larger and more accessible */}
+        {/* Scene controls */}
         <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4">
-          {/* Progress bar - wider */}
-          <div className="w-72 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+          {/* Progress bar */}
+          <div className="w-64 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-amber-500 rounded-full"
               style={{ width: `${sceneProgress}%` }}
@@ -359,8 +318,8 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
             />
           </div>
 
-          {/* Scene indicators - larger */}
-          <div className="flex gap-3">
+          {/* Scene indicators */}
+          <div className="flex gap-2.5">
             {scenes.map((_, index) => (
               <button
                 key={index}
@@ -375,7 +334,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
             ))}
           </div>
 
-          {/* Control buttons - larger */}
+          {/* Control buttons */}
           <div className="flex items-center gap-4">
             <button
               onClick={restartScenes}
@@ -393,7 +352,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
             </button>
             <button
               onClick={togglePlayPause}
-              className="w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 flex items-center justify-center text-black transition-all shadow-lg shadow-amber-500/30"
+              className="w-12 h-12 rounded-full bg-amber-500 hover:bg-amber-400 flex items-center justify-center text-black transition-all shadow-lg shadow-amber-500/30"
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
@@ -405,7 +364,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-            <div className="text-amber-500/70 text-sm ml-3 font-medium">
+            <div className="text-amber-500/70 text-sm ml-2 font-medium">
               {currentScene + 1}/{scenes.length}
             </div>
           </div>
