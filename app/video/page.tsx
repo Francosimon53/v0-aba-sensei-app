@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { VideoLearningPlayer } from "@/components/video-learning-player"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Target, Trophy, ChevronRight, Check } from "lucide-react"
+import { ChevronLeft, Target, Trophy, ChevronRight, Check, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { isForeverFreeUser } from "@/lib/constants"
 
@@ -36,6 +36,16 @@ interface GameStats {
   dailyGoal: number
 }
 
+interface QuestionData {
+  question: string
+  options: string[]
+  correctIndex: number
+  hint: string
+  category?: string
+  topic?: string
+  difficulty?: string
+}
+
 export default function VideoModePage() {
   const router = useRouter()
   const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
@@ -46,7 +56,87 @@ export default function VideoModePage() {
     dailyGoal: 10,
   })
   const [subscriptionTier, setSubscriptionTier] = useState<string>("free")
+  const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [isAnswered, setIsAnswered] = useState<boolean>(false)
   const progressPercent = 80
+
+  // Load question from API
+  const loadQuestion = async () => {
+    setIsLoading(true)
+    setSelectedAnswer(null)
+    setIsAnswered(false)
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "practice",
+          topic: examLevel === "rbt" ? "RBT exam concepts" : "BCBA exam concepts",
+          examLevel,
+          category: selectedCategory !== "all" ? selectedCategory : null,
+          difficulty: difficulty,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.type === "quiz" && data.question) {
+        let options: string[] = []
+        let correctIndex = 0
+        
+        if (Array.isArray(data.options)) {
+          if (typeof data.options[0] === 'string') {
+            options = data.options
+            correctIndex = data.correctIndex ?? 0
+          } else {
+            options = data.options.map((opt: any, idx: number) => {
+              const letter = ['A', 'B', 'C', 'D'][idx]
+              return `${letter}. ${opt.text || opt.answer || opt.content || 'Option'}`
+            })
+            correctIndex = data.options.findIndex((opt: any) => opt.isCorrect === true || opt.correct === true)
+            if (correctIndex === -1) correctIndex = 0
+          }
+        }
+
+        const questionData: QuestionData = {
+          question: data.question,
+          options,
+          correctIndex,
+          hint: data.hint || "Think about the key ABA concepts involved.",
+          category: data.category || undefined,
+          topic: data.topic || undefined,
+          difficulty: data.difficulty || "Medium",
+        }
+
+        setCurrentQuestion(questionData)
+      }
+    } catch (error) {
+      console.error("Error loading question:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAnswer = (optionIndex: number) => {
+    if (isAnswered || !currentQuestion) return
+    
+    setSelectedAnswer(optionIndex)
+    setIsAnswered(true)
+    
+    const isCorrect = optionIndex === currentQuestion.correctIndex
+
+    setGameStats((prev) => ({
+      ...prev,
+      correctToday: isCorrect ? prev.correctToday + 1 : prev.correctToday,
+    }))
+  }
+
+  const handleNextQuestion = () => {
+    loadQuestion()
+  }
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -74,36 +164,31 @@ export default function VideoModePage() {
   }, [])
 
   const handleStartQuiz = () => {
-    // Navigate to tutor with selected settings via URL params
-    const params = new URLSearchParams({
-      level: examLevel,
-      category: selectedCategory,
-      difficulty: difficulty,
-    })
-    router.push(`/tutor?${params.toString()}`)
+    // Load a question instead of navigating away
+    loadQuestion()
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
       {/* Header */}
-      <header className="px-3 sm:px-4 py-3 sm:py-4 border-b border-zinc-800/50 flex items-center justify-between gap-3">
+      <header className="px-4 sm:px-6 py-4 border-b border-zinc-800/50 flex items-center justify-between">
         {/* Left: Back button */}
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-white/60 hover:text-white/80 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+          className="text-zinc-400 hover:text-white text-sm flex items-center gap-2 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Dashboard</span>
+          <span>Back to Dashboard</span>
         </button>
         
         {/* Center: Title */}
         <div className="flex items-center gap-2">
-          <span className="text-lg">🎬</span>
-          <span className="text-white font-semibold text-sm sm:text-base">Video Mode</span>
+          <span className="text-xl">🎬</span>
+          <span className="text-white font-semibold">Video Mode</span>
         </div>
         
-        {/* Right: Stats placeholder */}
-        <div className="w-20" />
+        {/* Right: Spacer for alignment */}
+        <div className="w-[140px]" />
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
@@ -136,14 +221,113 @@ export default function VideoModePage() {
         {/* Video Learning Player */}
         <VideoLearningPlayer autoPlay={true} />
 
-        {/* Logo and title */}
-        <div className="text-4xl mb-3 opacity-90">🥋</div>
-        <h1 className="text-xl font-semibold text-white mb-1 tracking-tight">ABA Sensei</h1>
-        <p className="text-zinc-500 text-center text-sm mb-6">
-          Watch and learn before you practice
-        </p>
+        {/* Question Section */}
+        {currentQuestion ? (
+          <div className="w-full max-w-2xl mt-8 mb-8">
+            {/* Question Card */}
+            <div className="bg-zinc-900/80 rounded-2xl p-6 border border-zinc-800/50 mb-4">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xs font-medium text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full">
+                  {currentQuestion.category || examLevel.toUpperCase()}
+                </span>
+                <span className="text-xs font-medium text-zinc-500 bg-zinc-800 px-2 py-1 rounded-full">
+                  {currentQuestion.difficulty || difficulty}
+                </span>
+              </div>
+              <p className="text-white text-lg leading-relaxed mb-6">{currentQuestion.question}</p>
+              
+              {/* Options */}
+              <div className="space-y-3">
+                {currentQuestion.options.map((option, idx) => {
+                  const isSelected = selectedAnswer === idx
+                  const isCorrect = idx === currentQuestion.correctIndex
+                  const showResult = isAnswered
+                  
+                  let optionStyle = "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600"
+                  if (showResult) {
+                    if (isCorrect) {
+                      optionStyle = "border-green-500 bg-green-500/10"
+                    } else if (isSelected && !isCorrect) {
+                      optionStyle = "border-red-500 bg-red-500/10"
+                    }
+                  } else if (isSelected) {
+                    optionStyle = "border-amber-500 bg-amber-500/10"
+                  }
+                  
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleAnswer(idx)}
+                      disabled={isAnswered}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${optionStyle} ${
+                        isAnswered ? "cursor-default" : "cursor-pointer"
+                      }`}
+                    >
+                      <span className={`${
+                        showResult && isCorrect ? "text-green-400" : 
+                        showResult && isSelected && !isCorrect ? "text-red-400" : 
+                        "text-white"
+                      }`}>
+                        {option}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              
+              {/* Result & Hint */}
+              {isAnswered && (
+                <div className="mt-6">
+                  <div className={`p-4 rounded-xl ${
+                    selectedAnswer === currentQuestion.correctIndex 
+                      ? "bg-green-500/10 border border-green-500/30" 
+                      : "bg-red-500/10 border border-red-500/30"
+                  }`}>
+                    <p className={`font-semibold mb-2 ${
+                      selectedAnswer === currentQuestion.correctIndex ? "text-green-400" : "text-red-400"
+                    }`}>
+                      {selectedAnswer === currentQuestion.correctIndex ? "Correct!" : "Incorrect"}
+                    </p>
+                    <p className="text-zinc-300 text-sm">{currentQuestion.hint}</p>
+                  </div>
+                  
+                  <div className="flex gap-3 mt-4">
+                    <Button
+                      onClick={() => setCurrentQuestion(null)}
+                      variant="outline"
+                      className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800 py-4 rounded-xl"
+                    >
+                      Change Settings
+                    </Button>
+                    <Button
+                      onClick={handleNextQuestion}
+                      disabled={isLoading}
+                      className="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-semibold py-4 rounded-xl"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        "Next Question"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Logo and title - shown when no question loaded */}
+            <div className="text-4xl mb-3 opacity-90 mt-8">🥋</div>
+            <h1 className="text-xl font-semibold text-white mb-1 tracking-tight">ABA Sensei</h1>
+            <p className="text-zinc-500 text-center text-sm mb-6">
+              Watch and learn, then practice with questions
+            </p>
+          </>
+        )}
 
-        {/* Category selection */}
+        {/* Category selection - only show when no question */}
+        {!currentQuestion && (
         <div className="w-full max-w-md mb-8">
           <p className="text-zinc-400 text-sm text-center mb-3">Select Category</p>
           <div className="flex flex-wrap gap-2 justify-center">
@@ -172,8 +356,10 @@ export default function VideoModePage() {
             ))}
           </div>
         </div>
+        )}
 
-        {/* Difficulty selector */}
+        {/* Difficulty selector - only show when no question */}
+        {!currentQuestion && (
         <div className="mt-6 w-full max-w-md mb-8">
           <p className="text-zinc-400 text-sm mb-3 text-center">Difficulty Level</p>
 
@@ -242,8 +428,10 @@ export default function VideoModePage() {
             </button>
           </div>
         </div>
+        )}
 
-        {/* Progress ring */}
+        {/* Progress ring - only show when no question */}
+        {!currentQuestion && (
         <div className="relative w-32 h-32 mb-8">
           <svg className="w-full h-full -rotate-90">
             <circle cx="64" cy="64" r="56" fill="none" stroke="#1f1f1f" strokeWidth="6" />
@@ -264,14 +452,25 @@ export default function VideoModePage() {
             <span className="text-white font-medium">{Math.round(progressPercent)}%</span>
           </div>
         </div>
+        )}
 
-        {/* Start Quiz button */}
-        <Button
-          onClick={handleStartQuiz}
-          className="w-full max-w-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
-        >
-          Start Quiz Practice
-        </Button>
+        {/* Start/Load Question button */}
+        {!currentQuestion && (
+          <Button
+            onClick={handleStartQuiz}
+            disabled={isLoading}
+            className="w-full max-w-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Loading Question...
+              </span>
+            ) : (
+              "Start Practice Question"
+            )}
+          </Button>
+        )}
 
         {/* Daily goal card */}
         <div className="mt-8 bg-zinc-900/80 rounded-xl p-4 w-full max-w-xs border border-zinc-800/50">
