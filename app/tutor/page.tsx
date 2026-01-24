@@ -979,10 +979,17 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     
     <button
       onClick={() => router.push("/video")}
-      className="w-full flex items-center justify-center gap-2 bg-zinc-800/80 hover:bg-zinc-700/80 text-white font-medium py-4 rounded-xl border border-zinc-700/50 hover:border-purple-500/30 transition-all duration-200"
+      className="w-full bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl p-4 border border-amber-500/30 hover:border-amber-500/50 transition-all duration-200 group"
     >
-      <span className="text-lg">🎬</span>
-      <span>Video Learning Mode</span>
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+          <span className="text-2xl">🎬</span>
+        </div>
+        <div className="text-left">
+          <p className="text-white font-semibold text-sm">Video Learning Mode</p>
+          <p className="text-zinc-400 text-xs">Learn through animated video explanations</p>
+        </div>
+      </div>
     </button>
   </div>
   
