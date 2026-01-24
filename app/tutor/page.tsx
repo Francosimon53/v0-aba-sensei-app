@@ -751,6 +751,14 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       correctOption: "B"
     },
     {
+      icon: "💡",
+      title: "Explanation",
+      subtitle: "Why B is correct + key takeaway",
+      color: "from-cyan-500/20 to-cyan-600/5",
+      duration: 10000, // 10 seconds
+      animation: "explanation"
+    },
+    {
       icon: "🚨",
       title: "Trap Alert",
       subtitle: "Identify tricky exam patterns",
@@ -929,6 +937,28 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                           </div>
                         )
                       })}
+                    </div>
+                  ) : scene.animation === "explanation" && isActive ? (
+                    <div className="flex flex-col items-center mt-2 max-w-xs">
+                      <div 
+                        className="text-sm text-zinc-300 text-center mb-3"
+                        style={{
+                          animation: "fadeSlideIn 0.8s ease-out forwards"
+                        }}
+                      >
+                        <span className="text-green-400 font-semibold">B is correct</span> because it directly addresses the function of the behavior.
+                      </div>
+                      <div 
+                        className="px-3 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg"
+                        style={{
+                          animation: "fadeSlideIn 0.8s ease-out 2s forwards",
+                          opacity: 0
+                        }}
+                      >
+                        <p className="text-xs text-cyan-300 text-center">
+                          <span className="font-semibold">Key takeaway:</span> Always identify the function before selecting an intervention.
+                        </p>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-zinc-400 text-sm max-w-xs text-center">{scene.subtitle}</p>
