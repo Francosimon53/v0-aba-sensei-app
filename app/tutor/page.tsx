@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Flame,
   Trophy,
   Target,
@@ -18,6 +19,9 @@ import {
   BookOpen,
   Share2,
   Linkedin,
+  RotateCcw,
+  Pause,
+  Play,
 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -723,6 +727,8 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
 
   // Animated scenes for welcome screen
   const [currentScene, setCurrentScene] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [sceneProgress, setSceneProgress] = useState(0)
   const scenes = [
     {
       icon: "❓",
@@ -780,13 +786,45 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
 
   // Auto-cycle scenes with variable duration
   useEffect(() => {
-    if (sessionStarted) return
+    if (sessionStarted || !isPlaying) return
     const currentDuration = scenes[currentScene]?.duration || 3000
-    const timeout = setTimeout(() => {
-      setCurrentScene((prev) => (prev + 1) % scenes.length)
-    }, currentDuration)
-    return () => clearTimeout(timeout)
-  }, [sessionStarted, currentScene, scenes])
+    const progressInterval = 50 // Update progress every 50ms
+    let elapsed = 0
+    
+    const interval = setInterval(() => {
+      elapsed += progressInterval
+      setSceneProgress((elapsed / currentDuration) * 100)
+      
+      if (elapsed >= currentDuration) {
+        setCurrentScene((prev) => (prev + 1) % scenes.length)
+        setSceneProgress(0)
+        elapsed = 0
+      }
+    }, progressInterval)
+    
+    return () => clearInterval(interval)
+  }, [sessionStarted, currentScene, scenes, isPlaying])
+
+  // Scene control functions
+  const nextScene = () => {
+    setCurrentScene((prev) => (prev + 1) % scenes.length)
+    setSceneProgress(0)
+  }
+  
+  const prevScene = () => {
+    setCurrentScene((prev) => (prev - 1 + scenes.length) % scenes.length)
+    setSceneProgress(0)
+  }
+  
+  const restartScenes = () => {
+    setCurrentScene(0)
+    setSceneProgress(0)
+    setIsPlaying(true)
+  }
+  
+  const togglePlayPause = () => {
+    setIsPlaying((prev) => !prev)
+  }
 
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
@@ -852,7 +890,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           </div>
 
           {/* Animated Scene Carousel */}
-          <div className="relative w-full max-w-sm h-48 mb-8 overflow-hidden">
+          <div className="relative w-full max-w-sm h-48 mb-24 overflow-visible">
             {scenes.map((scene, index) => {
               const isActive = index === currentScene
               // Different entrance animations based on scene type
@@ -1009,32 +1047,71 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                     <p className="text-zinc-400 text-sm max-w-xs text-center">{scene.subtitle}</p>
                   )}
   
-  {/* Progress bar for current scene */}
-                  {isActive && (
-                    <div className="absolute bottom-8 w-32 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-amber-500 rounded-full"
-                        style={{
-                          animation: `progress ${scene.duration}ms linear forwards`
-                        }}
-                      />
-                    </div>
-                  )}
+
                 </div>
               )
             })}
             
-            {/* Scene indicators */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2">
-              {scenes.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentScene(index)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === currentScene ? "bg-amber-500 w-6" : "bg-zinc-700 hover:bg-zinc-600 w-2"
-                  }`}
+{/* Scene controls */}
+            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+              {/* Progress bar */}
+              <div className="w-48 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-amber-500 rounded-full transition-all duration-100"
+                  style={{ width: `${sceneProgress}%` }}
                 />
-              ))}
+              </div>
+              
+              {/* Scene indicators */}
+              <div className="flex gap-2">
+                {scenes.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentScene(index)
+                      setSceneProgress(0)
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === currentScene ? "bg-amber-500 w-6" : "bg-zinc-700 hover:bg-zinc-600 w-2"
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Control buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={restartScenes}
+                  className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                  title="Restart"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={prevScene}
+                  className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                  title="Previous"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={togglePlayPause}
+                  className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-400 flex items-center justify-center text-black transition-all"
+                  title={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                </button>
+                <button
+                  onClick={nextScene}
+                  className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                  title="Next"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <div className="text-zinc-500 text-xs ml-2">
+                  {currentScene + 1}/{scenes.length}
+                </div>
+              </div>
             </div>
           </div>
           
