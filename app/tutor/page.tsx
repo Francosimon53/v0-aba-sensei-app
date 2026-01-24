@@ -726,6 +726,9 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     loadQuestion() // Load first question when session starts
   }
 
+  // Welcome screen mode toggle
+  const [welcomeMode, setWelcomeMode] = useState<"video" | "quiz">("video")
+
   // Animated scenes for welcome screen
   const [currentScene, setCurrentScene] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -870,8 +873,32 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+          {/* Mode toggle: Quiz | Video */}
+          <div className="flex bg-[#1a1a24] rounded-full p-1 mb-6 border border-zinc-800/50">
+            <button
+              onClick={() => setWelcomeMode("quiz")}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                welcomeMode === "quiz" 
+                  ? "bg-amber-500 text-black" 
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Quiz
+            </button>
+            <button
+              onClick={() => setWelcomeMode("video")}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                welcomeMode === "video" 
+                  ? "bg-amber-500 text-black" 
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Video
+            </button>
+          </div>
+
           {/* Level toggle */}
-          <div className="flex bg-zinc-900 rounded-full p-1 mb-8 border border-zinc-800">
+          <div className="flex bg-[#1a1a24] rounded-full p-1 mb-8 border border-zinc-800/50">
             <button
               onClick={() => {
                 setExamLevel("rbt")
@@ -896,8 +923,10 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </button>
           </div>
 
-          {/* Animated Scene Carousel with Framer Motion */}
-          <div className="relative w-full max-w-sm h-48 mb-24 overflow-visible">
+          {welcomeMode === "video" ? (
+            <>
+              {/* Animated Scene Carousel with Framer Motion */}
+              <div className="relative w-full max-w-sm h-48 mb-24 overflow-visible">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentScene}
@@ -1117,15 +1146,51 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               </div>
             </div>
           </div>
-          
+            </>
+          ) : (
+            /* Quiz mode - Simple ready state */
+            <motion.div 
+              className="flex flex-col items-center justify-center mb-8"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <motion.div 
+                className="w-28 h-28 rounded-3xl bg-gradient-to-br from-amber-500/30 to-amber-900/10 flex items-center justify-center mb-6 border border-amber-500/20"
+                animate={{ 
+                  boxShadow: ["0 0 30px rgba(245,158,11,0.2)", "0 0 50px rgba(245,158,11,0.4)", "0 0 30px rgba(245,158,11,0.2)"]
+                }}
+                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+              >
+                <span className="text-6xl">🥋</span>
+              </motion.div>
+              <h2 className="text-2xl font-bold text-white mb-2">Ready to Practice?</h2>
+              <p className="text-zinc-400 text-sm text-center max-w-xs">
+                {examLevel === "rbt" ? "RBT" : "BCBA"} exam questions powered by AI
+              </p>
+              <div className="flex items-center gap-4 mt-4 text-sm">
+                <div className="flex items-center gap-1.5 text-amber-500/80">
+                  <Zap className="w-4 h-4" />
+                  <span>{questionsUsedToday} today</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-green-500/80">
+                  <Target className="w-4 h-4" />
+                  <span>{gameStats.correctToday}/{gameStats.dailyGoal} goal</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-
-          {/* Logo and title */}
+          {/* Logo and title - only show in video mode */}
+          {welcomeMode === "video" && (
+            <>
           <div className="text-4xl mb-3 opacity-90">🥋</div>
           <h1 className="text-xl font-semibold text-white mb-1 tracking-tight">ABA Sensei</h1>
           <p className="text-zinc-500 text-center text-sm mb-6">
             {gameStats.correctToday}/{gameStats.dailyGoal} questions today
           </p>
+            </>
+          )}
 
           {/* Category selection */}
           <div className="w-full max-w-md mb-8">
