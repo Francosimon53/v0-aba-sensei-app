@@ -721,6 +721,50 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     loadQuestion() // Load first question when session starts
   }
 
+  // Animated scenes for welcome screen
+  const [currentScene, setCurrentScene] = useState(0)
+  const scenes = [
+    {
+      icon: "🎯",
+      title: "Practice Questions",
+      subtitle: "AI-generated clinical scenarios",
+      color: "from-amber-500/20 to-amber-600/5"
+    },
+    {
+      icon: "🧠",
+      title: "Smart Feedback",
+      subtitle: "Learn why each answer is right or wrong",
+      color: "from-blue-500/20 to-blue-600/5"
+    },
+    {
+      icon: "⚡",
+      title: "Trap Detection",
+      subtitle: "Identify tricky exam patterns",
+      color: "from-red-500/20 to-red-600/5"
+    },
+    {
+      icon: "📊",
+      title: "Track Progress",
+      subtitle: "See your improvement over time",
+      color: "from-green-500/20 to-green-600/5"
+    },
+    {
+      icon: "🏆",
+      title: "Exam Ready",
+      subtitle: "Prepare with confidence",
+      color: "from-purple-500/20 to-purple-600/5"
+    }
+  ]
+
+  // Auto-cycle scenes
+  useEffect(() => {
+    if (sessionStarted) return
+    const interval = setInterval(() => {
+      setCurrentScene((prev) => (prev + 1) % scenes.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [sessionStarted, scenes.length])
+
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
@@ -784,10 +828,45 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </button>
           </div>
 
+          {/* Animated Scene Carousel */}
+          <div className="relative w-full max-w-sm h-40 mb-8 overflow-hidden">
+            {scenes.map((scene, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-in-out ${
+                  index === currentScene
+                    ? "opacity-100 translate-y-0 scale-100"
+                    : index < currentScene
+                      ? "opacity-0 -translate-y-8 scale-95"
+                      : "opacity-0 translate-y-8 scale-95"
+                }`}
+              >
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${scene.color} flex items-center justify-center mb-3 shadow-lg`}>
+                  <span className="text-4xl">{scene.icon}</span>
+                </div>
+                <h2 className="text-xl font-semibold text-white mb-1">{scene.title}</h2>
+                <p className="text-zinc-500 text-sm">{scene.subtitle}</p>
+              </div>
+            ))}
+            
+            {/* Scene indicators */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {scenes.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentScene(index)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentScene ? "bg-amber-500 w-4" : "bg-zinc-700 hover:bg-zinc-600"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Logo and title */}
-          <div className="text-5xl mb-4 opacity-90">🥋</div>
-          <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">Ready to practice?</h1>
-          <p className="text-zinc-500 text-center mb-6">
+          <div className="text-4xl mb-3 opacity-90">🥋</div>
+          <h1 className="text-xl font-semibold text-white mb-1 tracking-tight">ABA Sensei</h1>
+          <p className="text-zinc-500 text-center text-sm mb-6">
             {gameStats.correctToday}/{gameStats.dailyGoal} questions today
           </p>
 
