@@ -728,6 +728,14 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
 
   // Welcome screen mode toggle
   const [welcomeMode, setWelcomeMode] = useState<"video" | "quiz">("video")
+  
+  // Auto-start session when switching to quiz mode
+  useEffect(() => {
+    if (welcomeMode === "quiz" && !sessionStarted && !currentQuestion) {
+      setSessionStarted(true)
+      loadQuestion()
+    }
+  }, [welcomeMode])
 
   // Animated scenes for welcome screen
   const [currentScene, setCurrentScene] = useState(0)
@@ -847,8 +855,8 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     }
   }
 
-// Welcome screen
-  if (!sessionStarted) {
+// Welcome screen - only show when video mode or not started
+  if (!sessionStarted && welcomeMode === "video") {
   return (
   <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
         {/* Header */}
@@ -1365,14 +1373,45 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
       {/* Header */}
       <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setSessionStarted(false)}
+            onClick={() => {
+              setSessionStarted(false)
+              setWelcomeMode("video")
+            }}
             className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150"
           >
             <X className="w-5 h-5 text-zinc-600" />
           </button>
-          <span className="text-zinc-500 text-sm">{examLevel.toUpperCase()} Practice</span>
+          
+          {/* Quiz | Video Toggle */}
+          <div className="flex bg-[#0d0d12] rounded-full p-1 border border-zinc-800/70">
+            <button
+              onClick={() => setWelcomeMode("quiz")}
+              className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+                welcomeMode === "quiz"
+                  ? "bg-amber-500 text-black"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Quiz
+            </button>
+            <button
+              onClick={() => {
+                setWelcomeMode("video")
+                setSessionStarted(false)
+              }}
+              className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+                welcomeMode === "video"
+                  ? "bg-amber-500 text-black"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Video
+            </button>
+          </div>
+          
+          <span className="text-zinc-500 text-sm hidden sm:inline">{examLevel.toUpperCase()} Practice</span>
         </div>
         <div className="flex items-center gap-4">
           {/* Remaining questions for free users */}
