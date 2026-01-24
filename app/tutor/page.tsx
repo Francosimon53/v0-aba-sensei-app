@@ -743,11 +743,12 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     },
     {
       icon: "✓",
-      title: "Feedback",
-      subtitle: "Learn why each option is right or wrong",
+      title: "Reveal",
+      subtitle: "Correct answer highlighted in green",
       color: "from-green-500/20 to-green-600/5",
-      duration: 3000,
-      animation: "reveal"
+      duration: 4000, // 4 seconds
+      animation: "reveal",
+      correctOption: "B"
     },
     {
       icon: "🚨",
@@ -907,6 +908,28 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         </div>
                       ))}
                     </div>
+                  ) : scene.animation === "reveal" && isActive ? (
+                    <div className="flex gap-2 mt-2">
+                      {["A", "B", "C", "D"].map((letter, optIdx) => {
+                        const isCorrect = letter === "B"
+                        return (
+                          <div
+                            key={letter}
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-sm transition-all duration-500 ${
+                              isCorrect 
+                                ? "bg-green-500 border-2 border-green-400 text-white shadow-lg shadow-green-500/30" 
+                                : "bg-zinc-800/50 border border-zinc-700/50 text-zinc-500"
+                            }`}
+                            style={{
+                              animation: isCorrect ? "pulseGlow 1s ease-in-out infinite" : "none",
+                              transform: isCorrect ? "scale(1.1)" : "scale(1)"
+                            }}
+                          >
+                            {isCorrect ? "✓" : letter}
+                          </div>
+                        )
+                      })}
+                    </div>
                   ) : (
                     <p className="text-zinc-400 text-sm max-w-xs text-center">{scene.subtitle}</p>
                   )}
@@ -958,6 +981,16 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               to { 
                 opacity: 1; 
                 transform: translateY(0); 
+              }
+            }
+            @keyframes pulseGlow {
+              0%, 100% { 
+                box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+                transform: scale(1.1);
+              }
+              50% { 
+                box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+                transform: scale(1.15);
               }
             }
           `}</style>
