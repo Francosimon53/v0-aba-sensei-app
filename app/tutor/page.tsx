@@ -735,16 +735,18 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       icon: "❓",
       title: "Question",
       subtitle: "Clinical scenario with 4 options",
-      color: "from-amber-500/20 to-amber-600/5",
-      duration: 8000, // 8 seconds
+      color: "from-amber-500/30 to-amber-900/10",
+      glowColor: "rgba(245,158,11,0.4)",
+      duration: 8000,
       animation: "typewriter"
     },
     {
       icon: "🎯",
       title: "Options",
       subtitle: "4 choices appear one by one",
-      color: "from-blue-500/20 to-blue-600/5",
-      duration: 6000, // 6 seconds
+      color: "from-zinc-700/50 to-zinc-800/30",
+      glowColor: "rgba(245,158,11,0.3)",
+      duration: 6000,
       animation: "stagger",
       options: ["A", "B", "C", "D"]
     },
@@ -752,8 +754,9 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       icon: "✓",
       title: "Reveal",
       subtitle: "Correct answer highlighted in green",
-      color: "from-green-500/20 to-green-600/5",
-      duration: 4000, // 4 seconds
+      color: "from-green-500/30 to-green-900/10",
+      glowColor: "rgba(34,197,94,0.4)",
+      duration: 4000,
       animation: "reveal",
       correctOption: "B"
     },
@@ -761,16 +764,18 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       icon: "💡",
       title: "Explanation",
       subtitle: "Why B is correct + key takeaway",
-      color: "from-cyan-500/20 to-cyan-600/5",
-      duration: 10000, // 10 seconds
+      color: "from-amber-500/20 to-amber-900/10",
+      glowColor: "rgba(245,158,11,0.3)",
+      duration: 10000,
       animation: "explanation"
     },
     {
       icon: "🚨",
       title: "Trap Detector",
       subtitle: "ABA keywords and common traps",
-      color: "from-red-500/20 to-red-600/5",
-      duration: 10000, // 10 seconds
+      color: "from-red-500/30 to-red-900/10",
+      glowColor: "rgba(239,68,68,0.4)",
+      duration: 10000,
       animation: "trapDetector",
       keywords: ["MOST", "BEST", "FIRST"],
       traps: ["Effectiveness vs Generality", "Reinforcement vs Punishment"]
@@ -779,7 +784,8 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       icon: "🏆",
       title: "Progress",
       subtitle: "Track your improvement",
-      color: "from-purple-500/20 to-purple-600/5",
+      color: "from-amber-500/30 to-amber-900/10",
+      glowColor: "rgba(245,158,11,0.4)",
       duration: 3000,
       animation: "scale"
     }
@@ -903,20 +909,15 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               >
                 {/* Icon with glow effect */}
                 <motion.div 
-                  className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${scenes[currentScene].color} flex items-center justify-center mb-4 shadow-2xl border border-white/5`}
+                  className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${scenes[currentScene].color} flex items-center justify-center mb-4 shadow-2xl border border-amber-500/20`}
                   initial={{ scale: 0.8, rotate: -10 }}
                   animate={{ 
                     scale: 1, 
                     rotate: 0,
-                    boxShadow: `0 0 40px ${scenes[currentScene].color.includes('amber') ? 'rgba(245,158,11,0.3)' : 
-                      scenes[currentScene].color.includes('blue') ? 'rgba(59,130,246,0.3)' :
-                      scenes[currentScene].color.includes('green') ? 'rgba(34,197,94,0.3)' :
-                      scenes[currentScene].color.includes('cyan') ? 'rgba(6,182,212,0.3)' :
-                      scenes[currentScene].color.includes('red') ? 'rgba(239,68,68,0.3)' :
-                      'rgba(168,85,247,0.3)'}`
+                    boxShadow: `0 0 50px ${scenes[currentScene].glowColor || 'rgba(245,158,11,0.3)'}`
                   }}
                   transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, boxShadow: `0 0 60px ${scenes[currentScene].glowColor || 'rgba(245,158,11,0.4)'}` }}
                 >
                   <motion.span 
                     className="text-5xl"
@@ -941,14 +942,15 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 
                 {/* Scene-specific content */}
                 {scenes[currentScene].animation === "stagger" ? (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-3 mt-3">
                     {["A", "B", "C", "D"].map((letter, optIdx) => (
                       <motion.div
                         key={letter}
                         initial={{ opacity: 0, y: 20, scale: 0.8 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ delay: 0.5 + optIdx * 1.2, duration: 0.5, type: "spring" }}
-                        className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-semibold text-sm"
+                        className="w-11 h-11 rounded-xl bg-[#1a1a24] border border-zinc-700/50 flex items-center justify-center text-amber-500 font-bold text-sm shadow-lg"
+                        whileHover={{ scale: 1.1, borderColor: "rgba(245,158,11,0.5)" }}
                       >
                         {letter}
                       </motion.div>
@@ -1079,21 +1081,21 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 ))}
               </div>
               
-              {/* Control buttons */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={restartScenes}
-                  className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
-                  title="Restart"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={prevScene}
-                  className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
-                  title="Previous"
-                >
-                  <ChevronLeft className="w-4 h-4" />
+{/* Control buttons */}
+  <div className="flex items-center gap-3">
+  <button
+  onClick={restartScenes}
+  className="w-8 h-8 rounded-full bg-[#1a1a24] border border-zinc-700/50 hover:border-amber-500/50 flex items-center justify-center text-zinc-400 hover:text-amber-500 transition-all"
+  title="Restart"
+  >
+  <RotateCcw className="w-4 h-4" />
+  </button>
+  <button
+  onClick={prevScene}
+  className="w-8 h-8 rounded-full bg-[#1a1a24] border border-zinc-700/50 hover:border-amber-500/50 flex items-center justify-center text-zinc-400 hover:text-amber-500 transition-all"
+  title="Previous"
+  >
+  <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button
                   onClick={togglePlayPause}
@@ -1104,12 +1106,12 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 </button>
                 <button
                   onClick={nextScene}
-                  className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+                  className="w-8 h-8 rounded-full bg-[#1a1a24] border border-zinc-700/50 hover:border-amber-500/50 flex items-center justify-center text-zinc-400 hover:text-amber-500 transition-all"
                   title="Next"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
-                <div className="text-zinc-500 text-xs ml-2">
+                <div className="text-amber-500/70 text-xs ml-2 font-medium">
                   {currentScene + 1}/{scenes.length}
                 </div>
               </div>
