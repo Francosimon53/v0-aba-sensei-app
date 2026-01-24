@@ -725,45 +725,57 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
   const [currentScene, setCurrentScene] = useState(0)
   const scenes = [
     {
+      icon: "❓",
+      title: "Question",
+      subtitle: "Clinical scenario with 4 options",
+      color: "from-amber-500/20 to-amber-600/5",
+      duration: 8000, // 8 seconds
+      animation: "typewriter"
+    },
+    {
       icon: "🎯",
-      title: "Practice Questions",
-      subtitle: "AI-generated clinical scenarios",
-      color: "from-amber-500/20 to-amber-600/5"
+      title: "Options",
+      subtitle: "4 choices appear one by one",
+      color: "from-blue-500/20 to-blue-600/5",
+      duration: 6000, // 6 seconds
+      animation: "stagger",
+      options: ["A", "B", "C", "D"]
     },
     {
-      icon: "🧠",
-      title: "Smart Feedback",
-      subtitle: "Learn why each answer is right or wrong",
-      color: "from-blue-500/20 to-blue-600/5"
+      icon: "✓",
+      title: "Feedback",
+      subtitle: "Learn why each option is right or wrong",
+      color: "from-green-500/20 to-green-600/5",
+      duration: 3000,
+      animation: "reveal"
     },
     {
-      icon: "⚡",
-      title: "Trap Detection",
+      icon: "🚨",
+      title: "Trap Alert",
       subtitle: "Identify tricky exam patterns",
-      color: "from-red-500/20 to-red-600/5"
-    },
-    {
-      icon: "📊",
-      title: "Track Progress",
-      subtitle: "See your improvement over time",
-      color: "from-green-500/20 to-green-600/5"
+      color: "from-red-500/20 to-red-600/5",
+      duration: 3000,
+      animation: "shake"
     },
     {
       icon: "🏆",
-      title: "Exam Ready",
-      subtitle: "Prepare with confidence",
-      color: "from-purple-500/20 to-purple-600/5"
+      title: "Progress",
+      subtitle: "Track your improvement",
+      color: "from-purple-500/20 to-purple-600/5",
+      duration: 3000,
+      animation: "scale"
     }
   ]
 
-  // Auto-cycle scenes
+  // Auto-cycle scenes with variable duration
   useEffect(() => {
     if (sessionStarted) return
-    const interval = setInterval(() => {
+    const currentDuration = scenes[currentScene]?.duration || 3000
+    const timeout = setTimeout(() => {
       setCurrentScene((prev) => (prev + 1) % scenes.length)
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [sessionStarted, scenes.length])
+    }, currentDuration)
+    return () => clearTimeout(timeout)
+  }, [sessionStarted, currentScene, scenes])
 
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
@@ -829,39 +841,126 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           </div>
 
           {/* Animated Scene Carousel */}
-          <div className="relative w-full max-w-sm h-40 mb-8 overflow-hidden">
-            {scenes.map((scene, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-in-out ${
-                  index === currentScene
-                    ? "opacity-100 translate-y-0 scale-100"
-                    : index < currentScene
-                      ? "opacity-0 -translate-y-8 scale-95"
-                      : "opacity-0 translate-y-8 scale-95"
-                }`}
-              >
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${scene.color} flex items-center justify-center mb-3 shadow-lg`}>
-                  <span className="text-4xl">{scene.icon}</span>
+          <div className="relative w-full max-w-sm h-48 mb-8 overflow-hidden">
+            {scenes.map((scene, index) => {
+              const isActive = index === currentScene
+              // Different entrance animations based on scene type
+              const getAnimationClass = () => {
+                if (!isActive) {
+                  return index < currentScene
+                    ? "opacity-0 -translate-y-12 scale-90"
+                    : "opacity-0 translate-y-12 scale-90"
+                }
+                switch (scene.animation) {
+                  case "typewriter":
+                    return "opacity-100 translate-y-0 scale-100 animate-pulse"
+                  case "stagger":
+                    return "opacity-100 translate-y-0 scale-100"
+                  case "reveal":
+                    return "opacity-100 translate-y-0 scale-100"
+                  case "shake":
+                    return "opacity-100 translate-y-0 scale-100 animate-bounce"
+                  case "scale":
+                    return "opacity-100 translate-y-0 scale-100"
+                  default:
+                    return "opacity-100 translate-y-0 scale-100"
+                }
+              }
+              
+              return (
+                <div
+                  key={index}
+                  className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out ${getAnimationClass()}`}
+                >
+                  <div 
+                    className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${scene.color} flex items-center justify-center mb-4 shadow-2xl border border-white/5 ${
+                      isActive && scene.animation === "shake" ? "animate-[wiggle_0.5s_ease-in-out_infinite]" : ""
+                    } ${
+                      isActive && scene.animation === "pulse" ? "animate-pulse" : ""
+                    }`}
+                    style={{
+                      boxShadow: isActive ? `0 0 40px ${scene.color.includes('amber') ? 'rgba(245,158,11,0.3)' : 
+                        scene.color.includes('blue') ? 'rgba(59,130,246,0.3)' :
+                        scene.color.includes('green') ? 'rgba(34,197,94,0.3)' :
+                        scene.color.includes('red') ? 'rgba(239,68,68,0.3)' :
+                        'rgba(168,85,247,0.3)'}` : 'none'
+                    }}
+                  >
+                    <span className="text-5xl">{scene.icon}</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">{scene.title}</h2>
+                  
+                  {/* Staggered options for Options scene */}
+                  {scene.animation === "stagger" && isActive ? (
+                    <div className="flex gap-2 mt-2">
+                      {["A", "B", "C", "D"].map((letter, optIdx) => (
+                        <div
+                          key={letter}
+                          className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-semibold text-sm"
+                          style={{
+                            animation: `fadeSlideIn 0.5s ease-out ${optIdx * 1.2}s forwards`,
+                            opacity: 0,
+                            transform: "translateY(10px)"
+                          }}
+                        >
+                          {letter}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-zinc-400 text-sm max-w-xs text-center">{scene.subtitle}</p>
+                  )}
+                  
+                  {/* Progress bar for current scene */}
+                  {isActive && (
+                    <div className="absolute bottom-8 w-32 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-amber-500 rounded-full"
+                        style={{
+                          animation: `progress ${scene.duration}ms linear forwards`
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <h2 className="text-xl font-semibold text-white mb-1">{scene.title}</h2>
-                <p className="text-zinc-500 text-sm">{scene.subtitle}</p>
-              </div>
-            ))}
+              )
+            })}
             
             {/* Scene indicators */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2">
               {scenes.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentScene(index)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                    index === currentScene ? "bg-amber-500 w-4" : "bg-zinc-700 hover:bg-zinc-600"
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentScene ? "bg-amber-500 w-6" : "bg-zinc-700 hover:bg-zinc-600 w-2"
                   }`}
                 />
               ))}
             </div>
           </div>
+          
+          {/* Add keyframes for progress animation */}
+          <style jsx>{`
+            @keyframes progress {
+              from { width: 0%; }
+              to { width: 100%; }
+            }
+            @keyframes wiggle {
+              0%, 100% { transform: rotate(-3deg); }
+              50% { transform: rotate(3deg); }
+            }
+            @keyframes fadeSlideIn {
+              from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+              }
+              to { 
+                opacity: 1; 
+                transform: translateY(0); 
+              }
+            }
+          `}</style>
 
           {/* Logo and title */}
           <div className="text-4xl mb-3 opacity-90">🥋</div>
