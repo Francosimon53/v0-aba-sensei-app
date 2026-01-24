@@ -657,10 +657,10 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     }
   }
 
-  // Welcome screen
+// Welcome screen
   if (!sessionStarted) {
-    return (
-      <div className="min-h-screen flex flex-col">
+  return (
+  <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
         {/* Header */}
         <header className="px-3 sm:px-4 py-2 sm:py-3 border-b border-zinc-800/50 flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 sm:gap-4">
@@ -724,7 +724,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 onClick={() => setSelectedCategory("all")}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
                   selectedCategory === "all"
-                    ? "bg-[#d4a853] text-black"
+                    ? "bg-amber-500 text-black"
                     : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
                 }`}
               >
@@ -736,7 +736,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
                     selectedCategory === cat
-                      ? "bg-[#d4a853] text-black"
+                      ? "bg-amber-500 text-black"
                       : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
                   }`}
                 >
@@ -825,7 +825,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 cy="64"
                 r="56"
                 fill="none"
-                stroke="#d4a853"
+                stroke="#f59e0b"
                 strokeWidth="6"
                 strokeLinecap="round"
                 strokeDasharray={`${progressPercent * 3.52} 352`}
@@ -841,7 +841,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           {/* Start button */}
           <Button
             onClick={startSession}
-            className="w-full max-w-xs bg-[#b8942d] hover:bg-[#d4a853] text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
+            className="w-full max-w-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
           >
             Start Practice
           </Button>
@@ -869,7 +869,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
       {/* Header */}
       <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
@@ -961,7 +961,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         }`}
                       >
                         {msg.role === "assistant" && (
-                          <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                          <p className="text-amber-500 text-xs mb-1 font-medium">Sensei</p>
                         )}
                         <p className="leading-relaxed">{msg.content}</p>
                       </div>
@@ -991,7 +991,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         }`}
                       >
                         {msg.role === "assistant" && (
-                          <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                          <p className="text-amber-500 text-xs mb-1 font-medium">Sensei</p>
                         )}
                         <p className="leading-relaxed">{msg.content}</p>
                       </div>
@@ -1024,7 +1024,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               <button
                 onClick={handleAskSensei}
                 disabled={!currentQuestion || isAskingSensei || !senseiQuestion.trim()}
-                className="p-1.5 text-zinc-500 hover:text-[#d4a853] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+                className="p-1.5 text-zinc-500 hover:text-amber-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 {isAskingSensei ? (
                   <div className="w-4 h-4 border-2 border-amber-500/60 border-t-transparent rounded-full animate-spin" />
@@ -1038,7 +1038,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         </div>
 
         {/* RIGHT PANEL - Quiz Area */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
+        <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#0a0a0f] to-[#12121a]">
           {/* Progress bar */}
           <div className="p-3 border-b border-zinc-800/30 shrink-0">
             <div className="flex items-center gap-1 mb-2">
@@ -1140,7 +1140,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         cardStyles = "bg-zinc-900/30 border-zinc-800/30 opacity-40"
                       }
                     } else if (isSelected) {
-                      cardStyles = "bg-zinc-900 border-[#d4a853]"
+                      cardStyles = "bg-zinc-900 border-amber-500"
                     }
 
                     return (
@@ -1158,7 +1158,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                                   : showResult && isSelected && !isCorrect
                                     ? "bg-red-500 text-white"
                                     : isSelected
-                                      ? "bg-[#d4a853] text-black"
+                                      ? "bg-amber-500 text-black"
                                       : "bg-zinc-800 text-zinc-400"
                               }`}
                             >
@@ -1188,7 +1188,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
                 <p className="text-zinc-500 text-sm">Could not load question</p>
-                <Button onClick={loadQuestion} className="mt-4 bg-[#b8942d] hover:bg-[#d4a853] text-black text-sm">
+                <Button onClick={loadQuestion} className="mt-4 bg-amber-500 hover:bg-amber-400 text-black text-sm">
                   Retry
                 </Button>
               </div>
@@ -1209,7 +1209,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               <Button
                 onClick={handleNextQuestion}
                 disabled={!isAnswered}
-                className="px-4 py-2 bg-[#b8942d] hover:bg-[#d4a853] text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 Next
                 <ChevronRight className="w-4 h-4 ml-2" />
