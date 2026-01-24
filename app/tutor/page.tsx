@@ -1,5 +1,7 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { VideoLearningPlayer } from "@/components/video-learning-player"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation" // Import router
 import {
@@ -7,6 +9,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Flame,
   Trophy,
   Target,
@@ -18,6 +21,9 @@ import {
   BookOpen,
   Share2,
   Linkedin,
+  RotateCcw,
+  Pause,
+  Play,
 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -171,14 +177,52 @@ export default function AITutorPage() {
     correctToday: 0,
     dailyGoal: 10, // Increased daily goal
   })
-  const [currentQuestion, setCurrentQuestion] = useState<{
-    content: string
-    options: QuizOption[]
-    difficulty: string
-    trapAnalysis?: TrapAnalysis
-    category?: string
-    topic?: string
-  } | null>(null)
+  // QuestionData type aligned with question-screen.tsx
+interface QuestionData {
+  question: string
+  options: string[]
+  correctIndex: number
+  hint: string
+  keyWords: string[]
+  keyWordExplanations: {
+    overall: string
+    strategy: string
+  }
+  pivotWords?: Array<{
+    word: string
+    meaning: string
+    strategy: string
+  }>
+  trapDetector?: {
+    trapWord: string
+    commonMeaning: string
+    abaMeaning: string
+    howItConfuses: string
+  }
+  decisionFilter: {
+    concepts: Array<{
+      name: string
+      definition: string
+      analogy?: string
+      rule?: string
+    }>
+    testQuestion: string
+  }
+  optionExplanations: {
+    A: string
+    B: string
+    C: string
+    D: string
+  }
+  conclusion: string
+  // Additional fields for tutor page
+  difficulty?: string
+  trapAnalysis?: TrapAnalysis
+  category?: string
+  topic?: string
+}
+
+const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -420,24 +464,44 @@ export default function AITutorPage() {
       const data = await response.json()
 
       if (data.type === "quiz" && data.question) {
-        const normalizedOptions: QuizOption[] = (data.options || []).map((opt: any, index: number) => {
-          const letters = ["A", "B", "C", "D"]
-          return {
-            id: opt.id || letters[index],
-            text: opt.text || opt.answer || opt.content || `Option ${letters[index]}`,
-            isCorrect: opt.isCorrect === true || opt.correct === true,
-            rationale: opt.rationale || opt.explanation || "",
+        // Convert API response to QuestionData format
+        // Handle both old format (options as array of objects) and new format (options as string array)
+        let options: string[] = []
+        let correctIndex = 0
+        
+        if (Array.isArray(data.options)) {
+          if (typeof data.options[0] === 'string') {
+            // New format: options is already string array
+            options = data.options
+            correctIndex = data.correctIndex ?? 0
+          } else {
+            // Old format: options is array of {id, text, isCorrect}
+            options = data.options.map((opt: any, idx: number) => {
+              const letter = ['A', 'B', 'C', 'D'][idx]
+              return `${letter}. ${opt.text || opt.answer || opt.content || 'Option'}`
+            })
+            correctIndex = data.options.findIndex((opt: any) => opt.isCorrect === true || opt.correct === true)
+            if (correctIndex === -1) correctIndex = 0
           }
-        })
+        }
 
-        setCurrentQuestion({
-          content: data.question,
-          options: normalizedOptions,
+        const questionData: QuestionData = {
+          question: data.question,
+          options,
+          correctIndex,
+          hint: data.hint || "Think about the key ABA concepts involved.",
+          keyWords: data.keyWords || [],
+          keyWordExplanations: data.keyWordExplanations || { overall: "", strategy: "" },
+          decisionFilter: data.decisionFilter || { concepts: [], testQuestion: "" },
+          optionExplanations: data.optionExplanations || { A: "", B: "", C: "", D: "" },
+          conclusion: data.conclusion || "",
           difficulty: data.difficulty || "Medium",
-          trapAnalysis: data.trapAnalysis || null,
-          category: data.category || null,
-          topic: data.topic || null,
-        })
+          trapAnalysis: data.trapAnalysis || undefined,
+          category: data.category || undefined,
+          topic: data.topic || undefined,
+        }
+
+        setCurrentQuestion(questionData)
       }
     } catch (error) {
       console.error("Error loading question:", error)
@@ -446,19 +510,19 @@ export default function AITutorPage() {
     }
   }
 
-  const handleAnswer = (optionId: string) => {
-    if (isAnswered) return
+  const handleAnswer = (optionIndex: number) => {
+    if (isAnswered || !currentQuestion) return
     
-    setSelectedAnswer(optionId)
+    setSelectedAnswer(optionIndex.toString())
     setIsAnswered(true)
     
     // Increment questions used for free plan tracking
     incrementQuestionsUsed()
     setQuestionsUsedToday(prev => prev + 1)
     
-    const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
-    const correctOption = currentQuestion?.options.find((o) => o.isCorrect)
-    const isCorrect = selectedOption?.isCorrect
+    const isCorrect = optionIndex === currentQuestion.correctIndex
+    const selectedOptionText = currentQuestion.options[optionIndex] || ""
+    const correctOptionText = currentQuestion.options[currentQuestion.correctIndex] || ""
 
     if (currentQuestion) {
       const trapAnalysis = currentQuestion.trapAnalysis
@@ -471,7 +535,7 @@ export default function AITutorPage() {
           trapAnalysis.trapWord,
           trapAnalysis.trapType,
           trapAnalysis.trapExplanation,
-          currentQuestion.content,
+          currentQuestion.question,
         )
         trapExplanations.push({
           word: trapAnalysis.trapWord,
@@ -479,6 +543,21 @@ export default function AITutorPage() {
           explanation: explanation,
         })
       }
+      
+      // Create QuizOption-like objects for helper functions
+      const selectedOption: QuizOption | undefined = currentQuestion.options[optionIndex] ? {
+        id: String.fromCharCode(65 + optionIndex),
+        text: currentQuestion.options[optionIndex],
+        isCorrect: optionIndex === currentQuestion.correctIndex,
+        rationale: currentQuestion.optionExplanations?.[String.fromCharCode(65 + optionIndex) as keyof typeof currentQuestion.optionExplanations] || ""
+      } : undefined
+      
+      const correctOption: QuizOption | undefined = currentQuestion.options[currentQuestion.correctIndex] ? {
+        id: String.fromCharCode(65 + currentQuestion.correctIndex),
+        text: currentQuestion.options[currentQuestion.correctIndex],
+        isCorrect: true,
+        rationale: currentQuestion.optionExplanations?.[String.fromCharCode(65 + currentQuestion.correctIndex) as keyof typeof currentQuestion.optionExplanations] || ""
+      } : undefined
       
       setDetectedTraps(trapExplanations)
       setQuickTip(generateQuickTip(trapAnalysis, correctOption))
@@ -571,15 +650,17 @@ export default function AITutorPage() {
 
       // If there's a current question, add context
       if (currentQuestion) {
-        const selectedOption = currentQuestion.options.find((o) => o.id === selectedAnswer)
-        const correctOption = currentQuestion.options.find((o) => o.isCorrect)
+        const selectedIndex = selectedAnswer ? parseInt(selectedAnswer) : -1
+        const selectedOptionText = selectedIndex >= 0 ? currentQuestion.options[selectedIndex] : ""
+        const correctOptionText = currentQuestion.options[currentQuestion.correctIndex] || ""
+        const isCorrectAnswer = selectedIndex === currentQuestion.correctIndex
 
-        if (isAnswered && selectedOption && !selectedOption.isCorrect) {
+        if (isAnswered && !isCorrectAnswer) {
           // User answered wrong - they might be asking why
           contextMessage = `Context: The student just answered a question incorrectly.
-Question: "${currentQuestion.content}"
-Their answer: "${selectedOption.text}" (incorrect)
-Correct answer: "${correctOption?.text}"
+Question: "${currentQuestion.question}"
+Their answer: "${selectedOptionText}" (incorrect)
+Correct answer: "${correctOptionText}"
 
 Student's follow-up question: ${userMessage}
 
@@ -587,8 +668,8 @@ Respond in 2-3 sentences max, conversationally. Reference the specific question 
         } else if (isAnswered) {
           // User answered correctly
           contextMessage = `Context: The student just answered a question correctly.
-Question: "${currentQuestion.content}"
-Correct answer: "${correctOption?.text}"
+Question: "${currentQuestion.question}"
+Correct answer: "${correctOptionText}"
 
 Student's follow-up question: ${userMessage}
 
@@ -596,7 +677,7 @@ Respond in 2-3 sentences max, conversationally.`
         } else {
           // Question is showing but not yet answered
           contextMessage = `Context: The student is viewing this question but hasn't answered yet.
-Question: "${currentQuestion.content}"
+Question: "${currentQuestion.question}"
 
 Student's question: ${userMessage}
 
@@ -646,6 +727,17 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     loadQuestion() // Load first question when session starts
   }
 
+  // Welcome screen mode toggle
+  const [welcomeMode, setWelcomeMode] = useState<"video" | "quiz">("video")
+  
+  // Auto-start session when switching to quiz mode
+  useEffect(() => {
+    if (welcomeMode === "quiz" && !sessionStarted && !currentQuestion) {
+      setSessionStarted(true)
+      loadQuestion()
+    }
+  }, [welcomeMode])
+
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
@@ -657,34 +749,75 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     }
   }
 
-  // Welcome screen
-  if (!sessionStarted) {
-    return (
-      <div className="min-h-screen flex flex-col">
+// Welcome screen - only show when video mode or not started
+  if (!sessionStarted && welcomeMode === "video") {
+  return (
+  <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
         {/* Header */}
-        <header className="px-3 sm:px-4 py-2 sm:py-3 border-b border-zinc-800/50 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 sm:gap-4">
+        <header className="px-3 sm:px-4 py-3 sm:py-4 border-b border-zinc-800/50 flex items-center justify-between gap-3">
+          {/* Left: Back button */}
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="text-white/60 hover:text-white/80 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </button>
+          
+          {/* Center: Quiz | Video Toggle */}
+          <div className="flex bg-[#0d0d12] rounded-full p-1 border border-zinc-800/70 shadow-lg shadow-black/20">
             <button
-              onClick={() => router.push("/dashboard")}
-              className="text-white/60 hover:text-white/80 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+              onClick={() => setWelcomeMode("quiz")}
+              className={`relative px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                welcomeMode === "quiz"
+                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/30"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
             >
-              ← <span className="hidden sm:inline">Dashboard</span>
+              {welcomeMode === "quiz" && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-amber-500 rounded-full"
+                  transition={{ type: "spring", duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">Quiz</span>
+            </button>
+            <button
+              onClick={() => setWelcomeMode("video")}
+              className={`relative px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${
+                welcomeMode === "video"
+                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/30"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {welcomeMode === "video" && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-amber-500 rounded-full"
+                  transition={{ type: "spring", duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">Video</span>
             </button>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-zinc-400 text-sm">
-            <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span>{questionsUsedToday}</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-amber-400/80 text-xs sm:text-sm">
-            <Target className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">{gameStats.correct}/{currentQuestionNumber}</span>
-            <span className="sm:hidden">{gameStats.correct}/{currentQuestionNumber}</span>
+          
+          {/* Right: Stats */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-zinc-400 text-xs sm:text-sm">
+              <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>{questionsUsedToday}</span>
+            </div>
+            <div className="flex items-center gap-1 text-amber-400/80 text-xs sm:text-sm">
+              <Target className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>{gameStats.correct}/{currentQuestionNumber}</span>
+            </div>
           </div>
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           {/* Level toggle */}
-          <div className="flex bg-zinc-900 rounded-full p-1 mb-8 border border-zinc-800">
+          <div className="flex bg-[#1a1a24] rounded-full p-1 mb-8 border border-zinc-800/50">
             <button
               onClick={() => {
                 setExamLevel("rbt")
@@ -709,12 +842,52 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </button>
           </div>
 
-          {/* Logo and title */}
-          <div className="text-5xl mb-4 opacity-90">🥋</div>
-          <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">Ready to practice?</h1>
-          <p className="text-zinc-500 text-center mb-6">
+          {welcomeMode === "video" ? (
+            <VideoLearningPlayer autoPlay={true} />
+          ) : (
+            /* Quiz mode - Simple ready state */
+            <motion.div 
+              className="flex flex-col items-center justify-center mb-8"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <motion.div 
+                className="w-28 h-28 rounded-3xl bg-gradient-to-br from-amber-500/30 to-amber-900/10 flex items-center justify-center mb-6 border border-amber-500/20"
+                animate={{ 
+                  boxShadow: ["0 0 30px rgba(245,158,11,0.2)", "0 0 50px rgba(245,158,11,0.4)", "0 0 30px rgba(245,158,11,0.2)"]
+                }}
+                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+              >
+                <span className="text-6xl">🥋</span>
+              </motion.div>
+              <h2 className="text-2xl font-bold text-white mb-2">Ready to Practice?</h2>
+              <p className="text-zinc-400 text-sm text-center max-w-xs">
+                {examLevel === "rbt" ? "RBT" : "BCBA"} exam questions powered by AI
+              </p>
+              <div className="flex items-center gap-4 mt-4 text-sm">
+                <div className="flex items-center gap-1.5 text-amber-500/80">
+                  <Zap className="w-4 h-4" />
+                  <span>{questionsUsedToday} today</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-green-500/80">
+                  <Target className="w-4 h-4" />
+                  <span>{gameStats.correctToday}/{gameStats.dailyGoal} goal</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Logo and title - only show in video mode */}
+          {welcomeMode === "video" && (
+            <>
+          <div className="text-4xl mb-3 opacity-90">🥋</div>
+          <h1 className="text-xl font-semibold text-white mb-1 tracking-tight">ABA Sensei</h1>
+          <p className="text-zinc-500 text-center text-sm mb-6">
             {gameStats.correctToday}/{gameStats.dailyGoal} questions today
           </p>
+            </>
+          )}
 
           {/* Category selection */}
           <div className="w-full max-w-md mb-8">
@@ -724,7 +897,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 onClick={() => setSelectedCategory("all")}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
                   selectedCategory === "all"
-                    ? "bg-[#d4a853] text-black"
+                    ? "bg-amber-500 text-black"
                     : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
                 }`}
               >
@@ -736,7 +909,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
                     selectedCategory === cat
-                      ? "bg-[#d4a853] text-black"
+                      ? "bg-amber-500 text-black"
                       : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
                   }`}
                 >
@@ -825,7 +998,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 cy="64"
                 r="56"
                 fill="none"
-                stroke="#d4a853"
+                stroke="#f59e0b"
                 strokeWidth="6"
                 strokeLinecap="round"
                 strokeDasharray={`${progressPercent * 3.52} 352`}
@@ -841,7 +1014,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
           {/* Start button */}
           <Button
             onClick={startSession}
-            className="w-full max-w-xs bg-[#b8942d] hover:bg-[#d4a853] text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
+            className="w-full max-w-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
           >
             Start Practice
           </Button>
@@ -869,17 +1042,48 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
       {/* Header */}
       <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setSessionStarted(false)}
+            onClick={() => {
+              setSessionStarted(false)
+              setWelcomeMode("video")
+            }}
             className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150"
           >
             <X className="w-5 h-5 text-zinc-600" />
           </button>
-          <span className="text-zinc-500 text-sm">{examLevel.toUpperCase()} Practice</span>
+          
+          {/* Quiz | Video Toggle */}
+          <div className="flex bg-[#0d0d12] rounded-full p-1 border border-zinc-800/70">
+            <button
+              onClick={() => setWelcomeMode("quiz")}
+              className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+                welcomeMode === "quiz"
+                  ? "bg-amber-500 text-black"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Quiz
+            </button>
+            <button
+              onClick={() => {
+                setWelcomeMode("video")
+                setSessionStarted(false)
+              }}
+              className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
+                welcomeMode === "video"
+                  ? "bg-amber-500 text-black"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Video
+            </button>
+          </div>
+          
+          <span className="text-zinc-500 text-sm hidden sm:inline">{examLevel.toUpperCase()} Practice</span>
         </div>
         <div className="flex items-center gap-4">
           {/* Remaining questions for free users */}
@@ -961,7 +1165,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         }`}
                       >
                         {msg.role === "assistant" && (
-                          <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                          <p className="text-amber-500 text-xs mb-1 font-medium">Sensei</p>
                         )}
                         <p className="leading-relaxed">{msg.content}</p>
                       </div>
@@ -991,7 +1195,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         }`}
                       >
                         {msg.role === "assistant" && (
-                          <p className="text-[#d4a853] text-xs mb-1 font-medium">Sensei</p>
+                          <p className="text-amber-500 text-xs mb-1 font-medium">Sensei</p>
                         )}
                         <p className="leading-relaxed">{msg.content}</p>
                       </div>
@@ -1024,7 +1228,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               <button
                 onClick={handleAskSensei}
                 disabled={!currentQuestion || isAskingSensei || !senseiQuestion.trim()}
-                className="p-1.5 text-zinc-500 hover:text-[#d4a853] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+                className="p-1.5 text-zinc-500 hover:text-amber-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 {isAskingSensei ? (
                   <div className="w-4 h-4 border-2 border-amber-500/60 border-t-transparent rounded-full animate-spin" />
@@ -1038,7 +1242,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         </div>
 
         {/* RIGHT PANEL - Quiz Area */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
+        <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#0a0a0f] to-[#12121a]">
           {/* Progress bar */}
           <div className="p-3 border-b border-zinc-800/30 shrink-0">
             <div className="flex items-center gap-1 mb-2">
@@ -1120,64 +1324,69 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 {/* Question text */}
                 <div className="mb-4">
                   <p className="text-zinc-600 text-xs mb-1">{currentQuestionNumber}.</p>
-                  <p className="text-white text-base leading-relaxed">{currentQuestion.content}</p>
+                  <p className="text-white text-base leading-relaxed">{currentQuestion.question}</p>
                 </div>
 
                 {/* Options */}
                 <div className="space-y-2">
-                  {currentQuestion.options.map((option) => {
-                    const isSelected = selectedAnswer === option.id
-                    const isCorrect = option.isCorrect
+                  {currentQuestion.options.map((optionText, index) => {
+                    const letter = String.fromCharCode(65 + index) as 'A' | 'B' | 'C' | 'D'
+                    const isSelected = selectedAnswer === index.toString()
+                    const isCorrectOption = index === currentQuestion.correctIndex
                     const showResult = isAnswered
 
                     let cardStyles = "bg-zinc-900 border-zinc-800 hover:brightness-110"
                     if (showResult) {
-                      if (isCorrect) {
+                      if (isCorrectOption) {
                         cardStyles = "bg-green-500/10 border-green-500/40"
-                      } else if (isSelected && !isCorrect) {
+                      } else if (isSelected && !isCorrectOption) {
                         cardStyles = "bg-red-500/10 border-red-500/40"
                       } else {
                         cardStyles = "bg-zinc-900/30 border-zinc-800/30 opacity-40"
                       }
                     } else if (isSelected) {
-                      cardStyles = "bg-zinc-900 border-[#d4a853]"
+                      cardStyles = "bg-zinc-900 border-amber-500"
                     }
 
+                    // Extract display text (remove "A. " prefix if present)
+                    const displayText = optionText.replace(/^[A-D]\.\s*/, '')
+                    const rationale = currentQuestion.optionExplanations?.[letter] || ""
+
                     return (
-                      <div key={option.id}>
+                      <div key={index}>
                         <button
-                          onClick={() => handleAnswer(option.id)}
+                          onClick={() => handleAnswer(index)}
                           disabled={isAnswered}
                           className={`w-full py-3 px-4 rounded-xl border text-left transition-all duration-150 hover:shadow-lg hover:shadow-black/20 ${cardStyles}`}
                         >
                           <div className="flex items-start gap-3">
                             <span
                               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all duration-150 ${
-                                showResult && isCorrect
+                                showResult && isCorrectOption
                                   ? "bg-green-500 text-black"
-                                  : showResult && isSelected && !isCorrect
+                                  : showResult && isSelected && !isCorrectOption
                                     ? "bg-red-500 text-white"
                                     : isSelected
-                                      ? "bg-[#d4a853] text-black"
+                                      ? "bg-amber-500 text-black"
                                       : "bg-zinc-800 text-zinc-400"
                               }`}
                             >
-                              {showResult && isCorrect ? (
+                              {showResult && isCorrectOption ? (
                                 <Check className="w-3 h-3" />
-                              ) : showResult && isSelected && !isCorrect ? (
+                              ) : showResult && isSelected && !isCorrectOption ? (
                                 <X className="w-3 h-3" />
                               ) : (
-                                option.id
+                                letter
                               )}
                             </span>
-                            <span className="text-zinc-200 text-sm leading-relaxed">{option.text}</span>
+                            <span className="text-zinc-200 text-sm leading-relaxed">{displayText}</span>
                           </div>
                         </button>
 
                         {/* Inline feedback for wrong answer */}
-                        {showResult && isSelected && !isCorrect && (
+                        {showResult && isSelected && !isCorrectOption && (
                           <div className="mt-2 ml-10 text-xs text-red-400/70">
-                            <span className="font-medium">Not quite</span> - {option.rationale || errorDiagnosis}
+                            <span className="font-medium">Not quite</span> - {rationale || errorDiagnosis}
                           </div>
                         )}
                       </div>
@@ -1188,7 +1397,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
                 <p className="text-zinc-500 text-sm">Could not load question</p>
-                <Button onClick={loadQuestion} className="mt-4 bg-[#b8942d] hover:bg-[#d4a853] text-black text-sm">
+                <Button onClick={loadQuestion} className="mt-4 bg-amber-500 hover:bg-amber-400 text-black text-sm">
                   Retry
                 </Button>
               </div>
@@ -1209,7 +1418,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               <Button
                 onClick={handleNextQuestion}
                 disabled={!isAnswered}
-                className="px-4 py-2 bg-[#b8942d] hover:bg-[#d4a853] text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
               >
                 Next
                 <ChevronRight className="w-4 h-4 ml-2" />
