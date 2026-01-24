@@ -873,27 +873,41 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-          {/* Mode toggle: Quiz | Video */}
-          <div className="flex bg-[#1a1a24] rounded-full p-1 mb-6 border border-zinc-800/50">
+{/* Mode toggle: Quiz | Video - Pill style */}
+          <div className="flex bg-[#0d0d12] rounded-full p-1.5 mb-6 border border-zinc-800/70 shadow-lg shadow-black/20">
             <button
               onClick={() => setWelcomeMode("quiz")}
-              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                welcomeMode === "quiz" 
-                  ? "bg-amber-500 text-black" 
+              className={`relative px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+                welcomeMode === "quiz"
+                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/30"
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
-              Quiz
+              {welcomeMode === "quiz" && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-amber-500 rounded-full"
+                  transition={{ type: "spring", duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">Quiz</span>
             </button>
             <button
               onClick={() => setWelcomeMode("video")}
-              className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                welcomeMode === "video" 
-                  ? "bg-amber-500 text-black" 
+              className={`relative px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+                welcomeMode === "video"
+                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/30"
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
-              Video
+              {welcomeMode === "video" && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-amber-500 rounded-full"
+                  transition={{ type: "spring", duration: 0.5 }}
+                />
+              )}
+              <span className="relative z-10">Video</span>
             </button>
           </div>
 
