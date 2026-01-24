@@ -968,15 +968,25 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </div>
           </div>
 
-          {/* Start button */}
-          <Button
-            onClick={startSession}
-            className="w-full max-w-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
-          >
-            Start Practice
-          </Button>
-
-          {/* Daily goal card */}
+  {/* Action buttons */}
+  <div className="flex flex-col gap-3 w-full max-w-xs">
+    <Button
+      onClick={startSession}
+      className="w-full bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
+    >
+      Start Practice
+    </Button>
+    
+    <button
+      onClick={() => router.push("/video")}
+      className="w-full flex items-center justify-center gap-2 bg-zinc-800/80 hover:bg-zinc-700/80 text-white font-medium py-4 rounded-xl border border-zinc-700/50 hover:border-purple-500/30 transition-all duration-200"
+    >
+      <span className="text-lg">🎬</span>
+      <span>Video Learning Mode</span>
+    </button>
+  </div>
+  
+  {/* Daily goal card */}
           <div className="mt-8 bg-zinc-900/80 rounded-xl p-4 w-full max-w-xs border border-zinc-800/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -994,24 +1004,6 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </div>
           </div>
 
-          {/* Video Learning Mode button */}
-          <button
-            onClick={() => router.push("/video")}
-            className="mt-4 w-full max-w-xs bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl p-4 border border-zinc-800/50 hover:border-purple-500/30 transition-all duration-200 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                  <span className="text-xl">🎬</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-medium text-sm">Video Learning Mode</p>
-                  <p className="text-zinc-500 text-xs">Watch animated explanations</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-purple-400 transition-colors" />
-            </div>
-          </button>
         </div>
       </div>
     )
