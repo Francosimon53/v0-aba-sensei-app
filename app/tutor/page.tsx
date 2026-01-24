@@ -760,11 +760,13 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     },
     {
       icon: "🚨",
-      title: "Trap Alert",
-      subtitle: "Identify tricky exam patterns",
+      title: "Trap Detector",
+      subtitle: "ABA keywords and common traps",
       color: "from-red-500/20 to-red-600/5",
-      duration: 3000,
-      animation: "shake"
+      duration: 10000, // 10 seconds
+      animation: "trapDetector",
+      keywords: ["MOST", "BEST", "FIRST"],
+      traps: ["Effectiveness vs Generality", "Reinforcement vs Punishment"]
     },
     {
       icon: "🏆",
@@ -960,11 +962,54 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                         </p>
                       </div>
                     </div>
+) : scene.animation === "trapDetector" && isActive ? (
+                    <div className="flex flex-col items-center mt-2 max-w-xs">
+                      {/* Keywords section */}
+                      <div className="flex gap-2 mb-3">
+                        {["MOST", "BEST", "FIRST"].map((keyword, idx) => (
+                          <span
+                            key={keyword}
+                            className="px-2 py-1 bg-yellow-500/20 border border-yellow-500/40 rounded text-yellow-400 text-xs font-bold"
+                            style={{
+                              animation: `fadeSlideIn 0.5s ease-out ${idx * 0.8}s forwards`,
+                              opacity: 0
+                            }}
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                      {/* Traps section */}
+                      <div className="space-y-2 w-full">
+                        <div 
+                          className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
+                          style={{
+                            animation: "fadeSlideIn 0.6s ease-out 3s forwards",
+                            opacity: 0
+                          }}
+                        >
+                          <p className="text-xs text-red-300 text-center">
+                            Effectiveness vs Generality
+                          </p>
+                        </div>
+                        <div 
+                          className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
+                          style={{
+                            animation: "fadeSlideIn 0.6s ease-out 5s forwards",
+                            opacity: 0
+                          }}
+                        >
+                          <p className="text-xs text-red-300 text-center">
+                            Reinforcement vs Punishment
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <p className="text-zinc-400 text-sm max-w-xs text-center">{scene.subtitle}</p>
                   )}
-                  
-                  {/* Progress bar for current scene */}
+  
+  {/* Progress bar for current scene */}
                   {isActive && (
                     <div className="absolute bottom-8 w-32 h-1 bg-zinc-800 rounded-full overflow-hidden">
                       <div 
