@@ -1,5 +1,6 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation" // Import router
 import {
@@ -889,168 +890,168 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </button>
           </div>
 
-          {/* Animated Scene Carousel */}
+          {/* Animated Scene Carousel with Framer Motion */}
           <div className="relative w-full max-w-sm h-48 mb-24 overflow-visible">
-            {scenes.map((scene, index) => {
-              const isActive = index === currentScene
-              // Different entrance animations based on scene type
-              const getAnimationClass = () => {
-                if (!isActive) {
-                  return index < currentScene
-                    ? "opacity-0 -translate-y-12 scale-90"
-                    : "opacity-0 translate-y-12 scale-90"
-                }
-                switch (scene.animation) {
-                  case "typewriter":
-                    return "opacity-100 translate-y-0 scale-100 animate-pulse"
-                  case "stagger":
-                    return "opacity-100 translate-y-0 scale-100"
-                  case "reveal":
-                    return "opacity-100 translate-y-0 scale-100"
-                  case "shake":
-                    return "opacity-100 translate-y-0 scale-100 animate-bounce"
-                  case "scale":
-                    return "opacity-100 translate-y-0 scale-100"
-                  default:
-                    return "opacity-100 translate-y-0 scale-100"
-                }
-              }
-              
-              return (
-                <div
-                  key={index}
-                  className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out ${getAnimationClass()}`}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentScene}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -30, scale: 0.95 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="absolute inset-0 flex flex-col items-center justify-center"
+              >
+                {/* Icon with glow effect */}
+                <motion.div 
+                  className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${scenes[currentScene].color} flex items-center justify-center mb-4 shadow-2xl border border-white/5`}
+                  initial={{ scale: 0.8, rotate: -10 }}
+                  animate={{ 
+                    scale: 1, 
+                    rotate: 0,
+                    boxShadow: `0 0 40px ${scenes[currentScene].color.includes('amber') ? 'rgba(245,158,11,0.3)' : 
+                      scenes[currentScene].color.includes('blue') ? 'rgba(59,130,246,0.3)' :
+                      scenes[currentScene].color.includes('green') ? 'rgba(34,197,94,0.3)' :
+                      scenes[currentScene].color.includes('cyan') ? 'rgba(6,182,212,0.3)' :
+                      scenes[currentScene].color.includes('red') ? 'rgba(239,68,68,0.3)' :
+                      'rgba(168,85,247,0.3)'}`
+                  }}
+                  transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
+                  whileHover={{ scale: 1.05 }}
                 >
-                  <div 
-                    className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${scene.color} flex items-center justify-center mb-4 shadow-2xl border border-white/5 ${
-                      isActive && scene.animation === "shake" ? "animate-[wiggle_0.5s_ease-in-out_infinite]" : ""
-                    } ${
-                      isActive && scene.animation === "pulse" ? "animate-pulse" : ""
-                    }`}
-                    style={{
-                      boxShadow: isActive ? `0 0 40px ${scene.color.includes('amber') ? 'rgba(245,158,11,0.3)' : 
-                        scene.color.includes('blue') ? 'rgba(59,130,246,0.3)' :
-                        scene.color.includes('green') ? 'rgba(34,197,94,0.3)' :
-                        scene.color.includes('red') ? 'rgba(239,68,68,0.3)' :
-                        'rgba(168,85,247,0.3)'}` : 'none'
-                    }}
+                  <motion.span 
+                    className="text-5xl"
+                    animate={scenes[currentScene].animation === "trapDetector" ? { 
+                      rotate: [0, -5, 5, -5, 5, 0],
+                      transition: { duration: 0.5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 2 }
+                    } : {}}
                   >
-                    <span className="text-5xl">{scene.icon}</span>
+                    {scenes[currentScene].icon}
+                  </motion.span>
+                </motion.div>
+                
+                {/* Title */}
+                <motion.h2 
+                  className="text-2xl font-bold text-white mb-2 tracking-tight"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                >
+                  {scenes[currentScene].title}
+                </motion.h2>
+                
+                {/* Scene-specific content */}
+                {scenes[currentScene].animation === "stagger" ? (
+                  <div className="flex gap-2 mt-2">
+                    {["A", "B", "C", "D"].map((letter, optIdx) => (
+                      <motion.div
+                        key={letter}
+                        initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.5 + optIdx * 1.2, duration: 0.5, type: "spring" }}
+                        className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-semibold text-sm"
+                      >
+                        {letter}
+                      </motion.div>
+                    ))}
                   </div>
-                  <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">{scene.title}</h2>
-                  
-                  {/* Staggered options for Options scene */}
-                  {scene.animation === "stagger" && isActive ? (
-                    <div className="flex gap-2 mt-2">
-                      {["A", "B", "C", "D"].map((letter, optIdx) => (
-                        <div
+                ) : scenes[currentScene].animation === "reveal" ? (
+                  <div className="flex gap-2 mt-2">
+                    {["A", "B", "C", "D"].map((letter) => {
+                      const isCorrect = letter === "B"
+                      return (
+                        <motion.div
                           key={letter}
-                          className="w-10 h-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-semibold text-sm"
-                          style={{
-                            animation: `fadeSlideIn 0.5s ease-out ${optIdx * 1.2}s forwards`,
-                            opacity: 0,
-                            transform: "translateY(10px)"
+                          initial={{ opacity: 0.5 }}
+                          animate={{ 
+                            opacity: 1,
+                            scale: isCorrect ? [1, 1.15, 1.1] : 1,
+                            boxShadow: isCorrect ? ["0 0 0px rgba(34,197,94,0)", "0 0 20px rgba(34,197,94,0.5)", "0 0 15px rgba(34,197,94,0.4)"] : "none"
                           }}
+                          transition={{ delay: isCorrect ? 0.5 : 0, duration: 0.6 }}
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-sm ${
+                            isCorrect 
+                              ? "bg-green-500 border-2 border-green-400 text-white" 
+                              : "bg-zinc-800/50 border border-zinc-700/50 text-zinc-500"
+                          }`}
                         >
-                          {letter}
-                        </div>
+                          {isCorrect ? "✓" : letter}
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                ) : scenes[currentScene].animation === "explanation" ? (
+                  <div className="flex flex-col items-center mt-2 max-w-xs">
+                    <motion.div 
+                      className="text-sm text-zinc-300 text-center mb-3"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                    >
+                      <span className="text-green-400 font-semibold">B is correct</span> because it directly addresses the function of the behavior.
+                    </motion.div>
+                    <motion.div 
+                      className="px-3 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg"
+                      initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 2, duration: 0.6, type: "spring" }}
+                    >
+                      <p className="text-xs text-cyan-300 text-center">
+                        <span className="font-semibold">Key takeaway:</span> Always identify the function before selecting an intervention.
+                      </p>
+                    </motion.div>
+                  </div>
+                ) : scenes[currentScene].animation === "trapDetector" ? (
+                  <div className="flex flex-col items-center mt-2 max-w-xs">
+                    {/* Keywords section */}
+                    <div className="flex gap-2 mb-3">
+                      {["MOST", "BEST", "FIRST"].map((keyword, idx) => (
+                        <motion.span
+                          key={keyword}
+                          initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={{ delay: 0.3 + idx * 0.6, duration: 0.4, type: "spring" }}
+                          className="px-2 py-1 bg-yellow-500/20 border border-yellow-500/40 rounded text-yellow-400 text-xs font-bold"
+                        >
+                          {keyword}
+                        </motion.span>
                       ))}
                     </div>
-                  ) : scene.animation === "reveal" && isActive ? (
-                    <div className="flex gap-2 mt-2">
-                      {["A", "B", "C", "D"].map((letter, optIdx) => {
-                        const isCorrect = letter === "B"
-                        return (
-                          <div
-                            key={letter}
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-sm transition-all duration-500 ${
-                              isCorrect 
-                                ? "bg-green-500 border-2 border-green-400 text-white shadow-lg shadow-green-500/30" 
-                                : "bg-zinc-800/50 border border-zinc-700/50 text-zinc-500"
-                            }`}
-                            style={{
-                              animation: isCorrect ? "pulseGlow 1s ease-in-out infinite" : "none",
-                              transform: isCorrect ? "scale(1.1)" : "scale(1)"
-                            }}
-                          >
-                            {isCorrect ? "✓" : letter}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : scene.animation === "explanation" && isActive ? (
-                    <div className="flex flex-col items-center mt-2 max-w-xs">
-                      <div 
-                        className="text-sm text-zinc-300 text-center mb-3"
-                        style={{
-                          animation: "fadeSlideIn 0.8s ease-out forwards"
-                        }}
+                    {/* Traps section */}
+                    <div className="space-y-2 w-full">
+                      <motion.div 
+                        className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 3, duration: 0.5 }}
                       >
-                        <span className="text-green-400 font-semibold">B is correct</span> because it directly addresses the function of the behavior.
-                      </div>
-                      <div 
-                        className="px-3 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg"
-                        style={{
-                          animation: "fadeSlideIn 0.8s ease-out 2s forwards",
-                          opacity: 0
-                        }}
-                      >
-                        <p className="text-xs text-cyan-300 text-center">
-                          <span className="font-semibold">Key takeaway:</span> Always identify the function before selecting an intervention.
+                        <p className="text-xs text-red-300 text-center">
+                          Effectiveness vs Generality
                         </p>
-                      </div>
+                      </motion.div>
+                      <motion.div 
+                        className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 5, duration: 0.5 }}
+                      >
+                        <p className="text-xs text-red-300 text-center">
+                          Reinforcement vs Punishment
+                        </p>
+                      </motion.div>
                     </div>
-) : scene.animation === "trapDetector" && isActive ? (
-                    <div className="flex flex-col items-center mt-2 max-w-xs">
-                      {/* Keywords section */}
-                      <div className="flex gap-2 mb-3">
-                        {["MOST", "BEST", "FIRST"].map((keyword, idx) => (
-                          <span
-                            key={keyword}
-                            className="px-2 py-1 bg-yellow-500/20 border border-yellow-500/40 rounded text-yellow-400 text-xs font-bold"
-                            style={{
-                              animation: `fadeSlideIn 0.5s ease-out ${idx * 0.8}s forwards`,
-                              opacity: 0
-                            }}
-                          >
-                            {keyword}
-                          </span>
-                        ))}
-                      </div>
-                      {/* Traps section */}
-                      <div className="space-y-2 w-full">
-                        <div 
-                          className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
-                          style={{
-                            animation: "fadeSlideIn 0.6s ease-out 3s forwards",
-                            opacity: 0
-                          }}
-                        >
-                          <p className="text-xs text-red-300 text-center">
-                            Effectiveness vs Generality
-                          </p>
-                        </div>
-                        <div 
-                          className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg"
-                          style={{
-                            animation: "fadeSlideIn 0.6s ease-out 5s forwards",
-                            opacity: 0
-                          }}
-                        >
-                          <p className="text-xs text-red-300 text-center">
-                            Reinforcement vs Punishment
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-zinc-400 text-sm max-w-xs text-center">{scene.subtitle}</p>
-                  )}
-  
-
-                </div>
-              )
-            })}
+                  </div>
+                ) : (
+                  <motion.p 
+                    className="text-zinc-400 text-sm max-w-xs text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {scenes[currentScene].subtitle}
+                  </motion.p>
+                )}
+              </motion.div>
+            </AnimatePresence>
             
 {/* Scene controls */}
             <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
@@ -1115,37 +1116,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </div>
           </div>
           
-          {/* Add keyframes for progress animation */}
-          <style jsx>{`
-            @keyframes progress {
-              from { width: 0%; }
-              to { width: 100%; }
-            }
-            @keyframes wiggle {
-              0%, 100% { transform: rotate(-3deg); }
-              50% { transform: rotate(3deg); }
-            }
-            @keyframes fadeSlideIn {
-              from { 
-                opacity: 0; 
-                transform: translateY(10px); 
-              }
-              to { 
-                opacity: 1; 
-                transform: translateY(0); 
-              }
-            }
-            @keyframes pulseGlow {
-              0%, 100% { 
-                box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
-                transform: scale(1.1);
-              }
-              50% { 
-                box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
-                transform: scale(1.15);
-              }
-            }
-          `}</style>
+
 
           {/* Logo and title */}
           <div className="text-4xl mb-3 opacity-90">🥋</div>
