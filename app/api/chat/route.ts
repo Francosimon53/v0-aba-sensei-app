@@ -524,16 +524,31 @@ The CORRECT answer's rationale MUST include:
 2. An intuitive analogy starting with "Think of it like..." (1 sentence)  
 3. A quick exam tip (1 sentence)
 
-Respond with ONLY valid JSON:
+Respond with ONLY valid JSON (QuestionData format):
 {
   "question": "Clinical scenario ending with a question (3-4 sentences max)",
   "difficulty": "${requestedDifficulty}",
-  "options": [
-    {"id": "A", "text": "Option text", "isCorrect": true, "rationale": "Why correct. Think of it like [analogy]. Exam tip: [tip]"},
-    {"id": "B", "text": "Option text", "isCorrect": false, "rationale": "Why wrong in 1-2 sentences"},
-    {"id": "C", "text": "Option text", "isCorrect": false, "rationale": "Why wrong in 1-2 sentences"},
-    {"id": "D", "text": "Option text", "isCorrect": false, "rationale": "Why wrong in 1-2 sentences"}
-  ],
+  "options": ["A. Option text", "B. Option text", "C. Option text", "D. Option text"],
+  "correctIndex": 0,
+  "hint": "One line hint to help the student",
+  "keyWords": ["key term 1", "key term 2"],
+  "keyWordExplanations": {
+    "overall": "Brief overall explanation",
+    "strategy": "How to approach this question type"
+  },
+  "decisionFilter": {
+    "concepts": [
+      {"name": "Concept name", "definition": "Brief definition", "analogy": "Simple analogy"}
+    ],
+    "testQuestion": "What question should I ask myself to solve this?"
+  },
+  "optionExplanations": {
+    "A": "Why A is correct/wrong. Think of it like [analogy]. Exam tip: [tip]",
+    "B": "Why B is wrong in 1-2 sentences",
+    "C": "Why C is wrong in 1-2 sentences",
+    "D": "Why D is wrong in 1-2 sentences"
+  },
+  "conclusion": "The key takeaway from this question",
   "trapAnalysis": {
     "hasTrap": true or false,
     "trapType": "terminology" | "conceptual" | "structure" | null,

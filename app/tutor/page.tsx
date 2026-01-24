@@ -171,14 +171,52 @@ export default function AITutorPage() {
     correctToday: 0,
     dailyGoal: 10, // Increased daily goal
   })
-  const [currentQuestion, setCurrentQuestion] = useState<{
-    content: string
-    options: QuizOption[]
-    difficulty: string
-    trapAnalysis?: TrapAnalysis
-    category?: string
-    topic?: string
-  } | null>(null)
+  // QuestionData type aligned with question-screen.tsx
+interface QuestionData {
+  question: string
+  options: string[]
+  correctIndex: number
+  hint: string
+  keyWords: string[]
+  keyWordExplanations: {
+    overall: string
+    strategy: string
+  }
+  pivotWords?: Array<{
+    word: string
+    meaning: string
+    strategy: string
+  }>
+  trapDetector?: {
+    trapWord: string
+    commonMeaning: string
+    abaMeaning: string
+    howItConfuses: string
+  }
+  decisionFilter: {
+    concepts: Array<{
+      name: string
+      definition: string
+      analogy?: string
+      rule?: string
+    }>
+    testQuestion: string
+  }
+  optionExplanations: {
+    A: string
+    B: string
+    C: string
+    D: string
+  }
+  conclusion: string
+  // Additional fields for tutor page
+  difficulty?: string
+  trapAnalysis?: TrapAnalysis
+  category?: string
+  topic?: string
+}
+
+const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -420,24 +458,44 @@ export default function AITutorPage() {
       const data = await response.json()
 
       if (data.type === "quiz" && data.question) {
-        const normalizedOptions: QuizOption[] = (data.options || []).map((opt: any, index: number) => {
-          const letters = ["A", "B", "C", "D"]
-          return {
-            id: opt.id || letters[index],
-            text: opt.text || opt.answer || opt.content || `Option ${letters[index]}`,
-            isCorrect: opt.isCorrect === true || opt.correct === true,
-            rationale: opt.rationale || opt.explanation || "",
+        // Convert API response to QuestionData format
+        // Handle both old format (options as array of objects) and new format (options as string array)
+        let options: string[] = []
+        let correctIndex = 0
+        
+        if (Array.isArray(data.options)) {
+          if (typeof data.options[0] === 'string') {
+            // New format: options is already string array
+            options = data.options
+            correctIndex = data.correctIndex ?? 0
+          } else {
+            // Old format: options is array of {id, text, isCorrect}
+            options = data.options.map((opt: any, idx: number) => {
+              const letter = ['A', 'B', 'C', 'D'][idx]
+              return `${letter}. ${opt.text || opt.answer || opt.content || 'Option'}`
+            })
+            correctIndex = data.options.findIndex((opt: any) => opt.isCorrect === true || opt.correct === true)
+            if (correctIndex === -1) correctIndex = 0
           }
-        })
+        }
 
-        setCurrentQuestion({
-          content: data.question,
-          options: normalizedOptions,
+        const questionData: QuestionData = {
+          question: data.question,
+          options,
+          correctIndex,
+          hint: data.hint || "Think about the key ABA concepts involved.",
+          keyWords: data.keyWords || [],
+          keyWordExplanations: data.keyWordExplanations || { overall: "", strategy: "" },
+          decisionFilter: data.decisionFilter || { concepts: [], testQuestion: "" },
+          optionExplanations: data.optionExplanations || { A: "", B: "", C: "", D: "" },
+          conclusion: data.conclusion || "",
           difficulty: data.difficulty || "Medium",
-          trapAnalysis: data.trapAnalysis || null,
-          category: data.category || null,
-          topic: data.topic || null,
-        })
+          trapAnalysis: data.trapAnalysis || undefined,
+          category: data.category || undefined,
+          topic: data.topic || undefined,
+        }
+
+        setCurrentQuestion(questionData)
       }
     } catch (error) {
       console.error("Error loading question:", error)
@@ -446,19 +504,19 @@ export default function AITutorPage() {
     }
   }
 
-  const handleAnswer = (optionId: string) => {
-    if (isAnswered) return
+  const handleAnswer = (optionIndex: number) => {
+    if (isAnswered || !currentQuestion) return
     
-    setSelectedAnswer(optionId)
+    setSelectedAnswer(optionIndex.toString())
     setIsAnswered(true)
     
     // Increment questions used for free plan tracking
     incrementQuestionsUsed()
     setQuestionsUsedToday(prev => prev + 1)
     
-    const selectedOption = currentQuestion?.options.find((o) => o.id === optionId)
-    const correctOption = currentQuestion?.options.find((o) => o.isCorrect)
-    const isCorrect = selectedOption?.isCorrect
+    const isCorrect = optionIndex === currentQuestion.correctIndex
+    const selectedOptionText = currentQuestion.options[optionIndex] || ""
+    const correctOptionText = currentQuestion.options[currentQuestion.correctIndex] || ""
 
     if (currentQuestion) {
       const trapAnalysis = currentQuestion.trapAnalysis
@@ -471,7 +529,7 @@ export default function AITutorPage() {
           trapAnalysis.trapWord,
           trapAnalysis.trapType,
           trapAnalysis.trapExplanation,
-          currentQuestion.content,
+          currentQuestion.question,
         )
         trapExplanations.push({
           word: trapAnalysis.trapWord,
@@ -479,6 +537,21 @@ export default function AITutorPage() {
           explanation: explanation,
         })
       }
+      
+      // Create QuizOption-like objects for helper functions
+      const selectedOption: QuizOption | undefined = currentQuestion.options[optionIndex] ? {
+        id: String.fromCharCode(65 + optionIndex),
+        text: currentQuestion.options[optionIndex],
+        isCorrect: optionIndex === currentQuestion.correctIndex,
+        rationale: currentQuestion.optionExplanations?.[String.fromCharCode(65 + optionIndex) as keyof typeof currentQuestion.optionExplanations] || ""
+      } : undefined
+      
+      const correctOption: QuizOption | undefined = currentQuestion.options[currentQuestion.correctIndex] ? {
+        id: String.fromCharCode(65 + currentQuestion.correctIndex),
+        text: currentQuestion.options[currentQuestion.correctIndex],
+        isCorrect: true,
+        rationale: currentQuestion.optionExplanations?.[String.fromCharCode(65 + currentQuestion.correctIndex) as keyof typeof currentQuestion.optionExplanations] || ""
+      } : undefined
       
       setDetectedTraps(trapExplanations)
       setQuickTip(generateQuickTip(trapAnalysis, correctOption))
@@ -571,15 +644,17 @@ export default function AITutorPage() {
 
       // If there's a current question, add context
       if (currentQuestion) {
-        const selectedOption = currentQuestion.options.find((o) => o.id === selectedAnswer)
-        const correctOption = currentQuestion.options.find((o) => o.isCorrect)
+        const selectedIndex = selectedAnswer ? parseInt(selectedAnswer) : -1
+        const selectedOptionText = selectedIndex >= 0 ? currentQuestion.options[selectedIndex] : ""
+        const correctOptionText = currentQuestion.options[currentQuestion.correctIndex] || ""
+        const isCorrectAnswer = selectedIndex === currentQuestion.correctIndex
 
-        if (isAnswered && selectedOption && !selectedOption.isCorrect) {
+        if (isAnswered && !isCorrectAnswer) {
           // User answered wrong - they might be asking why
           contextMessage = `Context: The student just answered a question incorrectly.
-Question: "${currentQuestion.content}"
-Their answer: "${selectedOption.text}" (incorrect)
-Correct answer: "${correctOption?.text}"
+Question: "${currentQuestion.question}"
+Their answer: "${selectedOptionText}" (incorrect)
+Correct answer: "${correctOptionText}"
 
 Student's follow-up question: ${userMessage}
 
@@ -587,8 +662,8 @@ Respond in 2-3 sentences max, conversationally. Reference the specific question 
         } else if (isAnswered) {
           // User answered correctly
           contextMessage = `Context: The student just answered a question correctly.
-Question: "${currentQuestion.content}"
-Correct answer: "${correctOption?.text}"
+Question: "${currentQuestion.question}"
+Correct answer: "${correctOptionText}"
 
 Student's follow-up question: ${userMessage}
 
@@ -596,7 +671,7 @@ Respond in 2-3 sentences max, conversationally.`
         } else {
           // Question is showing but not yet answered
           contextMessage = `Context: The student is viewing this question but hasn't answered yet.
-Question: "${currentQuestion.content}"
+Question: "${currentQuestion.question}"
 
 Student's question: ${userMessage}
 
@@ -1120,21 +1195,22 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                 {/* Question text */}
                 <div className="mb-4">
                   <p className="text-zinc-600 text-xs mb-1">{currentQuestionNumber}.</p>
-                  <p className="text-white text-base leading-relaxed">{currentQuestion.content}</p>
+                  <p className="text-white text-base leading-relaxed">{currentQuestion.question}</p>
                 </div>
 
                 {/* Options */}
                 <div className="space-y-2">
-                  {currentQuestion.options.map((option) => {
-                    const isSelected = selectedAnswer === option.id
-                    const isCorrect = option.isCorrect
+                  {currentQuestion.options.map((optionText, index) => {
+                    const letter = String.fromCharCode(65 + index) as 'A' | 'B' | 'C' | 'D'
+                    const isSelected = selectedAnswer === index.toString()
+                    const isCorrectOption = index === currentQuestion.correctIndex
                     const showResult = isAnswered
 
                     let cardStyles = "bg-zinc-900 border-zinc-800 hover:brightness-110"
                     if (showResult) {
-                      if (isCorrect) {
+                      if (isCorrectOption) {
                         cardStyles = "bg-green-500/10 border-green-500/40"
-                      } else if (isSelected && !isCorrect) {
+                      } else if (isSelected && !isCorrectOption) {
                         cardStyles = "bg-red-500/10 border-red-500/40"
                       } else {
                         cardStyles = "bg-zinc-900/30 border-zinc-800/30 opacity-40"
@@ -1143,41 +1219,45 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
                       cardStyles = "bg-zinc-900 border-amber-500"
                     }
 
+                    // Extract display text (remove "A. " prefix if present)
+                    const displayText = optionText.replace(/^[A-D]\.\s*/, '')
+                    const rationale = currentQuestion.optionExplanations?.[letter] || ""
+
                     return (
-                      <div key={option.id}>
+                      <div key={index}>
                         <button
-                          onClick={() => handleAnswer(option.id)}
+                          onClick={() => handleAnswer(index)}
                           disabled={isAnswered}
                           className={`w-full py-3 px-4 rounded-xl border text-left transition-all duration-150 hover:shadow-lg hover:shadow-black/20 ${cardStyles}`}
                         >
                           <div className="flex items-start gap-3">
                             <span
                               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all duration-150 ${
-                                showResult && isCorrect
+                                showResult && isCorrectOption
                                   ? "bg-green-500 text-black"
-                                  : showResult && isSelected && !isCorrect
+                                  : showResult && isSelected && !isCorrectOption
                                     ? "bg-red-500 text-white"
                                     : isSelected
                                       ? "bg-amber-500 text-black"
                                       : "bg-zinc-800 text-zinc-400"
                               }`}
                             >
-                              {showResult && isCorrect ? (
+                              {showResult && isCorrectOption ? (
                                 <Check className="w-3 h-3" />
-                              ) : showResult && isSelected && !isCorrect ? (
+                              ) : showResult && isSelected && !isCorrectOption ? (
                                 <X className="w-3 h-3" />
                               ) : (
-                                option.id
+                                letter
                               )}
                             </span>
-                            <span className="text-zinc-200 text-sm leading-relaxed">{option.text}</span>
+                            <span className="text-zinc-200 text-sm leading-relaxed">{displayText}</span>
                           </div>
                         </button>
 
                         {/* Inline feedback for wrong answer */}
-                        {showResult && isSelected && !isCorrect && (
+                        {showResult && isSelected && !isCorrectOption && (
                           <div className="mt-2 ml-10 text-xs text-red-400/70">
-                            <span className="font-medium">Not quite</span> - {option.rationale || errorDiagnosis}
+                            <span className="font-medium">Not quite</span> - {rationale || errorDiagnosis}
                           </div>
                         )}
                       </div>
