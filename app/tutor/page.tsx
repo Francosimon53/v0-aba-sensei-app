@@ -993,6 +993,25 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               <ChevronRight className="w-4 h-4 text-zinc-600" />
             </div>
           </div>
+
+          {/* Video Learning Mode button */}
+          <button
+            onClick={() => router.push("/video")}
+            className="mt-4 w-full max-w-xs bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl p-4 border border-zinc-800/50 hover:border-purple-500/30 transition-all duration-200 group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                  <span className="text-xl">🎬</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-medium text-sm">Video Learning Mode</p>
+                  <p className="text-zinc-500 text-xs">Watch animated explanations</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-purple-400 transition-colors" />
+            </div>
+          </button>
         </div>
       </div>
     )
