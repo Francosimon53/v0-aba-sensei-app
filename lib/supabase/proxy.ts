@@ -34,16 +34,16 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Allow access without authentication if DEV_MODE is enabled
-  const devMode = process.env.DEV_MODE === "true"
-
-  if ((request.nextUrl.pathname.startsWith("/study") || request.nextUrl.pathname.startsWith("/dashboard")) && !user && !devMode) {
+  // DEVELOPMENT MODE: Allow access to protected routes without authentication
+  // Uncomment the code below to require authentication
+  /*
+  if ((request.nextUrl.pathname.startsWith("/study") || request.nextUrl.pathname.startsWith("/dashboard")) && !user) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
   }
 
-  if (request.nextUrl.pathname.startsWith("/auth/") && user && !devMode) {
+  if (request.nextUrl.pathname.startsWith("/auth/") && user) {
     // Allow sign-up-success page for newly registered users
     if (!request.nextUrl.pathname.includes("sign-up-success")) {
       const url = request.nextUrl.clone()
@@ -51,6 +51,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
   }
+  */
 
   return supabaseResponse
 }
