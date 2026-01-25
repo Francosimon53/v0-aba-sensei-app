@@ -368,7 +368,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true, questionData 
       {/* Video Player Container */}
       <div className="relative w-full h-full bg-gradient-to-br from-zinc-900 via-[#0d0d14] to-zinc-900 rounded-2xl border border-zinc-800/50 overflow-hidden">
         {/* Scene Content */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pb-[120px]">
           <AnimatePresence mode="wait">
             {renderSceneContent()}
           </AnimatePresence>
