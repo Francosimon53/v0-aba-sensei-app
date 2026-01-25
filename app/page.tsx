@@ -34,15 +34,27 @@ export default function Page() {
 
   useEffect(() => {
     async function checkAuth() {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
 
-      if (user) {
-        setIsLoggedIn(true)
-        router.push("/dashboard")
-      } else {
+        if (error) {
+          console.log("[v0] Auth check error (non-critical):", error.message)
+          setIsLoading(false)
+          return
+        }
+
+        if (user) {
+          setIsLoggedIn(true)
+          router.push("/dashboard")
+        } else {
+          setIsLoading(false)
+        }
+      } catch (err) {
+        console.log("[v0] Auth check failed (non-critical):", err)
         setIsLoading(false)
       }
     }
