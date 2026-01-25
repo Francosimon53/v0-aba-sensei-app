@@ -12,6 +12,7 @@ export default function VideoModePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
   const [volume, setVolume] = useState(0.3)
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   // Sample questions data - in production this would come from API
@@ -108,13 +109,27 @@ export default function VideoModePage() {
     setIsMuted(!isMuted)
   }
 
+  const toggleAudioPlayback = () => {
+    if (!audioRef.current) return
+    
+    if (isAudioPlaying) {
+      audioRef.current.pause()
+      setIsAudioPlaying(false)
+    } else {
+      audioRef.current.play().then(() => {
+        setIsAudioPlaying(true)
+      }).catch((error) => {
+        console.log("Audio playback failed:", error)
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
       {/* Background Music */}
       <audio
         ref={audioRef}
         src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
-        autoPlay
         loop
       />
 
@@ -187,13 +202,24 @@ export default function VideoModePage() {
         {/* Audio Controls */}
         <div className="flex items-center gap-4 mt-6 px-4 py-3 bg-zinc-900/80 border border-zinc-800/50 rounded-xl">
           <button
+            onClick={toggleAudioPlayback}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+              isAudioPlaying 
+                ? "bg-amber-500/20 text-amber-500 border border-amber-500/30" 
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700"
+            }`}
+          >
+            {isAudioPlaying ? "Pause Music" : "Play Music"}
+          </button>
+          <button
             onClick={toggleMute}
             className="p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+            disabled={!isAudioPlaying}
           >
             {isMuted ? (
               <VolumeX className="w-5 h-5 text-zinc-400" />
             ) : (
-              <Volume2 className="w-5 h-5 text-amber-500" />
+              <Volume2 className={`w-5 h-5 ${isAudioPlaying ? "text-amber-500" : "text-zinc-600"}`} />
             )}
           </button>
           <input
@@ -203,7 +229,8 @@ export default function VideoModePage() {
             step="0.1"
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-24 h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:rounded-full"
+            disabled={!isAudioPlaying}
+            className="w-24 h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer disabled:opacity-50 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:rounded-full"
           />
           <span className="text-xs text-zinc-500">Background Music</span>
         </div>
