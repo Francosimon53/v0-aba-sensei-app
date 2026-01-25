@@ -1,9 +1,8 @@
 "use client"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { VideoLearningPlayer } from "@/components/video-learning-player"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation" // Import router
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Zap,
   ArrowLeft,
@@ -21,9 +20,6 @@ import {
   BookOpen,
   Share2,
   Linkedin,
-  RotateCcw,
-  Pause,
-  Play,
 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -166,7 +162,7 @@ function generateDetailedTrapExplanation(word: string, type: string, explanation
   return `The word "${word}" in the question "${question}" is a trap of type "${type}". ${explanation}`;
 }
 
-export default function AITutorPage() {
+function AITutorContent() {
   const [examLevel, setExamLevel] = useState<"bcba" | "rbt">("bcba")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium")
@@ -727,16 +723,24 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     loadQuestion() // Load first question when session starts
   }
 
-  // Welcome screen mode toggle
-  const [welcomeMode, setWelcomeMode] = useState<"video" | "quiz">("video")
+  // Parse URL search params for initial settings from video page
+  const searchParams = useSearchParams()
   
-  // Auto-start session when switching to quiz mode
   useEffect(() => {
-    if (welcomeMode === "quiz" && !sessionStarted && !currentQuestion) {
-      setSessionStarted(true)
-      loadQuestion()
+    const level = searchParams.get('level')
+    const category = searchParams.get('category')
+    const diff = searchParams.get('difficulty')
+    
+    if (level === 'rbt' || level === 'bcba') {
+      setExamLevel(level)
     }
-  }, [welcomeMode])
+    if (category) {
+      setSelectedCategory(category)
+    }
+    if (diff === 'Easy' || diff === 'Medium' || diff === 'Hard') {
+      setDifficulty(diff)
+    }
+  }, [searchParams])
 
   const getDifficultyStyles = (difficulty: string) => {
     switch (difficulty) {
@@ -749,8 +753,8 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
     }
   }
 
-// Welcome screen - only show when video mode or not started
-  if (!sessionStarted && welcomeMode === "video") {
+// Welcome screen - only show when session not started
+  if (!sessionStarted) {
   return (
   <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
         {/* Header */}
@@ -764,42 +768,10 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             <span className="hidden sm:inline">Dashboard</span>
           </button>
           
-          {/* Center: Quiz | Video Toggle */}
-          <div className="flex bg-[#0d0d12] rounded-full p-1 border border-zinc-800/70 shadow-lg shadow-black/20">
-            <button
-              onClick={() => setWelcomeMode("quiz")}
-              className={`relative px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${
-                welcomeMode === "quiz"
-                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/30"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {welcomeMode === "quiz" && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-amber-500 rounded-full"
-                  transition={{ type: "spring", duration: 0.5 }}
-                />
-              )}
-              <span className="relative z-10">Quiz</span>
-            </button>
-            <button
-              onClick={() => setWelcomeMode("video")}
-              className={`relative px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${
-                welcomeMode === "video"
-                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/30"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {welcomeMode === "video" && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-amber-500 rounded-full"
-                  transition={{ type: "spring", duration: 0.5 }}
-                />
-              )}
-              <span className="relative z-10">Video</span>
-            </button>
+          {/* Center: Title */}
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🥋</span>
+            <span className="text-white font-semibold text-sm sm:text-base">AI Sensei Quiz</span>
           </div>
           
           {/* Right: Stats */}
@@ -810,7 +782,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </div>
             <div className="flex items-center gap-1 text-amber-400/80 text-xs sm:text-sm">
               <Target className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{gameStats.correct}/{currentQuestionNumber}</span>
+              <span>{gameStats.correctToday}/{gameStats.dailyGoal}</span>
             </div>
           </div>
         </header>
@@ -842,52 +814,37 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </button>
           </div>
 
-          {welcomeMode === "video" ? (
-            <VideoLearningPlayer autoPlay={true} />
-          ) : (
-            /* Quiz mode - Simple ready state */
+          {/* Quiz mode - Simple ready state */}
+          <motion.div 
+            className="flex flex-col items-center justify-center mb-8"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
             <motion.div 
-              className="flex flex-col items-center justify-center mb-8"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4 }}
+              className="w-28 h-28 rounded-3xl bg-gradient-to-br from-amber-500/30 to-amber-900/10 flex items-center justify-center mb-6 border border-amber-500/20"
+              animate={{ 
+                boxShadow: ["0 0 30px rgba(245,158,11,0.2)", "0 0 50px rgba(245,158,11,0.4)", "0 0 30px rgba(245,158,11,0.2)"]
+              }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
             >
-              <motion.div 
-                className="w-28 h-28 rounded-3xl bg-gradient-to-br from-amber-500/30 to-amber-900/10 flex items-center justify-center mb-6 border border-amber-500/20"
-                animate={{ 
-                  boxShadow: ["0 0 30px rgba(245,158,11,0.2)", "0 0 50px rgba(245,158,11,0.4)", "0 0 30px rgba(245,158,11,0.2)"]
-                }}
-                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
-              >
-                <span className="text-6xl">🥋</span>
-              </motion.div>
-              <h2 className="text-2xl font-bold text-white mb-2">Ready to Practice?</h2>
-              <p className="text-zinc-400 text-sm text-center max-w-xs">
-                {examLevel === "rbt" ? "RBT" : "BCBA"} exam questions powered by AI
-              </p>
-              <div className="flex items-center gap-4 mt-4 text-sm">
-                <div className="flex items-center gap-1.5 text-amber-500/80">
-                  <Zap className="w-4 h-4" />
-                  <span>{questionsUsedToday} today</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-green-500/80">
-                  <Target className="w-4 h-4" />
-                  <span>{gameStats.correctToday}/{gameStats.dailyGoal} goal</span>
-                </div>
-              </div>
+              <span className="text-6xl">🥋</span>
             </motion.div>
-          )}
-
-          {/* Logo and title - only show in video mode */}
-          {welcomeMode === "video" && (
-            <>
-          <div className="text-4xl mb-3 opacity-90">🥋</div>
-          <h1 className="text-xl font-semibold text-white mb-1 tracking-tight">ABA Sensei</h1>
-          <p className="text-zinc-500 text-center text-sm mb-6">
-            {gameStats.correctToday}/{gameStats.dailyGoal} questions today
-          </p>
-            </>
-          )}
+            <h2 className="text-2xl font-bold text-white mb-2">Ready to Practice?</h2>
+            <p className="text-zinc-400 text-sm text-center max-w-xs">
+              {examLevel === "rbt" ? "RBT" : "BCBA"} exam questions powered by AI
+            </p>
+            <div className="flex items-center gap-4 mt-4 text-sm">
+              <div className="flex items-center gap-1.5 text-amber-500/80">
+                <Zap className="w-4 h-4" />
+                <span>{questionsUsedToday} today</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-green-500/80">
+                <Target className="w-4 h-4" />
+                <span>{gameStats.correctToday}/{gameStats.dailyGoal} goal</span>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Category selection */}
           <div className="w-full max-w-md mb-8">
@@ -1011,15 +968,32 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
             </div>
           </div>
 
-          {/* Start button */}
-          <Button
-            onClick={startSession}
-            className="w-full max-w-xs bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
-          >
-            Start Practice
-          </Button>
-
-          {/* Daily goal card */}
+  {/* Action buttons */}
+  <div className="flex flex-col gap-3 w-full max-w-xs">
+    <Button
+      onClick={startSession}
+      className="w-full bg-amber-500 hover:bg-amber-400 text-black font-semibold py-6 text-base rounded-xl transition-all duration-150"
+    >
+      Start Practice
+    </Button>
+    
+    <button
+      onClick={() => router.push("/video")}
+      className="w-full bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl p-4 border border-amber-500/30 hover:border-amber-500/50 transition-all duration-200 group"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+          <span className="text-2xl">🎬</span>
+        </div>
+        <div className="text-left">
+          <p className="text-white font-semibold text-sm">Video Learning Mode</p>
+          <p className="text-zinc-400 text-xs">Learn through animated video explanations</p>
+        </div>
+      </div>
+    </button>
+  </div>
+  
+  {/* Daily goal card */}
           <div className="mt-8 bg-zinc-900/80 rounded-xl p-4 w-full max-w-xs border border-zinc-800/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1036,6 +1010,7 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
               <ChevronRight className="w-4 h-4 text-zinc-600" />
             </div>
           </div>
+
         </div>
       </div>
     )
@@ -1047,43 +1022,16 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
       <header className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              setSessionStarted(false)
-              setWelcomeMode("video")
-            }}
+            onClick={() => setSessionStarted(false)}
             className="p-2 -ml-2 hover:bg-zinc-900 rounded-full transition-all duration-150"
           >
             <X className="w-5 h-5 text-zinc-600" />
           </button>
           
-          {/* Quiz | Video Toggle */}
-          <div className="flex bg-[#0d0d12] rounded-full p-1 border border-zinc-800/70">
-            <button
-              onClick={() => setWelcomeMode("quiz")}
-              className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
-                welcomeMode === "quiz"
-                  ? "bg-amber-500 text-black"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              Quiz
-            </button>
-            <button
-              onClick={() => {
-                setWelcomeMode("video")
-                setSessionStarted(false)
-              }}
-              className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 ${
-                welcomeMode === "video"
-                  ? "bg-amber-500 text-black"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              Video
-            </button>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🥋</span>
+            <span className="text-white font-semibold text-sm">{examLevel.toUpperCase()} Practice</span>
           </div>
-          
-          <span className="text-zinc-500 text-sm hidden sm:inline">{examLevel.toUpperCase()} Practice</span>
         </div>
         <div className="flex items-center gap-4">
           {/* Remaining questions for free users */}
@@ -1490,5 +1438,17 @@ Give a helpful hint without revealing the answer. Keep it to 2-3 sentences max.`
         </div>
       )}
     </div>
+  )
+}
+
+export default function AITutorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]">
+        <div className="animate-pulse text-zinc-500">Loading...</div>
+      </div>
+    }>
+      <AITutorContent />
+    </Suspense>
   )
 }
