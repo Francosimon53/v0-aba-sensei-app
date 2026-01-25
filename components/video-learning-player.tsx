@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
+import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Volume2, VolumeX } from "lucide-react"
 
 interface Scene {
   icon: string
@@ -23,6 +23,38 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
   const [currentScene, setCurrentScene] = useState(0)
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [sceneProgress, setSceneProgress] = useState(0)
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Initialize audio on mount
+  useEffect(() => {
+    audioRef.current = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3")
+    audioRef.current.loop = true
+    audioRef.current.volume = 0.3
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
+  // Toggle background music
+  const toggleMusic = () => {
+    if (!audioRef.current) return
+
+    if (isMusicPlaying) {
+      audioRef.current.pause()
+      setIsMusicPlaying(false)
+    } else {
+      audioRef.current.play().then(() => {
+        setIsMusicPlaying(true)
+      }).catch((error) => {
+        console.log("Audio playback failed:", error)
+      })
+    }
+  }
 
   const scenes: Scene[] = [
     {
@@ -142,7 +174,7 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center pb-[120px]">
       {/* Scene Carousel */}
       <div className="relative w-full max-w-sm h-48 mb-20 overflow-visible">
         <AnimatePresence mode="wait">
@@ -367,6 +399,17 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true }: VideoLearni
             <div className="text-amber-500/70 text-xs ml-2 font-medium">
               {currentScene + 1}/{scenes.length}
             </div>
+            <button
+              onClick={toggleMusic}
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ml-2 ${
+                isMusicPlaying 
+                  ? "bg-amber-500/20 border-amber-500/50 text-amber-500" 
+                  : "bg-[#1a1a24] border-zinc-700/50 hover:border-amber-500/50 text-zinc-400 hover:text-amber-500"
+              }`}
+              title={isMusicPlaying ? "Mute Music" : "Play Music"}
+            >
+              {isMusicPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
           </div>
         </div>
       </div>
