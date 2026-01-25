@@ -389,9 +389,9 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true, questionData 
         </div>
 
         {/* Bottom Controls Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-12 pb-4 px-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-24 pb-4 px-4">
           {/* Progress Bar */}
-          <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden mb-4">
+          <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden mb-6">
             <motion.div
               className="h-full bg-amber-500 rounded-full"
               style={{ width: `${sceneProgress}%` }}
