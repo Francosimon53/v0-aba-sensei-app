@@ -26,6 +26,20 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true, questionData 
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [sceneProgress, setSceneProgress] = useState(0)
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
+    const [isMusicPlaying, setIsMusicPlaying] = useState(false)
+    const audioRef = useRef<HTMLAudioElement>(null)
+
+    // Toggle music function
+    const toggleMusic = () => {
+          if (audioRef.current) {
+                  if (isMusicPlaying) {
+                            audioRef.current.pause()
+                  } else {
+                            audioRef.current.play()
+                  }
+          }
+          setIsMusicPlaying(!isMusicPlaying)
+    }
 
   // Default question data if none provided
   const defaultQuestion: QuestionData = {
