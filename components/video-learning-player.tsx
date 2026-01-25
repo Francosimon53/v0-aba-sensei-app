@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react"
+import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Volume2, VolumeX } from "lucide-react"
 
 interface QuestionData {
   question: string
@@ -450,6 +450,17 @@ export function VideoLearningPlayer({ onComplete, autoPlay = true, questionData 
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
+            <button
+              onClick={toggleMusic}
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ml-2 ${
+                isMusicPlaying 
+                  ? "bg-amber-500/20 border-amber-500/50 text-amber-500" 
+                  : "bg-[#1a1a24] border-zinc-700/50 hover:border-amber-500/50 text-zinc-400 hover:text-amber-500"
+              }`}
+              title={isMusicPlaying ? "Mute Music" : "Play Music"}
+            >
+              {isMusicPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
           </div>
         </div>
       </div>
