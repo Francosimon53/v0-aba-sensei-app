@@ -34,6 +34,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // DEVELOPMENT MODE: Allow access to protected routes without authentication
+  // Uncomment the code below to require authentication
+  /*
   if ((request.nextUrl.pathname.startsWith("/study") || request.nextUrl.pathname.startsWith("/dashboard")) && !user) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
@@ -48,6 +51,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
   }
+  */
 
   return supabaseResponse
 }
