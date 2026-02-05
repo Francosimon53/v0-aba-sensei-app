@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import Script from "next/script"
 
@@ -18,7 +18,7 @@ export function getFbp(): string | undefined {
   return match ? decodeURIComponent(match[1]) : undefined
 }
 
-export default function MetaPixel() {
+function MetaPixelInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -38,6 +38,10 @@ export default function MetaPixel() {
     }
   }, [pathname])
 
+  return null
+}
+
+export default function MetaPixel() {
   return (
     <>
       <Script
@@ -58,6 +62,9 @@ export default function MetaPixel() {
           `,
         }}
       />
+      <Suspense fallback={null}>
+        <MetaPixelInner />
+      </Suspense>
       <noscript>
         <img
           height="1"
