@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
+import { hashSHA256, sendMetaConversionEvent } from "@/lib/meta"
 import type Stripe from "stripe"
 
 const supabaseAdmin = createClient(
@@ -61,6 +62,36 @@ export async function POST(request: Request) {
               subscription_expires_at: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
             })
             .eq("id", userId)
+
+          // Send Meta Conversions API Purchase event
+          const metaEventId = session.metadata?.metaEventId
+          if (metaEventId) {
+            const customerEmail = session.customer_details?.email
+            const amountTotal = session.amount_total
+              ? session.amount_total / 100
+              : 0
+            const currency = (session.currency || "usd").toUpperCase()
+            const fbc = session.metadata?.fbc
+            const fbp = session.metadata?.fbp
+
+            await sendMetaConversionEvent({
+              event_name: "Purchase",
+              event_id: metaEventId,
+              event_time: Math.floor(Date.now() / 1000),
+              action_source: "website",
+              user_data: {
+                ...(customerEmail && { em: [hashSHA256(customerEmail)] }),
+                ...(fbc && { fbc }),
+                ...(fbp && { fbp }),
+              },
+              custom_data: {
+                value: amountTotal,
+                currency,
+              },
+            }).catch((err) => {
+              console.error("Meta CAPI Purchase event failed:", err)
+            })
+          }
         }
         break
       }

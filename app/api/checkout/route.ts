@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { priceId, userId } = await request.json()
+    const { priceId, userId, metaEventId, fbc, fbp } = await request.json()
 
     if (!priceId || !userId) {
       return NextResponse.json({ error: "Missing priceId or userId" }, { status: 400 })
@@ -80,6 +80,9 @@ export async function POST(request: Request) {
       cancel_url: `${appUrl}/pricing`,
       metadata: {
         userId,
+        ...(metaEventId && { metaEventId }),
+        ...(fbc && { fbc }),
+        ...(fbp && { fbp }),
       },
       subscription_data: {
         metadata: {

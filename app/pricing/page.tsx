@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { isForeverFreeUser } from "@/lib/constants"
+import { getFbc, getFbp } from "@/components/meta-pixel"
 import { Check, Settings } from "lucide-react"
 import Link from "next/link"
 
@@ -155,10 +156,25 @@ export default function PricingPage() {
     // User is logged in - start checkout
     setLoading(plan.id)
     try {
+      // Fire InitiateCheckout pixel event
+      const initiateCheckoutEventId = crypto.randomUUID()
+      const priceValue = parseFloat(plan.price.replace("$", ""))
+      if ((window as any).fbq) {
+        ;(window as any).fbq("track", "InitiateCheckout", {
+          value: priceValue,
+          currency: "USD",
+        }, { eventID: initiateCheckoutEventId })
+      }
+
+      // Generate Purchase event ID for dedup between pixel + CAPI
+      const metaEventId = crypto.randomUUID()
+      const fbc = getFbc()
+      const fbp = getFbp()
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: plan.priceId, userId: user.id }),
+        body: JSON.stringify({ priceId: plan.priceId, userId: user.id, metaEventId, fbc, fbp }),
       })
 
       const data = await response.json()

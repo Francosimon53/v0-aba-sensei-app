@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import MetaPixel from "@/components/meta-pixel"
 import { GlobalBackground } from "@/components/global-background"
 import "./globals.css"
 
@@ -41,6 +42,7 @@ export default function RootLayout({
         <GlobalBackground />
         <main className="relative z-10 min-h-screen">{children}</main>
         <Analytics />
+        <MetaPixel />
       </body>
     </html>
   )

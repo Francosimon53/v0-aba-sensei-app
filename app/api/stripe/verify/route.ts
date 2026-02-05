@@ -39,7 +39,7 @@ export async function GET(request: Request) {
         // Still return success - webhook will handle it
       }
 
-      return NextResponse.json({ success: true })
+      return NextResponse.json({ success: true, metaEventId: session.metadata?.metaEventId || null })
     }
 
     return NextResponse.json({ success: false, status: session.payment_status })

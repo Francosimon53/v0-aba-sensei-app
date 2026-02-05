@@ -18,6 +18,12 @@ export default function SuccessPage() {
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
+            // Fire client-side Purchase pixel event (deduped with CAPI via same eventID)
+            if (data.metaEventId && (window as any).fbq) {
+              ;(window as any).fbq("track", "Purchase", {
+                currency: "USD",
+              }, { eventID: data.metaEventId })
+            }
             setStatus("success")
           } else {
             setStatus("error")
