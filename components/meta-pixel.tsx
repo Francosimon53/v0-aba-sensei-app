@@ -4,7 +4,7 @@ import { Suspense, useEffect } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import Script from "next/script"
 
-const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID!
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1807419716173473"
 
 export function getFbc(): string | undefined {
   if (typeof document === "undefined") return undefined
@@ -57,7 +57,7 @@ export default function MetaPixel() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${PIXEL_ID}');
+            fbq('init', '` + process.env.NEXT_PUBLIC_META_PIXEL_ID + `');
             fbq('track', 'PageView');
           `,
         }}
