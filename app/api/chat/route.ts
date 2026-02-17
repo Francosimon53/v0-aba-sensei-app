@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { generateText } from "ai"
+import { classifyDomain, type ClassifyResult } from "@/lib/classifier"
 
 export const runtime = "nodejs"
 
@@ -347,6 +348,30 @@ export async function POST(request: NextRequest) {
       ragContext = await searchKnowledge(ragQuery, examLevel)
     }
 
+    // Classify domain using NeuralForge classifier (optional, non-blocking)
+    let classifierResult: ClassifyResult | null = null
+    let classifierContext = ""
+    try {
+      const classifyQuery = topic || message || ""
+      if (classifyQuery) {
+        classifierResult = await classifyDomain(classifyQuery, examLevel, ragContext || undefined)
+        if (classifierResult && classifierResult.predictions.length > 0) {
+          const top = classifierResult.predictions[0]
+          const others = classifierResult.predictions.slice(1)
+          classifierContext = `DOMAIN CLASSIFICATION (NeuralForge):
+Primary domain: ${top.domain}. ${top.name} (confidence: ${(top.confidence * 100).toFixed(1)}%)${
+            others.length > 0
+              ? `\nRelated domains: ${others.map((p) => `${p.domain}. ${p.name} (${(p.confidence * 100).toFixed(1)}%)`).join(", ")}`
+              : ""
+          }
+Focus your response on content from domain ${top.domain} (${top.name}).`
+          console.log(`[classifier] Domain: ${top.domain} (${(top.confidence * 100).toFixed(1)}%) in ${classifierResult.time_ms}ms`)
+        }
+      }
+    } catch (e) {
+      // Classifier is optional — continue without it
+    }
+
     const examLevelContext =
       examLevel === "rbt"
         ? `You are preparing questions for the RBT (Registered Behavior Technician) exam.
@@ -409,19 +434,22 @@ Questions should require critical thinking and application of principles.`
     // Build prompts based on action type
     switch (action) {
       case "practice":
-        systemPrompt = `CRITICAL: You MUST respond ONLY in ENGLISH. All text - questions, options, rationales, explanations, tips, feedback - must be in English. Never use Spanish, Portuguese, or any other language.
+        systemPrompt = `You are ABA Sensei, an expert Board Certified Behavior Analyst (BCBA-D) and clinical mentor for ${examLevel.toUpperCase()} exam preparation.
 
-You are "ABA Sensei" 🥋, an expert AI tutor for ${examLevel.toUpperCase()} exam preparation.
+LANGUAGE & TERMINOLOGY:
+- Primary language: ENGLISH (standard for the exam).
+- Exception: If the user explicitly asks for an explanation in Spanish, provide it in Spanish but KEEP all technical terms in English (e.g., "This is a Differential Reinforcement procedure").
+- All questions, options, rationales, and exam tips must be in English by default.
 
 ═══════════════════════════════════════════════════════
-📐 GOLDEN FORMATTING RULES
+GOLDEN FORMATTING RULES
 ═══════════════════════════════════════════════════════
 1. No Walls of Text: Keep rationales to 2-3 sentences MAX
 2. Visual Hierarchy: Use **bold** for key terms
 3. Tone: Professional, empathetic, motivating, direct
 
 ═══════════════════════════════════════════════════════
-🧠 TEACHING ALGORITHM (Use for rationales)
+TEACHING ALGORITHM (Use for rationales)
 ═══════════════════════════════════════════════════════
 For EACH option rationale, follow this structure:
 1. Direct Answer: Why this IS or ISN'T correct (1 sentence)
@@ -430,10 +458,9 @@ For EACH option rationale, follow this structure:
 
 ${examLevelContext}
 
-${ragContext ? `KNOWLEDGE BASE CONTEXT:\n${ragContext}\n` : ""}
-
+${ragContext ? `KNOWLEDGE BASE (source of truth — cite when relevant):\n${ragContext}\n` : ""}${classifierContext ? `\n${classifierContext}\n` : ""}
 ═══════════════════════════════════════════════════════
-🚨 TRAP DETECTOR (Analyze each question you create)
+TRAP DETECTOR (Analyze each question you create)
 ═══════════════════════════════════════════════════════
 
 TERMINOLOGY TRAPS - ABA words with different everyday meanings:
@@ -455,7 +482,7 @@ STRUCTURE TRAPS - Question phrasing tricks:
 - ALWAYS/NEVER = Usually incorrect (too absolute)
 
 ═══════════════════════════════════════════════════════
-📝 RESPONSE RULES
+RESPONSE RULES
 ═══════════════════════════════════════════════════════
 - Create questions that test APPLICATION, not just recall
 - Use realistic clinical scenarios (3-4 sentences max)
@@ -561,20 +588,25 @@ Respond with ONLY valid JSON (QuestionData format):
         break
 
       case "flashcards":
-        systemPrompt = `CRITICAL: You MUST respond ONLY in ENGLISH. All text - questions, options, rationales, explanations, tips, feedback - must be in English. Never use Spanish, Portuguese, or any other language.
+        systemPrompt = `You are ABA Sensei, an expert Board Certified Behavior Analyst (BCBA-D) and clinical mentor.
 
-You are an expert ${examLevel.toUpperCase()} tutor. Create concise flashcards for studying.
+LANGUAGE & TERMINOLOGY:
+- Primary language: ENGLISH (standard for the exam).
+- Exception: If the user explicitly asks in Spanish, respond in Spanish but KEEP all technical terms in English.
 
 ${examLevelContext}
 
 ${
   ragContext
-    ? `KNOWLEDGE BASE CONTEXT:
+    ? `KNOWLEDGE BASE (source of truth — cite when relevant):
 ${ragContext}
 
 `
     : ""
-}RULES:
+}${classifierContext ? `${classifierContext}\n\n` : ""}RAG INSTRUCTIONS:
+Always prioritize the uploaded PDF content (Cooper, etc.) as the source of truth. Cite the concept or principle when relevant.
+
+RULES:
 - Create 5 flashcards maximum
 - Front: Clear question or term
 - Back: Concise answer (1-2 sentences)
@@ -592,20 +624,25 @@ Respond with ONLY valid JSON:
         break
 
       case "studyguide":
-        systemPrompt = `CRITICAL: You MUST respond ONLY in ENGLISH. All text - questions, options, rationales, explanations, tips, feedback - must be in English. Never use Spanish, Portuguese, or any other language.
+        systemPrompt = `You are ABA Sensei, an expert Board Certified Behavior Analyst (BCBA-D) and clinical mentor.
 
-You are an expert ${examLevel.toUpperCase()} tutor. Create brief, focused study guides.
+LANGUAGE & TERMINOLOGY:
+- Primary language: ENGLISH (standard for the exam).
+- Exception: If the user explicitly asks in Spanish, respond in Spanish but KEEP all technical terms in English.
 
 ${examLevelContext}
 
 ${
   ragContext
-    ? `KNOWLEDGE BASE CONTEXT:
+    ? `KNOWLEDGE BASE (source of truth — cite when relevant):
 ${ragContext}
 
 `
     : ""
-}RULES:
+}${classifierContext ? `${classifierContext}\n\n` : ""}RAG INSTRUCTIONS:
+Always prioritize the uploaded PDF content (Cooper, etc.) as the source of truth. Cite the concept or principle when relevant.
+
+RULES:
 - Keep it SHORT (3-4 key points max)
 - Use simple language appropriate for ${examLevel.toUpperCase()} level
 - Include practical examples`
@@ -623,68 +660,94 @@ Quick Tip: One practical application tip`
         break
 
       case "explain":
-        systemPrompt = `CRITICAL: You MUST respond ONLY in ENGLISH. All text - questions, options, rationales, explanations, tips, feedback - must be in English. Never use Spanish, Portuguese, or any other language.
+        systemPrompt = `You are ABA Sensei, an expert Board Certified Behavior Analyst (BCBA-D) and clinical mentor using the SOCRATIC METHOD.
 
-You are a friendly ${examLevel.toUpperCase()} tutor. Explain concepts simply and briefly.
+PRIME DIRECTIVE: NEVER provide the correct answer or full explanation in the first turn. Use prompt fading to guide the user to discover the answer.
+
+LANGUAGE & TERMINOLOGY:
+- Primary language: ENGLISH (standard for the exam).
+- Exception: If the user explicitly asks in Spanish, respond in Spanish but KEEP all technical terms in English (e.g., "This is a Differential Reinforcement procedure").
+
+PROMPT HIERARCHY (escalate only if the student is stuck):
+  Level 1 (Open Question): "What elements in the scenario suggest the behavior will increase?"
+  Level 2 (Semantic Cue): "Remember the difference between negative reinforcement and punishment."
+  Level 3 (Forced Choice): "Is this closer to A or B?"
 
 ${examLevelContext}
 
 ${
   ragContext
-    ? `KNOWLEDGE BASE CONTEXT:
+    ? `KNOWLEDGE BASE (source of truth — cite when relevant):
 ${ragContext}
 
 `
     : ""
-}RULES:
+}${classifierContext ? `${classifierContext}\n\n` : ""}RAG INSTRUCTIONS:
+Always prioritize the uploaded PDF content (Cooper, etc.) as the source of truth. Cite the concept or principle when guiding the user.
+
+RULES:
 - Maximum 2-3 short paragraphs
-- Use simple language and examples appropriate for ${examLevel.toUpperCase()} level
-- End with ONE follow-up question to guide learning
+- Start by asking what the student already knows about the concept
+- Use analogies from everyday life
+- End with a Socratic question that pushes the student to think deeper
 - NO bullet point lists or headers`
 
         userPrompt = `Explain this topic briefly: ${topic || message}`
         break
 
       default: // chat
-        systemPrompt = `CRITICAL: You MUST respond ONLY in ENGLISH. All text - questions, options, rationales, explanations, tips, feedback - must be in English. Never use Spanish, Portuguese, or any other language.
+        systemPrompt = `You are ABA Sensei, an expert Board Certified Behavior Analyst (BCBA-D) and clinical mentor. Your goal is NOT to provide direct answers, but to SHAPE the user's critical thinking for the ${examLevel.toUpperCase()} exam using the Socratic Method.
 
-You are ABA Sensei, a warm and encouraging tutor who genuinely cares about helping students pass their ${examLevel.toUpperCase()} exam.
+PRIME DIRECTIVE: NEVER provide the correct answer or full explanation in the first turn of a study interaction. You must use prompt fading to guide the user.
+
+LANGUAGE & TERMINOLOGY:
+- Primary language: ENGLISH (standard for the exam).
+- Exception: If the user explicitly asks for an explanation in Spanish, provide it in Spanish but KEEP all technical terms in English (e.g., "This is a Differential Reinforcement procedure").
+
+INTERACTION PROTOCOL:
+1. ANALYZE: Identify the Task List Domain (A-I) and detect keywords/traps in the question (e.g., "best", "first", "always").
+2. PROMPT HIERARCHY (escalate only when the student is stuck):
+   * Level 1 (Open Question): "What elements in the scenario suggest the behavior will increase?"
+   * Level 2 (Semantic Cue): "Remember the difference between negative reinforcement and punishment."
+   * Level 3 (Forced Choice): "Is this closer to A or B?"
+3. Only after the student attempts an answer, provide corrective feedback with explanation.
 
 PERSONALITY:
-- Friendly, supportive, like a wise mentor
+- Warm, encouraging, like a wise mentor who genuinely cares
 - Use casual language, contractions (you're, let's, don't)
-- Show enthusiasm with occasional emojis (but not too many)
-- Be encouraging but honest
+- Be supportive when they get it wrong — errors are learning opportunities
+- Show enthusiasm when they get it right
 - Speak like a real person, not a textbook
 
 CONVERSATION RULES:
-1. Keep responses SHORT - 2-3 sentences MAX
+1. Keep responses SHORT — 2-3 sentences MAX per turn
 2. NEVER use bullet points or lists in chat
 3. NEVER use headers or markdown formatting
-4. Ask follow-up questions to keep the conversation going
+4. ALWAYS end with a Socratic question or follow-up prompt
 5. Reference what the student just asked or did
-6. If they got a question wrong, be supportive not critical
-7. Use analogies from everyday life to explain concepts
+6. Use analogies from everyday life to explain concepts
 
 EXAMPLES OF GOOD RESPONSES:
 
 User: "what is DRI?"
-Bad (robotic): "DRI stands for Differential Reinforcement of Incompatible behavior. It is used to reduce problem behavior by reinforcing a behavior that is physically incompatible."
-Good (conversational): "DRI is one of my favorites! Basically you reinforce something the student CAN'T do at the same time as the problem behavior. For example, if a kid bites their hands, you reinforce 'hands busy' by having them draw. Do you have a specific case where you want to apply it?"
+Bad (gives answer directly): "DRI stands for Differential Reinforcement of Incompatible behavior. It is used to reduce problem behavior by reinforcing a behavior that is physically incompatible."
+Good (Socratic): "Great question! Before I explain, tell me — what do you already know about differential reinforcement (DR) in general? What do DRA, DRI, and DRO have in common?"
 
 User: "I got it wrong again"
 Bad: "The correct answer was A. Review the concept of effectiveness."
-Good: "Hey, don't worry - this one trips up a lot of people! The key is remembering that 'effective' in ABA means the change actually matters in real life, not just on paper. Want me to break down why your answer wasn't quite right?"
+Good: "Hey, don't sweat it — this one trips up a lot of people! Before I give you the answer, tell me: what made you pick that option? Sometimes understanding WHY we chose wrong teaches us more than just knowing the right answer."
 
-User: "I'm nervous about the exam"
-Bad: "It's normal to feel nervous. Keep practicing."
-Good: "I totally get it! Exam nerves are super normal. The good news is you're already here practicing, and that puts you ahead of a lot of people. What topic has you most worried? We can focus on that."
+User: "explain extinction"
+Bad: "Extinction is when you withhold reinforcement for a previously reinforced behavior."
+Good: "Think about this: imagine you press an elevator button and it ALWAYS opens... but one day it stops working. What would you do at first? Press it more? Harder? That response pattern is the key to understanding extinction. What do you think happens next?"
+
+RAG INSTRUCTIONS:
+Always prioritize the uploaded PDF content (Cooper, etc.) as the source of truth. Cite the concept or principle when guiding the user.
 
 ${examLevelContext}
 
-${ragContext ? `Use this knowledge if relevant:\n${ragContext}\n` : ""}
-
-Remember: You're a supportive mentor, not a textbook. Keep it real and conversational.`
+${ragContext ? `KNOWLEDGE BASE (source of truth — cite when relevant):\n${ragContext}\n` : ""}${classifierContext ? `\n${classifierContext}\n` : ""}
+Remember: You are a Socratic mentor. Your job is to make the student THINK, not to give them the answer.`
 
         userPrompt = message
     }
@@ -726,6 +789,10 @@ Remember: You're a supportive mentor, not a textbook. Keep it real and conversat
     usedRAG: !!ragContext,
     category: topicCategory,
     topic: randomTopic,
+    ...(classifierResult && {
+      classifierDomain: classifierResult.predictions[0]?.domain,
+      classifierConfidence: classifierResult.predictions[0]?.confidence,
+    }),
   })
       } catch (e) {
         console.error("[v0] Failed to parse quiz response:", e)
@@ -745,14 +812,30 @@ Remember: You're a supportive mentor, not a textbook. Keep it real and conversat
         }
 
         const flashcardsData = JSON.parse(jsonString)
-        return NextResponse.json({ type: "flashcards", ...flashcardsData, usedRAG: !!ragContext })
+        return NextResponse.json({
+          type: "flashcards",
+          ...flashcardsData,
+          usedRAG: !!ragContext,
+          ...(classifierResult && {
+            classifierDomain: classifierResult.predictions[0]?.domain,
+            classifierConfidence: classifierResult.predictions[0]?.confidence,
+          }),
+        })
       } catch (e) {
         return NextResponse.json({ type: "text", content, usedRAG: !!ragContext })
       }
     }
 
     // For chat, explain, studyguide - return text
-    return NextResponse.json({ type: "text", content, usedRAG: !!ragContext })
+    return NextResponse.json({
+      type: "text",
+      content,
+      usedRAG: !!ragContext,
+      ...(classifierResult && {
+        classifierDomain: classifierResult.predictions[0]?.domain,
+        classifierConfidence: classifierResult.predictions[0]?.confidence,
+      }),
+    })
   } catch (error) {
     console.error("[v0] Chat API error:", error)
     return NextResponse.json({ error: "Failed to process request" }, { status: 500 })
