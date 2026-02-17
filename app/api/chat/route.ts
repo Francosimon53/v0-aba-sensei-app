@@ -358,7 +358,7 @@ export async function POST(request: NextRequest) {
         if (classifierResult && classifierResult.predictions.length > 0) {
           const top = classifierResult.predictions[0]
           const others = classifierResult.predictions.slice(1)
-          classifierContext = `DOMAIN CLASSIFICATION (NeuralForge):
+          classifierContext = `DOMAIN CLASSIFICATION:
 Primary domain: ${top.domain}. ${top.name} (confidence: ${(top.confidence * 100).toFixed(1)}%)${
             others.length > 0
               ? `\nRelated domains: ${others.map((p) => `${p.domain}. ${p.name} (${(p.confidence * 100).toFixed(1)}%)`).join(", ")}`
