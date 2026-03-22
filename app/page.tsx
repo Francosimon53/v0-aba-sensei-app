@@ -203,72 +203,224 @@ export default function Page() {
         </div>
       </section>
 
-      {/* See It In Action */}
-      <section className="relative z-10 py-20 px-6 bg-zinc-950/50">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-white text-center mb-4">See it in action</h2>
-          <p className="text-zinc-400 text-center mb-12 max-w-xl mx-auto">
-            AI Sensei explains the WHY behind every answer — not just right or wrong.
+      {/* See How ABA Sensei Teaches You */}
+      <section className="relative z-10 py-20 bg-zinc-950/50">
+        <div className="max-w-6xl mx-auto px-6 mb-12">
+          <h2 className="text-3xl font-bold text-white text-center mb-4">See how ABA Sensei teaches you</h2>
+          <p className="text-zinc-400 text-center max-w-xl mx-auto">
+            Not just right or wrong — real understanding.
           </p>
+        </div>
 
-          {/* App Mockup */}
-          <div className="bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
-            {/* Window Chrome */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
-              <div className="w-3 h-3 rounded-full bg-zinc-700" />
-              <div className="w-3 h-3 rounded-full bg-zinc-700" />
-              <div className="w-3 h-3 rounded-full bg-zinc-700" />
-              <span className="ml-3 text-xs text-zinc-600 font-mono">ABA Sensei — Practice Session</span>
+        {/* Horizontal Scrollable Carousel */}
+        <div className="overflow-x-auto scrollbar-hide pb-4">
+          <div className="flex gap-6 px-6 w-max">
+
+            {/* Mockup 1: Select Category */}
+            <div className="w-[340px] shrink-0 bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <span className="ml-2 text-[10px] text-zinc-600 font-mono">Select Category</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {/* Mode Tabs */}
+                <div className="flex gap-2">
+                  <div className="flex-1 py-2 text-center text-xs font-semibold bg-amber-500 text-black rounded-lg">Tutor Mode</div>
+                  <div className="flex-1 py-2 text-center text-xs font-medium text-zinc-500 border border-zinc-800 rounded-lg">Exam Mode</div>
+                </div>
+                <p className="text-white font-semibold text-sm">BCBA 6th Edition</p>
+                {/* Category List */}
+                <div className="space-y-2">
+                  {[
+                    { code: "A", name: "Behaviorism & Philosophical Foundations" },
+                    { code: "B", name: "Concepts and Principles" },
+                    { code: "C", name: "Measurement, Data Display & Interpretation" },
+                    { code: "D", name: "Experimental Design" },
+                    { code: "E", name: "Ethical & Professional Issues" },
+                    { code: "F", name: "Behavior Assessment" },
+                  ].map((cat) => (
+                    <div key={cat.code} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-zinc-800 hover:border-amber-500/30 bg-zinc-900/30 text-sm">
+                      <span className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xs text-amber-500 font-bold shrink-0">{cat.code}</span>
+                      <span className="text-zinc-300 text-xs">{cat.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="p-5 sm:p-8 space-y-5">
-              {/* Question Header */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-amber-500/80 bg-amber-500/10 px-2.5 py-1 rounded-full">
-                  BCBA 6th Ed. — Section G
-                </span>
-                <span className="text-xs text-zinc-600">Question 14 of 30</span>
+            {/* Mockup 2: Select Difficulty */}
+            <div className="w-[340px] shrink-0 bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <span className="ml-2 text-[10px] text-zinc-600 font-mono">Select Difficulty</span>
               </div>
-
-              {/* Question */}
-              <p className="text-white font-medium leading-relaxed">
-                A child receives a sticker each time they complete a math worksheet. Over the next two weeks, the child completes worksheets more frequently. This is an example of:
-              </p>
-
-              {/* Options */}
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/30 text-zinc-500 text-sm">
-                  <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center text-xs shrink-0">A</span>
-                  <span>Negative reinforcement</span>
+              <div className="p-5 space-y-4">
+                <p className="text-white font-semibold text-sm">Choose your challenge level</p>
+                <p className="text-zinc-500 text-xs">Section D: Experimental Design</p>
+                {/* Difficulty Cards */}
+                <div className="space-y-3">
+                  <div className="px-4 py-4 rounded-xl border border-zinc-800 bg-zinc-900/30">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🟢</span>
+                      <div>
+                        <p className="text-white font-semibold text-sm">Easy</p>
+                        <p className="text-zinc-500 text-xs">Foundational concepts & definitions</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-4 py-4 rounded-xl border-2 border-amber-500 bg-amber-500/5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🟡</span>
+                      <div>
+                        <p className="text-amber-400 font-semibold text-sm">Medium</p>
+                        <p className="text-zinc-400 text-xs">Application & scenario-based questions</p>
+                      </div>
+                      <span className="ml-auto text-amber-500 text-xs font-medium">Selected</span>
+                    </div>
+                  </div>
+                  <div className="px-4 py-4 rounded-xl border border-zinc-800 bg-zinc-900/30">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🔴</span>
+                      <div>
+                        <p className="text-white font-semibold text-sm">Hard</p>
+                        <p className="text-zinc-500 text-xs">Exam-level complexity & tricky scenarios</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/5 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center text-xs text-red-400 shrink-0">B</span>
-                  <span className="text-red-300">Positive punishment</span>
-                  <span className="ml-auto text-red-400 text-xs shrink-0">&#x2717;</span>
-                </div>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-green-500/40 bg-green-500/5 text-sm">
-                  <span className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center text-xs text-green-400 shrink-0">C</span>
-                  <span className="text-green-300">Positive reinforcement</span>
-                  <span className="ml-auto text-green-400 text-xs shrink-0">&#x2713;</span>
-                </div>
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/30 text-zinc-500 text-sm">
-                  <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center text-xs shrink-0">D</span>
-                  <span>Automatic reinforcement</span>
+                <div className="pt-2">
+                  <div className="w-full py-3 text-center bg-amber-500 text-black font-bold text-sm rounded-xl">
+                    Start Practice
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* AI Explanation */}
-              <div className="border border-amber-500/20 bg-amber-500/[0.03] rounded-xl p-4 sm:p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🥋</span>
-                  <span className="text-amber-500 font-semibold text-sm">AI Sensei</span>
+            {/* Mockup 3: Question Screen */}
+            <div className="w-[340px] shrink-0 bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <span className="ml-2 text-[10px] text-zinc-600 font-mono">Practice Session</span>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-amber-500/80 bg-amber-500/10 px-2 py-0.5 rounded-full">Section D — Experimental Design</span>
+                  <span className="text-[10px] text-zinc-600">Q 7 / 15</span>
                 </div>
-                <p className="text-zinc-300 text-sm leading-relaxed">
-                  Not quite. Remember: <span className="text-amber-400 font-medium">positive reinforcement</span> means <span className="text-white font-medium">ADDING</span> a stimulus that <span className="text-white font-medium">INCREASES</span> behavior. In this scenario, the sticker (stimulus added) led to more worksheet completion (behavior increased). Positive punishment would involve adding an <em>aversive</em> stimulus to decrease behavior — the opposite of what happened here.
+                <p className="text-white text-sm font-medium leading-relaxed">
+                  A researcher wants to evaluate the effect of a token economy on on-task behavior. She implements the intervention with one student, then a second, then a third at staggered intervals. This describes a:
                 </p>
+                <div className="space-y-2">
+                  {[
+                    { letter: "A", text: "Reversal (ABAB) design", selected: false },
+                    { letter: "B", text: "Multiple baseline across participants", selected: true },
+                    { letter: "C", text: "Changing criterion design", selected: false },
+                    { letter: "D", text: "Alternating treatments design", selected: false },
+                  ].map((opt) => (
+                    <div key={opt.letter} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-xs ${opt.selected ? "border-amber-500 bg-amber-500/5" : "border-zinc-800 bg-zinc-900/30 text-zinc-500"}`}>
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0 ${opt.selected ? "bg-amber-500/20 border border-amber-500 text-amber-400 font-bold" : "border border-zinc-700"}`}>{opt.letter}</span>
+                      <span className={opt.selected ? "text-white font-medium" : ""}>{opt.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="w-full py-3 text-center bg-amber-500 text-black font-bold text-sm rounded-xl">
+                  Submit Answer
+                </div>
               </div>
             </div>
+
+            {/* Mockup 4: Correct Answer — Decision Filter */}
+            <div className="w-[340px] shrink-0 bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <span className="ml-2 text-[10px] text-zinc-600 font-mono">Answer Explanation</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {/* Correct Banner */}
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3 text-center">
+                  <p className="text-green-400 font-bold text-sm">You nailed it!</p>
+                  <p className="text-green-400/70 text-[10px]">Multiple baseline across participants is correct.</p>
+                </div>
+                {/* Decision Filter */}
+                <div className="border border-amber-500/20 bg-amber-500/[0.03] rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🧠</span>
+                    <span className="text-amber-500 font-bold text-xs">DECISION FILTER</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="bg-zinc-900/50 rounded-lg p-2.5">
+                      <p className="text-amber-400 font-semibold text-[10px] mb-1">Independent Variable vs Dependent Variable</p>
+                      <p className="text-zinc-400 text-[10px] leading-relaxed">The token economy is the <span className="text-white font-medium">IV</span> (what the researcher manipulates). On-task behavior is the <span className="text-white font-medium">DV</span> (what gets measured).</p>
+                    </div>
+                    <div className="bg-zinc-900/50 rounded-lg p-2.5">
+                      <p className="text-amber-400 font-semibold text-[10px] mb-1">Analogy</p>
+                      <p className="text-zinc-400 text-[10px] leading-relaxed">Think of it like a <span className="text-white font-medium">domino chain</span> — you start the first domino (participant 1), wait for it to fall, then start the next one at a staggered time.</p>
+                    </div>
+                    <div className="bg-zinc-900/50 rounded-lg p-2.5">
+                      <p className="text-amber-400 font-semibold text-[10px] mb-1">Rule</p>
+                      <p className="text-zinc-400 text-[10px] leading-relaxed">Staggered introduction + same intervention + different participants = <span className="text-amber-400 font-medium">Multiple Baseline Across Participants</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mockup 5: Wrong Answer — Trap Detector */}
+            <div className="w-[340px] shrink-0 bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <span className="ml-2 text-[10px] text-zinc-600 font-mono">Answer Explanation</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {/* Wrong Banner */}
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-center">
+                  <p className="text-red-400 font-bold text-sm">Not quite. Let&apos;s learn the difference.</p>
+                  <p className="text-red-400/70 text-[10px]">You chose Reversal (ABAB) — the correct answer is Multiple baseline.</p>
+                </div>
+                {/* Trap Detector */}
+                <div className="border border-amber-500/20 bg-amber-500/[0.03] rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🪤</span>
+                    <span className="text-amber-500 font-bold text-xs">TRAP DETECTOR</span>
+                  </div>
+                  <p className="text-zinc-400 text-[10px] leading-relaxed">
+                    The ABAB design <span className="text-white font-medium">withdraws</span> the intervention to show control. This question says the intervention was <span className="text-white font-medium">staggered across people</span>, not removed and reintroduced.
+                  </p>
+                  {/* Strategy Word Badges */}
+                  <div>
+                    <p className="text-amber-400 font-semibold text-[10px] mb-2">EXAM STRATEGY WORDS</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["staggered", "across participants", "one at a time", "sequential introduction"].map((word) => (
+                        <span key={word} className="text-[10px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium">{word}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-zinc-900/50 rounded-lg p-2.5">
+                    <p className="text-amber-400 font-semibold text-[10px] mb-1">Strategy</p>
+                    <p className="text-zinc-400 text-[10px] leading-relaxed">When you see <span className="text-amber-400 font-medium">&quot;staggered&quot;</span> + <span className="text-amber-400 font-medium">&quot;across&quot;</span> in the same question, immediately think <span className="text-white font-medium">Multiple Baseline</span>. The &quot;across&quot; tells you the type: participants, settings, or behaviors.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="flex justify-center mt-6 gap-1.5">
+          {[0,1,2,3,4].map((i) => (
+            <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? "bg-amber-500" : "bg-zinc-700"}`} />
+          ))}
         </div>
       </section>
 
