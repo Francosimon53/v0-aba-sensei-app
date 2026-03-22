@@ -201,6 +201,75 @@ export default function Page() {
         </div>
       </section>
 
+      {/* See It In Action */}
+      <section className="relative z-10 py-20 px-6 bg-zinc-950/50">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-white text-center mb-4">See it in action</h2>
+          <p className="text-zinc-400 text-center mb-12 max-w-xl mx-auto">
+            AI Sensei explains the WHY behind every answer — not just right or wrong.
+          </p>
+
+          {/* App Mockup */}
+          <div className="bg-[#0c0c11] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+            {/* Window Chrome */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/80 bg-[#0e0e14]">
+              <div className="w-3 h-3 rounded-full bg-zinc-700" />
+              <div className="w-3 h-3 rounded-full bg-zinc-700" />
+              <div className="w-3 h-3 rounded-full bg-zinc-700" />
+              <span className="ml-3 text-xs text-zinc-600 font-mono">ABA Sensei — Practice Session</span>
+            </div>
+
+            <div className="p-5 sm:p-8 space-y-5">
+              {/* Question Header */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-amber-500/80 bg-amber-500/10 px-2.5 py-1 rounded-full">
+                  BCBA 6th Ed. — Section G
+                </span>
+                <span className="text-xs text-zinc-600">Question 14 of 30</span>
+              </div>
+
+              {/* Question */}
+              <p className="text-white font-medium leading-relaxed">
+                A child receives a sticker each time they complete a math worksheet. Over the next two weeks, the child completes worksheets more frequently. This is an example of:
+              </p>
+
+              {/* Options */}
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/30 text-zinc-500 text-sm">
+                  <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center text-xs shrink-0">A</span>
+                  <span>Negative reinforcement</span>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/5 text-sm">
+                  <span className="w-6 h-6 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center text-xs text-red-400 shrink-0">B</span>
+                  <span className="text-red-300">Positive punishment</span>
+                  <span className="ml-auto text-red-400 text-xs shrink-0">&#x2717;</span>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-green-500/40 bg-green-500/5 text-sm">
+                  <span className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center text-xs text-green-400 shrink-0">C</span>
+                  <span className="text-green-300">Positive reinforcement</span>
+                  <span className="ml-auto text-green-400 text-xs shrink-0">&#x2713;</span>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/30 text-zinc-500 text-sm">
+                  <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center text-xs shrink-0">D</span>
+                  <span>Automatic reinforcement</span>
+                </div>
+              </div>
+
+              {/* AI Explanation */}
+              <div className="border border-amber-500/20 bg-amber-500/[0.03] rounded-xl p-4 sm:p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🥋</span>
+                  <span className="text-amber-500 font-semibold text-sm">AI Sensei</span>
+                </div>
+                <p className="text-zinc-300 text-sm leading-relaxed">
+                  Not quite. Remember: <span className="text-amber-400 font-medium">positive reinforcement</span> means <span className="text-white font-medium">ADDING</span> a stimulus that <span className="text-white font-medium">INCREASES</span> behavior. In this scenario, the sticker (stimulus added) led to more worksheet completion (behavior increased). Positive punishment would involve adding an <em>aversive</em> stimulus to decrease behavior — the opposite of what happened here.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing" className="relative z-10 py-20 px-6 bg-zinc-950">
         <div className="max-w-5xl mx-auto">
