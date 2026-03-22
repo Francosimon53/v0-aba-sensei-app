@@ -230,7 +230,7 @@ export default function ContactPage() {
               Contact
             </Link>
           </div>
-          <p className="text-zinc-600 text-sm">© 2024 ABA Sensei. All rights reserved.</p>
+          <p className="text-zinc-600 text-sm">© 2026 ABA Sensei. All rights reserved.</p>
         </div>
 
         {/* BACB Disclaimer */}

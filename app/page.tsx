@@ -156,16 +156,16 @@ export default function Page() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="grid grid-cols-3 gap-8 text-center">
             <div>
-              <p className="text-4xl font-bold text-white">95%</p>
-              <p className="text-zinc-500 text-sm mt-1">Pass Rate</p>
+              <p className="text-4xl font-bold text-white">AI</p>
+              <p className="text-zinc-500 text-sm mt-1">Adaptive Learning</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-white">10,000+</p>
-              <p className="text-zinc-500 text-sm mt-1">Questions</p>
+              <p className="text-4xl font-bold text-white">Unlimited</p>
+              <p className="text-zinc-500 text-sm mt-1">AI-Generated Questions</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-white">4.9</p>
-              <p className="text-zinc-500 text-sm mt-1">User Rating</p>
+              <p className="text-4xl font-bold text-white">2</p>
+              <p className="text-zinc-500 text-sm mt-1">Exams Covered</p>
             </div>
           </div>
         </div>
@@ -339,18 +339,16 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Testimonial Section */}
+      {/* Community Section */}
       <section className="relative z-10 py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="text-5xl mb-6">"</div>
-          <p className="text-2xl text-white mb-8 leading-relaxed">
-            I passed my BCBA exam on the first try thanks to ABA Sensei. The AI tutor helped me understand concepts I'd
-            been struggling with for months.
+          <div className="text-5xl mb-6">🎓</div>
+          <p className="text-2xl text-white mb-4 leading-relaxed">
+            Join students preparing for their BCBA & RBT exams
           </p>
-          <div>
-            <p className="text-white font-semibold">Sarah Johnson, BCBA</p>
-            <p className="text-zinc-500">Passed BCBA Exam 2024</p>
-          </div>
+          <p className="text-zinc-400">
+            AI-powered practice aligned with the latest BCBA 6th Edition and RBT 3rd Edition task lists.
+          </p>
         </div>
       </section>
 
@@ -358,7 +356,7 @@ export default function Page() {
       <section className="relative z-10 py-20 px-6 bg-gradient-to-b from-zinc-950 to-black">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">Ready to pass your exam?</h2>
-          <p className="text-xl text-zinc-400 mb-10">Join thousands of behavior analysts who passed with ABA Sensei.</p>
+          <p className="text-xl text-zinc-400 mb-10">AI-powered exam prep for BCBA and RBT candidates.</p>
           <Link
             href="/auth/sign-up"
             className="inline-block bg-amber-500 hover:bg-amber-600 text-black font-bold px-10 py-4 rounded-full text-lg transition hover:scale-105"
@@ -389,7 +387,7 @@ export default function Page() {
               Contact
             </Link>
           </div>
-          <p className="text-zinc-600 text-sm">© 2024 ABA Sensei. All rights reserved.</p>
+          <p className="text-zinc-600 text-sm">© 2026 ABA Sensei. All rights reserved.</p>
         </div>
 
         {/* BACB Disclaimer */}
