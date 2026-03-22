@@ -91,7 +91,9 @@ export default function Page() {
               <span className="text-2xl">🥋</span>
               <span className="font-bold text-white text-xl">ABA Sensei</span>
             </div>
-            <span className="text-[10px] text-zinc-500 tracking-wide ml-8">by Simon Franco</span>
+            <Link href="/about" className="text-xs text-zinc-400 hover:text-amber-500 transition ml-8">
+              Built by Simon Franco, M.S. in Applied Behavior Analysis
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/about" className="text-zinc-400 hover:text-white transition hidden sm:inline">
@@ -491,7 +493,9 @@ export default function Page() {
               <span className="text-xl">🥋</span>
               <span className="font-semibold text-white">ABA Sensei</span>
             </div>
-            <span className="text-[10px] text-zinc-500 tracking-wide ml-7">by Simon Franco</span>
+            <Link href="/about" className="text-xs text-zinc-400 hover:text-amber-500 transition ml-7">
+              Built by Simon Franco, M.S. in Applied Behavior Analysis
+            </Link>
           </div>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
             <Link href="/about" className="hover:text-white transition">
