@@ -220,6 +220,9 @@ export default function ContactPage() {
             <span className="text-[10px] text-zinc-500 tracking-wide ml-7">by Simon Franco</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
+            <Link href="/about" className="hover:text-white transition">
+              About
+            </Link>
             <Link href="/privacy" className="hover:text-white transition">
               Privacy
             </Link>

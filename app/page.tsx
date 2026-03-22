@@ -94,6 +94,9 @@ export default function Page() {
             <span className="text-[10px] text-zinc-500 tracking-wide ml-8">by Simon Franco</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/about" className="text-zinc-400 hover:text-white transition hidden sm:inline">
+              About
+            </Link>
             <Link href="/auth/login" className="text-zinc-400 hover:text-white transition">
               Login
             </Link>
@@ -377,6 +380,9 @@ export default function Page() {
             <span className="text-[10px] text-zinc-500 tracking-wide ml-7">by Simon Franco</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
+            <Link href="/about" className="hover:text-white transition">
+              About
+            </Link>
             <Link href="/privacy" className="hover:text-white transition">
               Privacy
             </Link>
