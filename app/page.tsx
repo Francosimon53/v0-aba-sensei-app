@@ -369,6 +369,51 @@ export default function Page() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="relative z-10 py-20 px-6">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-white text-center mb-12">Frequently asked questions</h2>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Can I cancel anytime?",
+                a: "Yes. Cancel your subscription anytime from your account settings. No questions asked.",
+              },
+              {
+                q: "Is the content updated for the latest edition?",
+                a: "Yes. All BCBA questions align with the 6th Edition Task List, and RBT questions follow the 3rd Edition.",
+              },
+              {
+                q: "How is ABA Sensei different from other study apps?",
+                a: "Most apps give you static quizzes. ABA Sensei uses AI to adapt to your weak areas, explain concepts in depth, and simulate real exam conditions with personalized feedback.",
+              },
+              {
+                q: "Does it work on mobile?",
+                a: "Yes. ABA Sensei works on any device with a web browser.",
+              },
+              {
+                q: "What if I don\u2019t pass?",
+                a: "Use the analytics to identify weak areas and keep practicing. Our AI adapts to focus on what you need most.",
+              },
+            ].map((faq, i) => (
+              <details
+                key={i}
+                className="group bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden"
+              >
+                <summary className="flex items-center justify-between cursor-pointer px-6 py-5 text-white font-medium hover:bg-zinc-800/50 transition list-none">
+                  {faq.q}
+                  <span className="text-zinc-500 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+                </summary>
+                <div className="px-6 pb-5 text-zinc-400 leading-relaxed">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="relative z-10 py-12 px-6 border-t border-zinc-900">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
