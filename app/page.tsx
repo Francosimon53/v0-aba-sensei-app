@@ -133,7 +133,7 @@ export default function Page() {
           </div>
 
           <p className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
-            The smartest way to prepare. AI-generated questions aligned with the latest BCBA 6th Edition & RBT 3rd Edition exam content, instant feedback, and personalized tutoring to help you pass on your first try.
+            The only ABA exam prep with a personal AI tutor that adapts to YOUR weak areas. Not just quizzes — real understanding.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
