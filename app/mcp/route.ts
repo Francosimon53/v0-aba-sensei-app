@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   if (method === "tools/call") {
     const { name, arguments: args = {} } = params
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://abasensei.app"
+    const baseUrl = "https://abasensei.app"
     
     let action = "chat", body: any = { message: args.message || args.topic, examLevel: args.exam_level?.toLowerCase() || "bcba" }
     
